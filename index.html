@@ -14,7 +14,37 @@
 <script type="text/babel">
 const { useState, useEffect, useCallback } = React;
 
-const SKEY = "id-studio-v9";
+// ── Supabase 設定 ──
+const SUPABASE_URL = "https://hrxyylqngkubruivwsdm.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-ShQ0-R3viUcSxjy0o-oeA_GnPuB8_O";
+const DATA_ID = "main";
+
+async function loadData() {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/studio_data?id=eq.${DATA_ID}&select=data`, {
+      headers: { "apikey": SUPABASE_KEY, "Authorization": `Bearer ${SUPABASE_KEY}` }
+    });
+    const rows = await res.json();
+    if (rows && rows.length > 0) return rows[0].data;
+  } catch(e) { console.error("load error", e); }
+  return INIT;
+}
+
+async function saveData(d) {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/studio_data`, {
+      method: "POST",
+      headers: {
+        "apikey": SUPABASE_KEY,
+        "Authorization": `Bearer ${SUPABASE_KEY}`,
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates"
+      },
+      body: JSON.stringify({ id: DATA_ID, data: d, updated_at: new Date().toISOString() })
+    });
+  } catch(e) { console.error("save error", e); }
+}
+
 const uid = () => Math.random().toString(36).slice(2, 8);
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const fmtD = (d) => (d ? d.replace(/-/g, ".") : "—");
@@ -71,9 +101,9 @@ const INIT = { projects:[
     ],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
     timelines:[
-      {id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測，確認格局變動可行性"},
-      {id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向，選定主色調"},
-      {id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認，與圖面吻合"},
+      {id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測"},
+      {id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向"},
+      {id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認"},
     ],
   },
   { id:"p2", name:"新北板橋商業空間", owner:"陳小姐", loc:"新北市板橋區", contact:"陳美君", tel:"0988-765-432", stage:"drawing", color:"#4E8A81",
@@ -98,20 +128,11 @@ const INIT = { projects:[
     ],
     extras:[],
     timelines:[
-      {id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格，業主偏好深色系"},
-      {id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸，與建築圖核對無誤"},
+      {id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格"},
+      {id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸"},
     ],
   },
 ]};
-
-// localStorage 替換 window.storage
-function loadData() {
-  try { const v = localStorage.getItem(SKEY); if(v) return JSON.parse(v); } catch(e) {}
-  return INIT;
-}
-function saveData(d) {
-  try { localStorage.setItem(SKEY, JSON.stringify(d)); } catch(e) {}
-}
 
 const CSS = `
 @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=DM+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
@@ -156,7 +177,7 @@ button{font-family:inherit;cursor:pointer;}
 .sb-close{display:none;width:100%;padding:.6rem;background:transparent;border:1px solid var(--ln);border-radius:var(--rs);font-family:'DM Mono',monospace;font-size:.68rem;color:var(--mu);cursor:pointer;margin-bottom:.75rem;text-align:center;}
 .sb-close:hover{border-color:var(--red);color:var(--red);}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:149;}
-.main{padding:1.8rem 2.2rem 3rem;overflow-y:auto;}
+.main{padding:1.8rem 2.2rem 3rem;}
 .proj-hdr{margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--ln);}
 .proj-tag{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:.22rem .75rem;border-radius:20px;margin-bottom:.45rem;}
 .proj-name{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1.1;margin-bottom:.35rem;}
@@ -290,7 +311,7 @@ button{font-family:inherit;cursor:pointer;}
 .swatch.on{border-color:var(--ink);transform:scale(1.1);}
 @media(max-width:640px){
   .workspace{grid-template-columns:1fr;}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;width:var(--sb);height:100%;transform:translateX(-100%);box-shadow:none;transition:transform .25s ease,box-shadow .25s ease;}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;width:var(--sb);height:100%;transform:translateX(-100%);transition:transform .25s ease,box-shadow .25s ease;}
   .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.15);}
   .sb-overlay.show{display:block;}
   .sb-close{display:block;}
@@ -315,51 +336,23 @@ function OverviewTab({proj,upd,openModal}){
   const delComm=id=>upd(p=>({...p,comms:(p.comms||[]).filter(c=>c.id!==id)}));
   return(<>
     <div className="card full" style={{marginBottom:"1rem"}}>
-      <div className="card-hd">專案進度
-        <select value={proj.stage} onChange={e=>upd(p=>({...p,stage:e.target.value}))} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",border:"1px solid var(--ln)",borderRadius:20,padding:".18rem .6rem",background:"transparent",color:"var(--mu)",cursor:"pointer",outline:"none"}}>
-          {STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}
-        </select>
-      </div>
+      <div className="card-hd">專案進度<select value={proj.stage} onChange={e=>upd(p=>({...p,stage:e.target.value}))} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",border:"1px solid var(--ln)",borderRadius:20,padding:".18rem .6rem",background:"transparent",color:"var(--mu)",cursor:"pointer",outline:"none"}}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select></div>
       <div className="phase-row">{STAGES.map((s,i)=><div key={s} className={`phase-step${i<stIdx?" d":i===stIdx?" c":""}`} onClick={()=>upd(p=>({...p,stage:s}))}>{STAGE_L[s]}</div>)}</div>
       <div className="prog-w"><div className="prog-fill" style={{width:pct+"%"}}/></div>
       <div className="prog-ft"><span className="prog-lbl">{done} / {total} 里程碑完成</span><span className="prog-pct">{pct}%</span></div>
     </div>
     <div className="grid2">
       <div className="card">
-        <div className="card-hd">工程里程碑 <button className="hd-add" onClick={()=>openModal("ms")}>＋ 新增</button></div>
-        {proj.milestones.length===0?<Empty icon="🏗" text="尚無里程碑" sub="新增設計施工里程碑"/>:
-        <ul className="ms-list">{proj.milestones.map(m=>{const c=MSS[m.status];return(
-          <li key={m.id} className="ms-item">
-            <div className="ms-dot" style={{background:c.dot.bg,borderColor:c.dot.bd}}/>
-            <div className="ms-body"><div className="ms-title">{m.title}</div><div className="ms-dates">{fmtD(m.start)}{m.end?` → ${fmtD(m.end)}`:""}</div></div>
-            <select className="ms-sel" value={m.status} onChange={e=>updMs(m.id,{status:e.target.value})} style={{...c.tag}}>{Object.entries(MSS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select>
-            <Tag cfg={PRC[m.prio]}>{PRC[m.prio].l}</Tag><DelBtn onClick={()=>delMs(m.id)}/>
-          </li>);})}</ul>}
+        <div className="card-hd">工程里程碑<button className="hd-add" onClick={()=>openModal("ms")}>＋ 新增</button></div>
+        {proj.milestones.length===0?<Empty icon="🏗" text="尚無里程碑" sub="新增設計施工里程碑"/>:<ul className="ms-list">{proj.milestones.map(m=>{const c=MSS[m.status];return(<li key={m.id} className="ms-item"><div className="ms-dot" style={{background:c.dot.bg,borderColor:c.dot.bd}}/><div className="ms-body"><div className="ms-title">{m.title}</div><div className="ms-dates">{fmtD(m.start)}{m.end?` → ${fmtD(m.end)}`:""}</div></div><select className="ms-sel" value={m.status} onChange={e=>updMs(m.id,{status:e.target.value})} style={{...c.tag}}>{Object.entries(MSS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><Tag cfg={PRC[m.prio]}>{PRC[m.prio].l}</Tag><DelBtn onClick={()=>delMs(m.id)}/></li>);})}</ul>}
       </div>
       <div className="card">
-        <div className="card-hd">待辦事項 <button className="hd-add" onClick={()=>openModal("todo")}>＋ 新增</button></div>
-        {proj.todos.length===0?<Empty icon="✅" text="尚無待辦事項" sub="新增設計或施工相關待辦"/>:
-        proj.todos.map(t=>{const over=t.due&&!t.done&&t.due<todayISO();return(
-          <div key={t.id} className="todo-item">
-            <div className="todo-main">
-              <button className={`chk${t.done?" on":""}`} onClick={()=>togTodo(t.id)}>{t.done?"✓":""}</button>
-              <div style={{flex:1,minWidth:0}}>
-                <div className={`todo-txt${t.done?" todo-done":""}`}>{t.text}</div>
-                <div className="todo-meta">{t.due&&<span className={`todo-due${over?" ov":""}`}>📅 {fmtD(t.due)}</span>}<Tag cfg={PRC[t.prio]}>{PRC[t.prio].l}</Tag></div>
-                {t.note&&<div className="todo-note">{t.note}</div>}
-              </div>
-              <DelBtn onClick={()=>delTodo(t.id)}/>
-            </div>
-          </div>);})}
+        <div className="card-hd">待辦事項<button className="hd-add" onClick={()=>openModal("todo")}>＋ 新增</button></div>
+        {proj.todos.length===0?<Empty icon="✅" text="尚無待辦事項" sub="新增設計或施工相關待辦"/>:proj.todos.map(t=>{const over=t.due&&!t.done&&t.due<todayISO();return(<div key={t.id} className="todo-item"><div className="todo-main"><button className={`chk${t.done?" on":""}`} onClick={()=>togTodo(t.id)}>{t.done?"✓":""}</button><div style={{flex:1,minWidth:0}}><div className={`todo-txt${t.done?" todo-done":""}`}>{t.text}</div><div className="todo-meta">{t.due&&<span className={`todo-due${over?" ov":""}`}>📅 {fmtD(t.due)}</span>}<Tag cfg={PRC[t.prio]}>{PRC[t.prio].l}</Tag></div>{t.note&&<div className="todo-note">{t.note}</div>}</div><DelBtn onClick={()=>delTodo(t.id)}/></div></div>);})}
       </div>
       <div className="card full">
-        <div className="card-hd">客戶溝通記錄 <button className="hd-add" onClick={()=>openModal("comm")}>＋ 新增</button></div>
-        {(proj.comms||[]).length===0?<Empty icon="💬" text="尚無溝通記錄" sub="記錄與業主或廠商的重要溝通"/>:
-        (proj.comms||[]).map(c=>(
-          <div key={c.id} className="comm-item">
-            <div className="comm-hd"><div className="comm-who">{c.who}</div><div style={{display:"flex",alignItems:"center",gap:".45rem"}}><span className="comm-when">{fmtD(c.date)}</span><DelBtn onClick={()=>delComm(c.id)}/></div></div>
-            <div className="comm-note">{c.note}</div><span className="comm-ch">{c.ch}</span>
-          </div>))}
+        <div className="card-hd">客戶溝通記錄<button className="hd-add" onClick={()=>openModal("comm")}>＋ 新增</button></div>
+        {(proj.comms||[]).length===0?<Empty icon="💬" text="尚無溝通記錄" sub="記錄與業主或廠商的重要溝通"/>:(proj.comms||[]).map(c=><div key={c.id} className="comm-item"><div className="comm-hd"><div className="comm-who">{c.who}</div><div style={{display:"flex",alignItems:"center",gap:".45rem"}}><span className="comm-when">{fmtD(c.date)}</span><DelBtn onClick={()=>delComm(c.id)}/></div></div><div className="comm-note">{c.note}</div><span className="comm-ch">{c.ch}</span></div>)}
       </div>
     </div>
   </>);
@@ -376,18 +369,7 @@ function PendingTab({proj,upd,openModal}){
       <div className="pd-filter">{["all","urgent","pending","confirmed","closed"].map(f=><button key={f} className={`f-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{f==="all"?`全部 (${proj.pendings.length})`:PDS[f].l}{f==="urgent"&&uc>0?` (${uc})`:""}</button>)}</div>
       <button className="hd-add" onClick={()=>openModal("pend")}>＋ 新增</button>
     </div>
-    {filtered.length===0?<Empty icon="📋" text="無待確認事項" sub="新增需業主或廠商確認的事項"/>:
-    filtered.map(pd=>{const c=PDS[pd.status];return(
-      <div key={pd.id} className={`pd-item${pd.status==="urgent"?" urg":""}`}>
-        <div className="pd-hd"><div className="pd-title">{pd.title}</div>
-          <div style={{display:"flex",gap:".35rem",alignItems:"center"}}>
-            <select className="pd-st-sel" value={pd.status} onChange={e=>updPd(pd.id,{status:e.target.value})} style={{background:c.bg,color:c.color}}>{Object.entries(PDS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select>
-            <DelBtn onClick={()=>delPd(pd.id)}/>
-          </div>
-        </div>
-        {pd.note&&<div className="pd-note">{pd.note}</div>}
-        {pd.date&&<div className="pd-date">{fmtD(pd.date)}</div>}
-      </div>);})}
+    {filtered.length===0?<Empty icon="📋" text="無待確認事項" sub="新增需業主或廠商確認的事項"/>:filtered.map(pd=>{const c=PDS[pd.status];return(<div key={pd.id} className={`pd-item${pd.status==="urgent"?" urg":""}`}><div className="pd-hd"><div className="pd-title">{pd.title}</div><div style={{display:"flex",gap:".35rem",alignItems:"center"}}><select className="pd-st-sel" value={pd.status} onChange={e=>updPd(pd.id,{status:e.target.value})} style={{background:c.bg,color:c.color}}>{Object.entries(PDS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select><DelBtn onClick={()=>delPd(pd.id)}/></div></div>{pd.note&&<div className="pd-note">{pd.note}</div>}{pd.date&&<div className="pd-date">{fmtD(pd.date)}</div>}</div>);})}
   </>);
 }
 
@@ -397,20 +379,8 @@ function FinanceTab({proj,upd,openModal}){
   const delFin=id=>upd(p=>({...p,finances:p.finances.filter(f=>f.id!==id)}));
   const delEx=id=>upd(p=>({...p,extras:p.extras.filter(e=>e.id!==id)}));
   const inc=proj.finances.filter(f=>f.type==="income"),exp=proj.finances.filter(f=>f.type==="expense");
-  const totalIn=inc.reduce((a,f)=>a+Number(f.amt),0);
-  const paidIn=inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
-  const unpaidIn=inc.filter(f=>f.status==="unpaid").reduce((a,f)=>a+Number(f.amt),0);
-  const totalEx=exp.reduce((a,f)=>a+Number(f.amt),0);
-  const exTot=proj.extras.reduce((a,e)=>a+Number(e.amt),0);
-  const renderList=(items,type)=>items.length===0?<Empty icon={type==="income"?"💰":"💸"} text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>:
-    items.map(f=><div key={f.id} className="fin-item">
-      <div style={{flex:1,minWidth:0}}><div className="fin-name">{f.name}</div><div className="fin-date">{fmtD(f.date)}{f.note?` · ${f.note}`:""}</div></div>
-      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
-        <div className={`fin-amt ${type==="income"?"fin-in":"fin-ex"}`}>{type==="income"?"+ ":"- "}NT$ {fmtN(f.amt)}</div>
-        <button className={`fin-st-btn ${f.status==="paid"?"fin-paid":"fin-unpaid"}`} onClick={()=>togSt(f.id)}>{f.status==="paid"?"已收/已付":"待收/待付"}</button>
-      </div>
-      <DelBtn onClick={()=>delFin(f.id)}/>
-    </div>);
+  const totalIn=inc.reduce((a,f)=>a+Number(f.amt),0),paidIn=inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0),unpaidIn=inc.filter(f=>f.status==="unpaid").reduce((a,f)=>a+Number(f.amt),0),totalEx=exp.reduce((a,f)=>a+Number(f.amt),0),exTot=proj.extras.reduce((a,e)=>a+Number(e.amt),0);
+  const rl=(items,type)=>items.length===0?<Empty icon={type==="income"?"💰":"💸"} text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>:items.map(f=><div key={f.id} className="fin-item"><div style={{flex:1,minWidth:0}}><div className="fin-name">{f.name}</div><div className="fin-date">{fmtD(f.date)}{f.note?` · ${f.note}`:""}</div></div><div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}><div className={`fin-amt ${type==="income"?"fin-in":"fin-ex"}`}>{type==="income"?"+ ":"- "}NT$ {fmtN(f.amt)}</div><button className={`fin-st-btn ${f.status==="paid"?"fin-paid":"fin-unpaid"}`} onClick={()=>togSt(f.id)}>{f.status==="paid"?"已收/已付":"待收/待付"}</button></div><DelBtn onClick={()=>delFin(f.id)}/></div>);
   return(<>
     <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:".75rem",marginBottom:"1.2rem"}}>
       <div className="fin-stat"><div className="fin-stat-l">合約總收款</div><div className="fin-stat-v" style={{color:"#5A9653"}}>NT$ {fmtN(totalIn)}</div></div>
@@ -418,23 +388,10 @@ function FinanceTab({proj,upd,openModal}){
       <div className="fin-stat"><div className="fin-stat-l">待收款</div><div className="fin-stat-v" style={{color:"#C4773B"}}>NT$ {fmtN(unpaidIn)}</div></div>
       <div className="fin-stat"><div className="fin-stat-l">支出合計</div><div className="fin-stat-v" style={{color:"#B04848"}}>NT$ {fmtN(totalEx)}</div></div>
     </div>
-    <div className="fin-3toggle">
-      <button className={`fin-3tab${sub==="income"?" on":""}`} onClick={()=>setSub("income")}>⬇ 收款</button>
-      <button className={`fin-3tab${sub==="expense"?" on":""}`} onClick={()=>setSub("expense")}>⬆ 支出</button>
-      <button className={`fin-3tab${sub==="extras"?" on":""}`} onClick={()=>setSub("extras")}>＋ 追加單</button>
-    </div>
-    {sub==="income"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finIncome")}>＋ 新增收款</button></div><div className="card">{renderList(inc,"income")}</div></>}
-    {sub==="expense"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finExpense")}>＋ 新增支出</button></div><div className="card">{renderList(exp,"expense")}</div></>}
-    {sub==="extras"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("extra")}>＋ 新增追加單</button></div>
-      <div className="card">{proj.extras.length===0?<Empty icon="📋" text="尚無追加項目" sub="記錄業主追加的工程項目"/>:
-        proj.extras.map(e=><div key={e.id} className="extra-item">
-          <div style={{flex:1}}><div style={{fontSize:".83rem",fontWeight:500}}>{e.title}</div><div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"#6E6860",marginTop:".12rem"}}>{fmtD(e.date)}</div>{e.note&&<div style={{fontSize:".72rem",color:"#6E6860",marginTop:".18rem"}}>{e.note}</div>}</div>
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".78rem",color:"#C4773B",flexShrink:0}}>NT$ {fmtN(e.amt)}</div>
-          <DelBtn onClick={()=>delEx(e.id)}/>
-        </div>)}
-        {proj.extras.length>0&&<div className="extra-total"><div className="extra-total-lbl">追加總計</div><div className="extra-total-val">NT$ {fmtN(exTot)}</div></div>}
-      </div>
-    </>}
+    <div className="fin-3toggle"><button className={`fin-3tab${sub==="income"?" on":""}`} onClick={()=>setSub("income")}>⬇ 收款</button><button className={`fin-3tab${sub==="expense"?" on":""}`} onClick={()=>setSub("expense")}>⬆ 支出</button><button className={`fin-3tab${sub==="extras"?" on":""}`} onClick={()=>setSub("extras")}>＋ 追加單</button></div>
+    {sub==="income"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finIncome")}>＋ 新增收款</button></div><div className="card">{rl(inc,"income")}</div></>}
+    {sub==="expense"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finExpense")}>＋ 新增支出</button></div><div className="card">{rl(exp,"expense")}</div></>}
+    {sub==="extras"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("extra")}>＋ 新增追加單</button></div><div className="card">{proj.extras.length===0?<Empty icon="📋" text="尚無追加項目" sub="記錄業主追加的工程項目"/>:proj.extras.map(e=><div key={e.id} className="extra-item"><div style={{flex:1}}><div style={{fontSize:".83rem",fontWeight:500}}>{e.title}</div><div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"#6E6860",marginTop:".12rem"}}>{fmtD(e.date)}</div>{e.note&&<div style={{fontSize:".72rem",color:"#6E6860",marginTop:".18rem"}}>{e.note}</div>}</div><div style={{fontFamily:"'DM Mono',monospace",fontSize:".78rem",color:"#C4773B",flexShrink:0}}>NT$ {fmtN(e.amt)}</div><DelBtn onClick={()=>delEx(e.id)}/></div>)}{proj.extras.length>0&&<div className="extra-total"><div className="extra-total-lbl">追加總計</div><div className="extra-total-val">NT$ {fmtN(exTot)}</div></div>}</div></>}
   </>);
 }
 
@@ -448,62 +405,31 @@ function TimelineTab({proj,upd,openModal}){
       <div style={{display:"flex",gap:".3rem"}}>{["all","site","meet"].map(f=><button key={f} className={`f-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"全部":TLT[f].l}</button>)}</div>
       <button className="btn-ok" onClick={()=>openModal("tl")}>＋ 新增紀錄</button>
     </div>
-    {filtered.length===0?<Empty icon="🕐" text="尚無紀錄" sub="新增工地查驗或會議紀錄"/>:
-    filtered.map(tl=>{const c=TLT[tl.type];return(
-      <div key={tl.id} className="tl-item">
-        <div className="tl-icon" style={{background:c.bg}}>{c.icon}</div>
-        <div className="tl-body"><div className="tl-title">{tl.title}</div><div className="tl-meta">{fmtD(tl.date)}</div>{tl.note&&<div className="tl-note">{tl.note}</div>}</div>
-        <span className="tl-tag" style={{background:c.bg,color:c.color}}>{c.l}</span>
-        <DelBtn onClick={()=>delTl(tl.id)}/>
-      </div>);})}
+    {filtered.length===0?<Empty icon="🕐" text="尚無紀錄" sub="新增工地查驗或會議紀錄"/>:filtered.map(tl=>{const c=TLT[tl.type];return(<div key={tl.id} className="tl-item"><div className="tl-icon" style={{background:c.bg}}>{c.icon}</div><div className="tl-body"><div className="tl-title">{tl.title}</div><div className="tl-meta">{fmtD(tl.date)}</div>{tl.note&&<div className="tl-note">{tl.note}</div>}</div><span className="tl-tag" style={{background:c.bg,color:c.color}}>{c.l}</span><DelBtn onClick={()=>delTl(tl.id)}/></div>);})}
   </>);
 }
 
 function CalendarTab({proj,calYM,setCalYM}){
-  const {y,m}=calYM;
-  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
-  const cells=[];for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const {y,m}=calYM,first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),cells=[];
+  for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
   const td=todayISO(),prefix=`${y}-${String(m+1).padStart(2,"0")}`;
-  const evs=proj.milestones.flatMap(ms=>{const arr=[];if(ms.start&&ms.start.startsWith(prefix))arr.push({date:ms.start,title:ms.title,color:MSS[ms.status].dot.bg});if(ms.end&&ms.end.startsWith(prefix))arr.push({date:ms.end,title:ms.title+"（結）",color:MSS[ms.status].dot.bg});return arr;});
+  const evs=proj.milestones.flatMap(ms=>{const a=[];if(ms.start&&ms.start.startsWith(prefix))a.push({date:ms.start,title:ms.title,color:MSS[ms.status].dot.bg});if(ms.end&&ms.end.startsWith(prefix))a.push({date:ms.end,title:ms.title+"（結）",color:MSS[ms.status].dot.bg});return a;});
   return(<>
-    <div className="cal-hdr">
-      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
-      <span className="cal-month">{y} 年 {MONTHS[m]}</span>
-      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
-    </div>
-    <div className="cal-grid">
-      {WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}
-      {cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(
-        <div key={d} className={`cal-cell${isToday?" today":""}`}>
-          <div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>
-          {dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}
-        </div>);})}
-    </div>
+    <div className="cal-hdr"><button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button><span className="cal-month">{y} 年 {MONTHS[m]}</span><button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button></div>
+    <div className="cal-grid">{WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}{cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(<div key={d} className={`cal-cell${isToday?" today":""}`}><div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>{dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}</div>);})}</div>
   </>);
 }
 
 function AllCalendar({data,calYM,setCalYM}){
-  const {y,m}=calYM;
-  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
-  const cells=[];for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const {y,m}=calYM,first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate(),cells=[];
+  for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
   const td=todayISO(),prefix=`${y}-${String(m+1).padStart(2,"0")}`;
-  const evs=data.projects.flatMap(proj=>proj.milestones.flatMap(ms=>{const arr=[];if(ms.start&&ms.start.startsWith(prefix))arr.push({date:ms.start,title:`${proj.name.slice(0,5)} · ${ms.title}`,color:proj.color});if(ms.end&&ms.end.startsWith(prefix))arr.push({date:ms.end,title:`${proj.name.slice(0,5)} · ${ms.title}（結）`,color:proj.color});return arr;}));
+  const evs=data.projects.flatMap(proj=>proj.milestones.flatMap(ms=>{const a=[];if(ms.start&&ms.start.startsWith(prefix))a.push({date:ms.start,title:`${proj.name.slice(0,5)} · ${ms.title}`,color:proj.color});if(ms.end&&ms.end.startsWith(prefix))a.push({date:ms.end,title:`${proj.name.slice(0,5)} · ${ms.title}（結）`,color:proj.color});return a;}));
   return(<>
     <div className="proj-hdr"><div className="proj-name" style={{fontSize:"1.7rem"}}>📅 總合行事曆</div><div className="proj-meta-r"><span className="proj-meta">All Projects — 整合所有案件的時程</span></div></div>
-    <div className="cal-hdr">
-      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
-      <span className="cal-month">{y} 年 {MONTHS[m]}</span>
-      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
-    </div>
+    <div className="cal-hdr"><button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button><span className="cal-month">{y} 年 {MONTHS[m]}</span><button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button></div>
     <div style={{marginBottom:".75rem",display:"flex",gap:".4rem",flexWrap:"wrap"}}>{data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".58rem",padding:".15rem .5rem",borderRadius:20,background:p.color+"22",color:p.color,border:`1px solid ${p.color}55`}}>{p.name}</span>)}</div>
-    <div className="cal-grid">
-      {WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}
-      {cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(
-        <div key={d} className={`cal-cell${isToday?" today":""}`}>
-          <div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>
-          {dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}
-        </div>);})}
-    </div>
+    <div className="cal-grid">{WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}{cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(<div key={d} className={`cal-cell${isToday?" today":""}`}><div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>{dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}</div>);})}</div>
   </>);
 }
 
@@ -512,15 +438,7 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM}){
   const pendCount=proj.pendings.filter(p=>p.status==="urgent"||p.status==="pending").length;
   const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"時間軸"},{id:"pending",l:`待確認${pendCount>0?` (${pendCount})`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
   return(<>
-    <div className="proj-hdr">
-      <div style={{display:"flex",alignItems:"center",gap:".55rem",marginBottom:".45rem"}}><span className="proj-tag" style={{...stCfg}}>{STAGE_L[proj.stage]}</span></div>
-      <div className="proj-name">{proj.name}</div>
-      <div className="proj-meta-r">
-        <span className="proj-meta">業主 — {proj.owner} ／ {proj.loc}</span>
-        {proj.tel&&<span className="proj-meta">· {proj.tel}</span>}
-        <button className="edit-meta-btn" onClick={()=>openModal("editProj")}>✎ 編輯</button>
-      </div>
-    </div>
+    <div className="proj-hdr"><div style={{display:"flex",alignItems:"center",gap:".55rem",marginBottom:".45rem"}}><span className="proj-tag" style={{...stCfg}}>{STAGE_L[proj.stage]}</span></div><div className="proj-name">{proj.name}</div><div className="proj-meta-r"><span className="proj-meta">業主 — {proj.owner} ／ {proj.loc}</span>{proj.tel&&<span className="proj-meta">· {proj.tel}</span>}<button className="edit-meta-btn" onClick={()=>openModal("editProj")}>✎ 編輯</button></div></div>
     <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
     {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="timeline"&&<TimelineTab proj={proj} upd={upd} openModal={openModal}/>}
@@ -535,71 +453,38 @@ function NewProjectModal({close,upd,onCreated}){
   const [color,setColor]=useState(PCOLS[0]);
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
   const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
-  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
-    <h3>新增案件</h3>
-    <label>案件名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：台北信義住宅裝修"/>
-    <label>業主名稱</label><input value={form.owner} onChange={F("owner")} placeholder="業主 / 公司名稱"/>
-    <label>地址 / 地點</label><input value={form.loc} onChange={F("loc")} placeholder="縣市區域"/>
-    <label>聯絡人</label><input value={form.contact} onChange={F("contact")} placeholder="聯絡人姓名"/>
-    <label>聯絡電話</label><input value={form.tel} onChange={F("tel")} placeholder="0912-345-678"/>
-    <label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select>
-    <label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div>
-    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={save}>建立案件</button></div>
-  </div></div>);
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal"><h3>新增案件</h3><label>案件名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：台北信義住宅裝修"/><label>業主名稱</label><input value={form.owner} onChange={F("owner")} placeholder="業主 / 公司名稱"/><label>地址 / 地點</label><input value={form.loc} onChange={F("loc")} placeholder="縣市區域"/><label>聯絡人</label><input value={form.contact} onChange={F("contact")} placeholder="聯絡人姓名"/><label>聯絡電話</label><input value={form.tel} onChange={F("tel")} placeholder="0912-345-678"/><label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select><label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div><div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={save}>建立案件</button></div></div></div>);
 }
 
 function EditProjModal({proj,close,upd}){
   const [form,setForm]=useState({name:proj.name,owner:proj.owner,loc:proj.loc,contact:proj.contact||"",tel:proj.tel||"",stage:proj.stage});
   const [color,setColor]=useState(proj.color);
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
-  const save=()=>{upd(p=>({...p,...form,color}));close();};
-  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
-    <h3>編輯案件資訊</h3>
-    <label>案件名稱</label><input value={form.name} onChange={F("name")}/>
-    <label>業主名稱</label><input value={form.owner} onChange={F("owner")}/>
-    <label>地址 / 地點</label><input value={form.loc} onChange={F("loc")}/>
-    <label>聯絡人</label><input value={form.contact} onChange={F("contact")}/>
-    <label>聯絡電話</label><input value={form.tel} onChange={F("tel")}/>
-    <label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select>
-    <label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div>
-    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={save}>儲存</button></div>
-  </div></div>);
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal"><h3>編輯案件資訊</h3><label>案件名稱</label><input value={form.name} onChange={F("name")}/><label>業主名稱</label><input value={form.owner} onChange={F("owner")}/><label>地址 / 地點</label><input value={form.loc} onChange={F("loc")}/><label>聯絡人</label><input value={form.contact} onChange={F("contact")}/><label>聯絡電話</label><input value={form.tel} onChange={F("tel")}/><label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select><label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div><div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={()=>{upd(p=>({...p,...form,color}));close();}}>儲存</button></div></div></div>);
 }
 
-const MODAL_CFGS={
-  ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"end",l:"完成日期（選填）",type:"date"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",...form}]}));close();}},
-  todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(form,updP,close)=>{if(!form.text||!form.text.trim())return;updP(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...form}]}));close();}},
-  comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容摘要",type:"textarea",ph:"記錄重要決定或確認事項..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(form,updP,close)=>{if(!form.note||!form.note.trim())return;updP(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...form}]}));close();}},
-  pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...form}]}));close();}},
-  finIncome:{title:"新增收款項目",defs:{status:"unpaid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：設計費第一期"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待收款"],["paid","已收款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(form,updP,close)=>{if(!form.name||!form.name.trim()||!form.amt)return;updP(p=>({...p,finances:[...p.finances,{id:uid(),type:"income",status:"unpaid",date:todayISO(),...form,amt:Number(form.amt)}]}));close();}},
-  finExpense:{title:"新增支出項目",defs:{status:"paid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：測量費"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待付款"],["paid","已付款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(form,updP,close)=>{if(!form.name||!form.name.trim()||!form.amt)return;updP(p=>({...p,finances:[...p.finances,{id:uid(),type:"expense",status:"paid",date:todayISO(),...form,amt:Number(form.amt)}]}));close();}},
-  extra:{title:"新增追加單",defs:{},fields:[{k:"title",l:"追加項目 *",type:"text",ph:"例：增設插座8組"},{k:"amt",l:"追加金額 (NT$)",type:"number",ph:"0"},{k:"date",l:"日期",type:"date"},{k:"note",l:"說明",type:"textarea",ph:"追加原因、說明..."}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,extras:[...p.extras,{id:uid(),date:todayISO(),...form,amt:Number(form.amt||0)}]}));close();}},
-  tl:{title:"新增紀錄",defs:{type:"site"},fields:[{k:"type",l:"類型",type:"select",opts:[["site","📷 工地紀錄"],["meet","💬 會議紀錄"]]},{k:"title",l:"標題 *",type:"text",ph:"紀錄標題"},{k:"date",l:"日期",type:"date"},{k:"note",l:"內容說明",type:"textarea",ph:"詳細說明..."}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,timelines:[...p.timelines,{id:uid(),type:"site",date:todayISO(),...form}]}));close();}},
+const MC={
+  ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"end",l:"完成日期（選填）",type:"date"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]}],save:(f,u,c)=>{if(!f.title||!f.title.trim())return;u(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",...f}]}));c();}},
+  todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(f,u,c)=>{if(!f.text||!f.text.trim())return;u(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...f}]}));c();}},
+  comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容摘要",type:"textarea",ph:"記錄重要決定..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.note||!f.note.trim())return;u(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...f}]}));c();}},
+  pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.title||!f.title.trim())return;u(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...f}]}));c();}},
+  finIncome:{title:"新增收款項目",defs:{status:"unpaid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：設計費第一期"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待收款"],["paid","已收款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.name||!f.name.trim()||!f.amt)return;u(p=>({...p,finances:[...p.finances,{id:uid(),type:"income",status:"unpaid",date:todayISO(),...f,amt:Number(f.amt)}]}));c();}},
+  finExpense:{title:"新增支出項目",defs:{status:"paid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：測量費"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待付款"],["paid","已付款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.name||!f.name.trim()||!f.amt)return;u(p=>({...p,finances:[...p.finances,{id:uid(),type:"expense",status:"paid",date:todayISO(),...f,amt:Number(f.amt)}]}));c();}},
+  extra:{title:"新增追加單",defs:{},fields:[{k:"title",l:"追加項目 *",type:"text",ph:"例：增設插座8組"},{k:"amt",l:"追加金額 (NT$)",type:"number",ph:"0"},{k:"date",l:"日期",type:"date"},{k:"note",l:"說明",type:"textarea",ph:"追加原因..."}],save:(f,u,c)=>{if(!f.title||!f.title.trim())return;u(p=>({...p,extras:[...p.extras,{id:uid(),date:todayISO(),...f,amt:Number(f.amt||0)}]}));c();}},
+  tl:{title:"新增紀錄",defs:{type:"site"},fields:[{k:"type",l:"類型",type:"select",opts:[["site","📷 工地紀錄"],["meet","💬 會議紀錄"]]},{k:"title",l:"標題 *",type:"text",ph:"紀錄標題"},{k:"date",l:"日期",type:"date"},{k:"note",l:"內容說明",type:"textarea",ph:"詳細說明..."}],save:(f,u,c)=>{if(!f.title||!f.title.trim())return;u(p=>({...p,timelines:[...p.timelines,{id:uid(),type:"site",date:todayISO(),...f}]}));c();}},
 };
 
 function ItemModal({type,close,updP}){
-  const cfg=MODAL_CFGS[type];
+  const cfg=MC[type];
   const [form,setForm]=useState({...(cfg?cfg.defs||{}:{})});
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
   if(!cfg)return null;
-  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
-    <h3>{cfg.title}</h3>
-    {cfg.fields.map(f=><div key={f.k}><label>{f.l}</label>
-      {f.type==="select"?<select value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)}>{f.opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>:
-       f.type==="textarea"?<textarea value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>:
-       <input type={f.type} value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>}
-    </div>)}
-    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={()=>cfg.save(form,updP,close)}>儲存</button></div>
-  </div></div>);
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal"><h3>{cfg.title}</h3>{cfg.fields.map(f=><div key={f.k}><label>{f.l}</label>{f.type==="select"?<select value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)}>{f.opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>:f.type==="textarea"?<textarea value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>:<input type={f.type} value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>}</div>)}<div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={()=>cfg.save(form,updP,close)}>儲存</button></div></div></div>);
 }
 
 function DelProjModal({proj,close,upd,onDeleted}){
   const confirm=()=>{upd(d=>({...d,projects:d.projects.filter(p=>p.id!==proj.id)}));onDeleted(proj.id);close();};
-  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal" style={{maxWidth:360}}>
-    <h3 style={{color:"#B04848"}}>🗑 刪除案件</h3>
-    <p style={{fontSize:".87rem",color:"#6E6860",lineHeight:1.7,margin:"1rem 0 1.2rem"}}>確定要刪除「<strong style={{color:"#1A1A18"}}>{proj.name}</strong>」？<br/>所有資料將<strong style={{color:"#B04848"}}>永久刪除</strong>，無法復原。</p>
-    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" style={{background:"#B04848"}} onClick={confirm}>確認刪除</button></div>
-  </div></div>);
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal" style={{maxWidth:360}}><h3 style={{color:"#B04848"}}>🗑 刪除案件</h3><p style={{fontSize:".87rem",color:"#6E6860",lineHeight:1.7,margin:"1rem 0 1.2rem"}}>確定要刪除「<strong style={{color:"#1A1A18"}}>{proj.name}</strong>」？<br/>所有資料將<strong style={{color:"#B04848"}}>永久刪除</strong>，無法復原。</p><div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" style={{background:"#B04848"}} onClick={confirm}>確認刪除</button></div></div></div>);
 }
 
 function App(){
@@ -615,17 +500,13 @@ function App(){
   const [sbOpen,setSbOpen]=useState(false);
 
   useEffect(()=>{
-    const d=loadData();
-    setData(d);
-    if(d.projects.length>0)setPid(d.projects[0].id);
-    setLoading(false);
+    loadData().then(d=>{setData(d);if(d.projects.length>0)setPid(d.projects[0].id);setLoading(false);});
   },[]);
 
   const upd=useCallback(fn=>{
     setData(prev=>{
       const next=fn(prev);
-      saveData(next);
-      setSyncOk(true);setTimeout(()=>setSyncOk(false),2000);
+      saveData(next).then(()=>{setSyncOk(true);setTimeout(()=>setSyncOk(false),2000);});
       return next;
     });
   },[]);
@@ -635,18 +516,13 @@ function App(){
   const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
-
-  const handleDeleted=useCallback((deletedId)=>{
-    setData(curr=>{const remaining=curr.projects.filter(p=>p.id!==deletedId);setPid(remaining.length>0?remaining[0].id:null);setTab("overview");setShowAllCal(false);return curr;});
-  },[]);
-
+  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);return curr;});},[]);
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);},[]);
   const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F5F0E8",fontFamily:"'DM Mono',monospace",fontSize:".75rem",color:"#6E6860",flexDirection:"column",gap:"1rem"}}><div style={{fontSize:"2rem",opacity:.3}}>🏠</div>載入中...</div>);
 
   const dateParts=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,".");
-
   return(<>
     <style>{CSS}</style>
     {modal&&modal.type==="newProj"&&<NewProjectModal close={closeModal} upd={upd} onCreated={handleCreated}/>}
@@ -654,7 +530,6 @@ function App(){
     {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
     {delTarget&&<DelProjModal proj={delTarget} close={()=>setDelTarget(null)} upd={upd} onDeleted={handleDeleted}/>}
     <div className={`sb-overlay${sbOpen?" show":""}`} onClick={()=>setSbOpen(false)}/>
-
     <header className="hdr">
       <div className="hdr-l">
         <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
@@ -666,35 +541,20 @@ function App(){
         <button className="hdr-btn" onClick={()=>{setShowAllCal(v=>!v);setSbOpen(false);}}>{showAllCal?"← 返回":"📅 行事曆"}</button>
       </div>
     </header>
-
     <div className="workspace">
       <aside className={`sidebar${sbOpen?" open":""}`}>
         <button className="sb-close" onClick={()=>setSbOpen(false)}>✕ 關閉選單</button>
         <div className="sb-label">進行中案件</div>
-        {data.projects.map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
-          <div key={p.id} className={`sb-nav${pid===p.id&&!showAllCal?" on":""}`} onClick={()=>selectProj(p.id)}>
-            <div className="sb-hd"><span className="sb-dot" style={{background:p.color}}/><div className="sb-name">{p.name}</div></div>
-            <div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div>
-            <div className="sb-pw"><div className="sb-p" style={{width:pct+"%",background:p.color}}/></div>
-          </div>);})}
+        {data.projects.map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(<div key={p.id} className={`sb-nav${pid===p.id&&!showAllCal?" on":""}`} onClick={()=>selectProj(p.id)}><div className="sb-hd"><span className="sb-dot" style={{background:p.color}}/><div className="sb-name">{p.name}</div></div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-pw"><div className="sb-p" style={{width:pct+"%",background:p.color}}/></div></div>);})}
         <hr className="sep"/>
-        <div className={`sb-nav cal${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setSbOpen(false);}}>
-          <div className="sb-hd"><span style={{marginRight:".35rem"}}>📅</span><div className="sb-name">總合行事曆</div></div>
-          <div className="sb-sub">All Projects</div>
-        </div>
+        <div className={`sb-nav cal${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setSbOpen(false);}}><div className="sb-hd"><span style={{marginRight:".35rem"}}>📅</span><div className="sb-name">總合行事曆</div></div><div className="sb-sub">All Projects</div></div>
         <hr className="sep"/>
         {proj&&!showAllCal&&<div style={{padding:".4rem .65rem"}}><button className="del-proj-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>🗑 刪除此案件</button></div>}
         <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
       </aside>
-
       <main className="main">
         {data.projects.length===0?(
-          <div style={{textAlign:"center",paddingTop:"5rem"}}>
-            <div style={{fontSize:"3rem",marginBottom:"1rem",opacity:.3}}>🏠</div>
-            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.8rem",fontWeight:300,marginBottom:".4rem"}}>還沒有任何案件</div>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"#6E6860",marginBottom:"1.2rem"}}>點擊下方按鈕建立第一個設計案件</div>
-            <button className="btn-ok" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".65rem 2rem"}}>＋ 新增第一個案件</button>
-          </div>
+          <div style={{textAlign:"center",paddingTop:"5rem"}}><div style={{fontSize:"3rem",marginBottom:"1rem",opacity:.3}}>🏠</div><div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.8rem",fontWeight:300,marginBottom:".4rem"}}>還沒有任何案件</div><div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"#6E6860",marginBottom:"1.2rem"}}>點擊下方按鈕建立第一個設計案件</div><button className="btn-ok" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".65rem 2rem"}}>＋ 新增第一個案件</button></div>
         ):showAllCal?(
           <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
         ):proj?(
