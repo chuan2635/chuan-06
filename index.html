@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ID Studio — 設計工作室</title>
+<script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>body{margin:0;padding:0;background:#F5F0E8;}#root{min-height:100vh;}</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useCallback } = React;
+
+const SKEY = "id-studio-v9";
+const uid = () => Math.random().toString(36).slice(2, 8);
+const todayISO = () => new Date().toISOString().slice(0, 10);
+const fmtD = (d) => (d ? d.replace(/-/g, ".") : "—");
+const fmtN = (n) => Number(n || 0).toLocaleString("zh-TW");
+const MONTHS = ["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
+const WDAYS = ["日","一","二","三","四","五","六"];
+const STAGES = ["design","drawing","waiting","construction","done"];
+const STAGE_L = { design:"設計發展",drawing:"施工圖",waiting:"等待進場",construction:"施工中",done:"竣工驗收" };
+const STAGE_TAG = {
+  design:{ bg:"#F0E3CE", color:"#7A5220" }, drawing:{ bg:"#D5E9E5", color:"#2B6058" },
+  waiting:{ bg:"#E5E0D8", color:"#5A5550" }, construction:{ bg:"#E3F2E1", color:"#3A6A35" }, done:{ bg:"#EEECE9", color:"#4A4540" },
+};
+const PCOLS = ["#C4773B","#4E8A81","#7A7070","#6B8FA8","#8B6B8A","#5A7A5A","#A87B5A","#6A6A9A"];
+const MSS = {
+  done:{ l:"已完成", dot:{ bg:"#5A9653", bd:"#5A9653" }, tag:{ bg:"#E3F2E1", color:"#5A9653" } },
+  doing:{ l:"進行中", dot:{ bg:"#C4773B", bd:"#C4773B" }, tag:{ bg:"#FBF0E6", color:"#C4773B" } },
+  pending:{ l:"待進行", dot:{ bg:"transparent", bd:"#A09890" }, tag:{ bg:"#EDEAE6", color:"#A09890" } },
+};
+const PDS = {
+  urgent:{ l:"緊急", bg:"#FDEAEA", color:"#B04848" }, pending:{ l:"待處理", bg:"#FBF0E6", color:"#C4773B" },
+  confirmed:{ l:"已確認", bg:"#EAF2E9", color:"#5A9653" }, closed:{ l:"已關閉", bg:"#EEECE9", color:"#A09890" },
+};
+const PRC = {
+  high:{ l:"高", bg:"#FDEAEA", color:"#B04848" }, mid:{ l:"中", bg:"#FBF0E6", color:"#C4773B" }, low:{ l:"低", bg:"#EDEAE6", color:"#A09890" },
+};
+const TLT = {
+  site:{ l:"工地紀錄", icon:"📷", bg:"#F5E6D3", color:"#8B5E2E" },
+  meet:{ l:"會議紀錄", icon:"💬", bg:"#DDE8E6", color:"#3D6A64" },
+};
+const COMM_CH = ["Line","Email","電話","會議"];
+
+const INIT = { projects:[
+  { id:"p1", name:"台北信義住宅裝修", owner:"王先生", loc:"台北市信義區", contact:"王大明", tel:"0912-345-678", stage:"construction", color:"#C4773B",
+    milestones:[
+      {id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},
+      {id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},
+      {id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},
+      {id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"",prio:"high"},
+    ],
+    todos:[
+      {id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},
+      {id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},
+      {id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"},
+    ],
+    comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
+    pendings:[
+      {id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-10"},
+      {id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台，需確認追加金額",date:"2026-05-12"},
+    ],
+    finances:[
+      {id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:""},
+      {id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:""},
+      {id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:""},
+    ],
+    extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
+    timelines:[
+      {id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測，確認格局變動可行性"},
+      {id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向，選定主色調"},
+      {id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認，與圖面吻合"},
+    ],
+  },
+  { id:"p2", name:"新北板橋商業空間", owner:"陳小姐", loc:"新北市板橋區", contact:"陳美君", tel:"0988-765-432", stage:"drawing", color:"#4E8A81",
+    milestones:[
+      {id:"m1",title:"平面規劃完成",status:"done",start:"2026-03-01",end:"2026-03-15",prio:"high"},
+      {id:"m2",title:"3D提案簡報",status:"doing",start:"2026-04-01",end:"2026-04-20",prio:"high"},
+      {id:"m3",title:"施工圖發包",status:"pending",start:"2026-05-15",end:"",prio:"mid"},
+    ],
+    todos:[
+      {id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},
+      {id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},
+      {id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"},
+    ],
+    comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
+    pendings:[
+      {id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},
+      {id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"},
+    ],
+    finances:[
+      {id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:""},
+      {id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:""},
+    ],
+    extras:[],
+    timelines:[
+      {id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格，業主偏好深色系"},
+      {id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸，與建築圖核對無誤"},
+    ],
+  },
+]};
+
+// localStorage 替換 window.storage
+function loadData() {
+  try { const v = localStorage.getItem(SKEY); if(v) return JSON.parse(v); } catch(e) {}
+  return INIT;
+}
+function saveData(d) {
+  try { localStorage.setItem(SKEY, JSON.stringify(d)); } catch(e) {}
+}
+
+const CSS = `
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;500&family=DM+Mono:wght@300;400&family=Cormorant+Garamond:ital,wght@0,300;0,400;1,300&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#F5F0E8;--sf:#FDFAF5;--ink:#1A1A18;--mu:#6E6860;--acc:#C4773B;--al:#EDE0CE;--ln:#DDD5C8;--done:#5A9653;--red:#B04848;--r:12px;--rs:8px;--rxs:5px;--sh:0 1px 8px rgba(0,0,0,.06);--shm:0 4px 20px rgba(0,0,0,.1);--sb:240px;--hh:56px;}
+html,body{background:var(--bg);color:var(--ink);font-family:'Noto Serif TC',serif;font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+button{font-family:inherit;cursor:pointer;}
+::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-thumb{background:var(--ln);border-radius:2px;}
+.hdr{position:sticky;top:0;z-index:200;height:var(--hh);background:var(--sf);border-bottom:1px solid var(--ln);display:flex;align-items:center;justify-content:space-between;padding:0 1.4rem;}
+.hdr-l{display:flex;align-items:center;gap:.65rem;min-width:0;}
+.hdr-studio{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:.72rem;color:var(--mu);letter-spacing:.1em;display:block;}
+.hdr-title{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;line-height:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.hdr-r{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.hdr-date{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.sync-ok{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--done);opacity:0;transition:opacity .4s;}
+.sync-ok.on{opacity:1;}
+.hdr-btn{background:var(--bg);border:1.5px solid var(--ln);border-radius:var(--rs);padding:.32rem .7rem;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mu);transition:all .18s;white-space:nowrap;}
+.hdr-btn:hover{border-color:var(--acc);background:var(--al);color:var(--acc);}
+.menu-btn{display:none;background:var(--bg);border:1.5px solid var(--ln);border-radius:var(--rs);width:36px;height:36px;align-items:center;justify-content:center;font-size:1.1rem;color:var(--mu);flex-shrink:0;transition:all .18s;}
+.menu-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--al);}
+.workspace{display:grid;grid-template-columns:var(--sb) 1fr;min-height:calc(100vh - var(--hh));}
+.sidebar{background:var(--sf);border-right:1px solid var(--ln);padding:1rem .75rem;height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;position:sticky;top:var(--hh);}
+.sb-label{font-family:'DM Mono',monospace;font-size:.54rem;letter-spacing:.18em;text-transform:uppercase;color:var(--mu);margin-bottom:.55rem;padding:0 .4rem;}
+.sb-nav{padding:.75rem .65rem .65rem;border-radius:var(--rs);cursor:pointer;transition:all .18s;margin-bottom:.25rem;border:1.5px solid transparent;}
+.sb-nav:hover{background:var(--al);}
+.sb-nav.on{background:var(--ink);color:#F5F0E8;box-shadow:var(--shm);}
+.sb-nav.on .sb-sub{color:rgba(255,255,255,.5);}
+.sb-nav.on .sb-pw{background:rgba(255,255,255,.15);}
+.sb-nav.cal{border:1.5px dashed var(--ln);}
+.sb-nav.cal:hover{border-color:var(--acc);background:var(--al);}
+.sb-nav.cal.on{background:var(--acc);border-color:var(--acc);}
+.sb-nav.cal.on .sb-sub{color:rgba(255,255,255,.65);}
+.sb-hd{display:flex;align-items:center;}
+.sb-dot{width:7px;height:7px;border-radius:50%;margin-right:.4rem;flex-shrink:0;}
+.sb-name{font-size:.8rem;font-weight:500;margin-bottom:.2rem;line-height:1.2;}
+.sb-sub{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--mu);margin-bottom:.4rem;}
+.sb-pw{height:3px;background:rgba(0,0,0,.08);border-radius:2px;overflow:hidden;}
+.sb-p{height:100%;border-radius:2px;transition:width .5s;}
+.sep{border:none;border-top:1px solid var(--ln);margin:.7rem .3rem;}
+.sb-add{width:100%;padding:.65rem;border:1.5px dashed var(--ln);background:transparent;border-radius:var(--rs);font-family:'Noto Serif TC',serif;font-size:.75rem;color:var(--mu);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.3rem;}
+.sb-add:hover{border-color:var(--acc);color:var(--acc);background:var(--al);}
+.sb-close{display:none;width:100%;padding:.6rem;background:transparent;border:1px solid var(--ln);border-radius:var(--rs);font-family:'DM Mono',monospace;font-size:.68rem;color:var(--mu);cursor:pointer;margin-bottom:.75rem;text-align:center;}
+.sb-close:hover{border-color:var(--red);color:var(--red);}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.38);z-index:149;}
+.main{padding:1.8rem 2.2rem 3rem;overflow-y:auto;}
+.proj-hdr{margin-bottom:1.2rem;padding-bottom:1rem;border-bottom:1px solid var(--ln);}
+.proj-tag{display:inline-flex;align-items:center;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.08em;padding:.22rem .75rem;border-radius:20px;margin-bottom:.45rem;}
+.proj-name{font-family:'Cormorant Garamond',serif;font-size:2rem;font-weight:300;line-height:1.1;margin-bottom:.35rem;}
+.proj-meta-r{display:flex;align-items:center;gap:.45rem;flex-wrap:wrap;}
+.proj-meta{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mu);}
+.edit-meta-btn{font-family:'DM Mono',monospace;font-size:.58rem;padding:.22rem .58rem;border:1px solid var(--ln);border-radius:20px;background:transparent;color:var(--mu);cursor:pointer;transition:all .18s;}
+.edit-meta-btn:hover{border-color:var(--acc);color:var(--acc);background:var(--al);}
+.del-proj-btn{font-family:'DM Mono',monospace;font-size:.58rem;padding:.22rem .58rem;border:1px solid transparent;border-radius:20px;background:transparent;color:var(--mu);cursor:pointer;transition:all .18s;}
+.del-proj-btn:hover{border-color:var(--red);color:var(--red);background:#FDEAEA;}
+.tabs{display:flex;gap:.3rem;margin-bottom:1.4rem;padding:.3rem;background:var(--bg);border:1px solid var(--ln);border-radius:var(--r);width:fit-content;max-width:100%;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:.42rem .9rem;cursor:pointer;border-radius:var(--rs);color:var(--mu);white-space:nowrap;transition:all .18s;border:none;background:transparent;}
+.tab-btn:hover{color:var(--ink);background:var(--al);}
+.tab-btn.on{color:var(--ink);background:var(--sf);font-weight:500;box-shadow:var(--sh);}
+.phase-row{display:flex;margin-top:.65rem;margin-bottom:.75rem;border-radius:var(--rs);overflow:hidden;}
+.phase-step{flex:1;text-align:center;padding:.42rem .15rem;font-family:'DM Mono',monospace;font-size:.52rem;background:var(--bg);color:var(--mu);border-right:1px solid var(--ln);cursor:pointer;transition:all .15s;}
+.phase-step:last-child{border-right:none;}
+.phase-step::before{content:'';display:block;height:3px;background:var(--ln);margin-bottom:.3rem;border-radius:2px;}
+.phase-step.d::before{background:var(--done);}
+.phase-step.c::before{background:var(--acc);}
+.phase-step.d{color:var(--done);}
+.phase-step.c{color:var(--acc);font-weight:700;}
+.prog-w{background:var(--bg);height:6px;border-radius:4px;overflow:hidden;border:1px solid var(--ln);}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--acc),#A85A25);border-radius:4px;transition:width .6s;}
+.prog-ft{display:flex;justify-content:space-between;align-items:center;margin-top:.35rem;}
+.prog-lbl{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.prog-pct{font-family:'Cormorant Garamond',serif;font-size:1rem;font-weight:300;color:var(--acc);}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+.full{grid-column:1/-1;}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:var(--r);padding:1.1rem 1.2rem;box-shadow:var(--sh);}
+.card-hd{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin-bottom:.9rem;display:flex;justify-content:space-between;align-items:center;}
+.hd-add{font-family:'DM Mono',monospace;font-size:.6rem;padding:.22rem .6rem;border:1.5px solid var(--acc);border-radius:20px;background:transparent;color:var(--acc);cursor:pointer;transition:all .18s;}
+.hd-add:hover{background:var(--acc);color:#fff;}
+.ms-list{list-style:none;}
+.ms-item{display:flex;gap:.65rem;padding:.6rem 0;border-bottom:1px solid var(--ln);align-items:center;}
+.ms-item:last-child{border-bottom:none;}
+.ms-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;border:2px solid;}
+.ms-body{flex:1;min-width:0;}
+.ms-title{font-size:.85rem;margin-bottom:.15rem;}
+.ms-dates{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--mu);}
+.ms-sel{font-family:'DM Mono',monospace;font-size:.55rem;padding:.15rem .45rem;border-radius:20px;border:1px solid transparent;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;}
+.todo-item{padding:.75rem 0;border-bottom:1px solid var(--ln);}
+.todo-item:last-child{border-bottom:none;}
+.todo-main{display:flex;gap:.75rem;align-items:flex-start;}
+.chk{width:22px;height:22px;border:2px solid var(--ln);border-radius:5px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .18s;background:transparent;font-size:.75rem;}
+.chk:hover{border-color:var(--acc);background:var(--al);}
+.chk.on{background:var(--done);border-color:var(--done);color:#fff;}
+.todo-txt{font-size:.87rem;line-height:1.5;}
+.todo-done{text-decoration:line-through;color:var(--mu);}
+.todo-meta{display:flex;align-items:center;gap:.4rem;margin-top:.22rem;flex-wrap:wrap;}
+.todo-due{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.todo-due.ov{color:var(--red);}
+.todo-note{font-size:.72rem;color:var(--mu);font-style:italic;line-height:1.5;margin-top:.22rem;padding:.25rem .45rem;background:var(--bg);border-radius:4px;border-left:2.5px solid var(--al);}
+.comm-item{padding:.75rem 0;border-bottom:1px solid var(--ln);}
+.comm-item:last-child{border-bottom:none;}
+.comm-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.25rem;}
+.comm-who{font-size:.85rem;font-weight:500;}
+.comm-when{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.comm-note{font-size:.8rem;color:var(--mu);line-height:1.6;}
+.comm-ch{display:inline-block;font-family:'DM Mono',monospace;font-size:.57rem;padding:.15rem .45rem;border:1px solid var(--ln);border-radius:20px;margin-top:.25rem;color:var(--mu);}
+.pd-filter{display:flex;gap:.3rem;flex-wrap:wrap;}
+.f-btn{font-family:'DM Mono',monospace;font-size:.6rem;padding:.25rem .65rem;border:1.5px solid var(--ln);border-radius:20px;background:transparent;color:var(--mu);cursor:pointer;transition:all .15s;}
+.f-btn.on{background:var(--ink);color:var(--bg);border-color:var(--ink);}
+.pd-item{padding:.8rem .9rem;border:1.5px solid var(--ln);border-radius:var(--rs);margin-bottom:.65rem;background:var(--sf);box-shadow:var(--sh);}
+.pd-item.urg{border-left:4px solid var(--red);}
+.pd-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.25rem;gap:.4rem;}
+.pd-title{font-size:.87rem;font-weight:500;}
+.pd-st-sel{font-family:'DM Mono',monospace;font-size:.55rem;padding:.15rem .45rem;border-radius:20px;border:1px solid transparent;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;flex-shrink:0;}
+.pd-note{font-size:.75rem;color:var(--mu);line-height:1.5;margin-bottom:.2rem;}
+.pd-date{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.fin-3toggle{display:flex;margin-bottom:1.2rem;border:1.5px solid var(--ln);border-radius:var(--rs);overflow:hidden;background:var(--bg);}
+.fin-3tab{flex:1;padding:.48rem;text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;cursor:pointer;border:none;background:transparent;color:var(--mu);transition:all .2s;}
+.fin-3tab.on{background:var(--ink);color:var(--bg);}
+.fin-stat{background:var(--sf);border:1px solid var(--ln);border-radius:var(--rs);padding:.85rem .75rem;text-align:center;box-shadow:var(--sh);}
+.fin-stat-l{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--mu);letter-spacing:.05em;margin-bottom:.35rem;}
+.fin-stat-v{font-family:'Cormorant Garamond',serif;font-size:1.25rem;font-weight:300;}
+.fin-item{display:flex;justify-content:space-between;align-items:center;padding:.62rem 0;border-bottom:1px solid var(--ln);gap:.4rem;}
+.fin-item:last-child{border-bottom:none;}
+.fin-name{font-size:.83rem;}
+.fin-date{font-family:'DM Mono',monospace;font-size:.57rem;color:var(--mu);margin-top:.12rem;}
+.fin-amt{font-family:'DM Mono',monospace;font-size:.78rem;}
+.fin-in{color:var(--done);}
+.fin-ex{color:var(--red);}
+.fin-st-btn{font-family:'DM Mono',monospace;font-size:.54rem;padding:.08rem .34rem;border-radius:3px;cursor:pointer;border:none;transition:all .15s;margin-top:.12rem;}
+.fin-paid{background:#EAF2E9;color:var(--done);}
+.fin-unpaid{background:#FBF0E6;color:var(--acc);}
+.extra-item{display:flex;justify-content:space-between;padding:.62rem 0;border-bottom:1px solid var(--ln);align-items:flex-start;gap:.4rem;}
+.extra-item:last-child{border-bottom:none;}
+.extra-total{display:flex;justify-content:space-between;align-items:center;padding-top:.75rem;margin-top:.4rem;border-top:1.5px solid var(--ln);}
+.extra-total-lbl{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.extra-total-val{font-family:'Cormorant Garamond',serif;font-size:1.2rem;font-weight:300;color:var(--acc);}
+.tl-item{display:flex;gap:.75rem;padding:.8rem 0;border-bottom:1px solid var(--ln);align-items:flex-start;}
+.tl-item:last-child{border-bottom:none;}
+.tl-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+.tl-body{flex:1;}
+.tl-title{font-size:.85rem;font-weight:500;margin-bottom:.1rem;}
+.tl-meta{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--mu);}
+.tl-note{font-size:.75rem;color:var(--mu);line-height:1.45;margin-top:.15rem;}
+.tl-tag{font-family:'DM Mono',monospace;font-size:.55rem;padding:.18rem .5rem;border-radius:20px;flex-shrink:0;}
+.cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
+.cal-nav{background:var(--bg);border:1.5px solid var(--ln);border-radius:var(--rs);padding:.3rem .65rem;cursor:pointer;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--mu);transition:all .18s;}
+.cal-nav:hover{border-color:var(--acc);color:var(--acc);background:var(--al);}
+.cal-month{font-family:'Cormorant Garamond',serif;font-size:1.3rem;font-weight:300;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.cal-dow{text-align:center;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--mu);padding:.38rem .2rem;}
+.cal-cell{min-height:72px;background:var(--sf);border:1px solid var(--ln);border-radius:4px;padding:.25rem .3rem;}
+.cal-cell.empty{background:var(--bg);}
+.cal-cell.today{border-color:var(--acc);}
+.cal-day{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--mu);margin-bottom:.18rem;}
+.cal-ev{font-size:.5rem;padding:.1rem .28rem;border-radius:3px;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
+.empty{text-align:center;padding:1.8rem 1rem;color:var(--mu);}
+.empty-icon{font-size:1.8rem;margin-bottom:.5rem;opacity:.25;display:block;}
+.empty-sub{font-family:'DM Mono',monospace;font-size:.6rem;}
+.del-btn{background:none;border:none;cursor:pointer;color:var(--ln);font-size:.8rem;padding:.08rem .18rem;transition:color .15s;line-height:1;flex-shrink:0;}
+.del-btn:hover{color:var(--red);}
+.overlay{position:fixed;inset:0;background:rgba(20,20,18,.55);z-index:1000;display:flex;align-items:center;justify-content:center;}
+.modal{background:var(--sf);border:1.5px solid var(--ln);border-radius:var(--r);padding:1.5rem 1.7rem 1.3rem;width:min(480px,92vw);box-shadow:0 12px 48px rgba(0,0,0,.18);max-height:88vh;overflow-y:auto;}
+.modal h3{font-family:'Cormorant Garamond',serif;font-size:1.4rem;font-weight:300;margin-bottom:1rem;}
+.modal label{display:block;font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;color:var(--mu);margin-bottom:.28rem;margin-top:.75rem;}
+.modal input,.modal select,.modal textarea{width:100%;padding:.5rem .7rem;border:1.5px solid var(--ln);border-radius:var(--rxs);background:var(--bg);color:var(--ink);font-size:.88rem;outline:none;transition:border-color .15s;font-family:inherit;}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--acc);}
+.modal textarea{resize:vertical;min-height:64px;}
+.modal-ft{display:flex;justify-content:flex-end;gap:.55rem;margin-top:1.2rem;}
+.btn-cancel{font-family:'DM Mono',monospace;font-size:.68rem;padding:.5rem 1rem;background:transparent;border:1.5px solid var(--ln);border-radius:var(--rs);color:var(--mu);cursor:pointer;transition:all .18s;}
+.btn-cancel:hover{border-color:var(--ink);color:var(--ink);}
+.btn-ok{font-family:'DM Mono',monospace;font-size:.68rem;padding:.5rem 1.2rem;background:var(--ink);border:none;border-radius:var(--rs);color:var(--bg);cursor:pointer;transition:all .18s;}
+.btn-ok:hover{background:var(--acc);}
+.swatches{display:flex;gap:.35rem;flex-wrap:wrap;margin-top:.3rem;}
+.swatch{width:22px;height:22px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .15s;}
+.swatch:hover{transform:scale(1.15);}
+.swatch.on{border-color:var(--ink);transform:scale(1.1);}
+@media(max-width:640px){
+  .workspace{grid-template-columns:1fr;}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;width:var(--sb);height:100%;transform:translateX(-100%);box-shadow:none;transition:transform .25s ease,box-shadow .25s ease;}
+  .sidebar.open{transform:translateX(0);box-shadow:4px 0 24px rgba(0,0,0,.15);}
+  .sb-overlay.show{display:block;}
+  .sb-close{display:block;}
+  .menu-btn{display:flex;}
+  .hdr-date{display:none;}
+  .main{padding:1rem .9rem 2rem;}
+  .proj-name{font-size:1.5rem;}
+  .grid2{grid-template-columns:1fr;}
+}
+`;
+
+const Tag = ({cfg,children}) => <span style={{fontFamily:"'DM Mono',monospace",fontSize:".56rem",padding:".14rem .42rem",borderRadius:20,...cfg}}>{children}</span>;
+const DelBtn = ({onClick}) => <button className="del-btn" onClick={e=>{e.stopPropagation();onClick();}}>✕</button>;
+const Empty = ({icon,text,sub}) => <div className="empty"><span className="empty-icon">{icon}</span><div style={{fontSize:".84rem",marginBottom:".25rem"}}>{text}</div>{sub&&<div className="empty-sub">{sub}</div>}</div>;
+
+function OverviewTab({proj,upd,openModal}){
+  const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
+  const updMs=(id,ch)=>upd(p=>({...p,milestones:p.milestones.map(m=>m.id===id?{...m,...ch}:m)}));
+  const delMs=id=>upd(p=>({...p,milestones:p.milestones.filter(m=>m.id!==id)}));
+  const togTodo=id=>upd(p=>({...p,todos:p.todos.map(t=>t.id===id?{...t,done:!t.done}:t)}));
+  const delTodo=id=>upd(p=>({...p,todos:p.todos.filter(t=>t.id!==id)}));
+  const delComm=id=>upd(p=>({...p,comms:(p.comms||[]).filter(c=>c.id!==id)}));
+  return(<>
+    <div className="card full" style={{marginBottom:"1rem"}}>
+      <div className="card-hd">專案進度
+        <select value={proj.stage} onChange={e=>upd(p=>({...p,stage:e.target.value}))} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",border:"1px solid var(--ln)",borderRadius:20,padding:".18rem .6rem",background:"transparent",color:"var(--mu)",cursor:"pointer",outline:"none"}}>
+          {STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}
+        </select>
+      </div>
+      <div className="phase-row">{STAGES.map((s,i)=><div key={s} className={`phase-step${i<stIdx?" d":i===stIdx?" c":""}`} onClick={()=>upd(p=>({...p,stage:s}))}>{STAGE_L[s]}</div>)}</div>
+      <div className="prog-w"><div className="prog-fill" style={{width:pct+"%"}}/></div>
+      <div className="prog-ft"><span className="prog-lbl">{done} / {total} 里程碑完成</span><span className="prog-pct">{pct}%</span></div>
+    </div>
+    <div className="grid2">
+      <div className="card">
+        <div className="card-hd">工程里程碑 <button className="hd-add" onClick={()=>openModal("ms")}>＋ 新增</button></div>
+        {proj.milestones.length===0?<Empty icon="🏗" text="尚無里程碑" sub="新增設計施工里程碑"/>:
+        <ul className="ms-list">{proj.milestones.map(m=>{const c=MSS[m.status];return(
+          <li key={m.id} className="ms-item">
+            <div className="ms-dot" style={{background:c.dot.bg,borderColor:c.dot.bd}}/>
+            <div className="ms-body"><div className="ms-title">{m.title}</div><div className="ms-dates">{fmtD(m.start)}{m.end?` → ${fmtD(m.end)}`:""}</div></div>
+            <select className="ms-sel" value={m.status} onChange={e=>updMs(m.id,{status:e.target.value})} style={{...c.tag}}>{Object.entries(MSS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select>
+            <Tag cfg={PRC[m.prio]}>{PRC[m.prio].l}</Tag><DelBtn onClick={()=>delMs(m.id)}/>
+          </li>);})}</ul>}
+      </div>
+      <div className="card">
+        <div className="card-hd">待辦事項 <button className="hd-add" onClick={()=>openModal("todo")}>＋ 新增</button></div>
+        {proj.todos.length===0?<Empty icon="✅" text="尚無待辦事項" sub="新增設計或施工相關待辦"/>:
+        proj.todos.map(t=>{const over=t.due&&!t.done&&t.due<todayISO();return(
+          <div key={t.id} className="todo-item">
+            <div className="todo-main">
+              <button className={`chk${t.done?" on":""}`} onClick={()=>togTodo(t.id)}>{t.done?"✓":""}</button>
+              <div style={{flex:1,minWidth:0}}>
+                <div className={`todo-txt${t.done?" todo-done":""}`}>{t.text}</div>
+                <div className="todo-meta">{t.due&&<span className={`todo-due${over?" ov":""}`}>📅 {fmtD(t.due)}</span>}<Tag cfg={PRC[t.prio]}>{PRC[t.prio].l}</Tag></div>
+                {t.note&&<div className="todo-note">{t.note}</div>}
+              </div>
+              <DelBtn onClick={()=>delTodo(t.id)}/>
+            </div>
+          </div>);})}
+      </div>
+      <div className="card full">
+        <div className="card-hd">客戶溝通記錄 <button className="hd-add" onClick={()=>openModal("comm")}>＋ 新增</button></div>
+        {(proj.comms||[]).length===0?<Empty icon="💬" text="尚無溝通記錄" sub="記錄與業主或廠商的重要溝通"/>:
+        (proj.comms||[]).map(c=>(
+          <div key={c.id} className="comm-item">
+            <div className="comm-hd"><div className="comm-who">{c.who}</div><div style={{display:"flex",alignItems:"center",gap:".45rem"}}><span className="comm-when">{fmtD(c.date)}</span><DelBtn onClick={()=>delComm(c.id)}/></div></div>
+            <div className="comm-note">{c.note}</div><span className="comm-ch">{c.ch}</span>
+          </div>))}
+      </div>
+    </div>
+  </>);
+}
+
+function PendingTab({proj,upd,openModal}){
+  const [filter,setFilter]=useState("all");
+  const updPd=(id,ch)=>upd(p=>({...p,pendings:p.pendings.map(x=>x.id===id?{...x,...ch}:x)}));
+  const delPd=id=>upd(p=>({...p,pendings:p.pendings.filter(x=>x.id!==id)}));
+  const filtered=filter==="all"?proj.pendings:proj.pendings.filter(x=>x.status===filter);
+  const uc=proj.pendings.filter(x=>x.status==="urgent").length;
+  return(<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.1rem",flexWrap:"wrap",gap:".4rem"}}>
+      <div className="pd-filter">{["all","urgent","pending","confirmed","closed"].map(f=><button key={f} className={`f-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{f==="all"?`全部 (${proj.pendings.length})`:PDS[f].l}{f==="urgent"&&uc>0?` (${uc})`:""}</button>)}</div>
+      <button className="hd-add" onClick={()=>openModal("pend")}>＋ 新增</button>
+    </div>
+    {filtered.length===0?<Empty icon="📋" text="無待確認事項" sub="新增需業主或廠商確認的事項"/>:
+    filtered.map(pd=>{const c=PDS[pd.status];return(
+      <div key={pd.id} className={`pd-item${pd.status==="urgent"?" urg":""}`}>
+        <div className="pd-hd"><div className="pd-title">{pd.title}</div>
+          <div style={{display:"flex",gap:".35rem",alignItems:"center"}}>
+            <select className="pd-st-sel" value={pd.status} onChange={e=>updPd(pd.id,{status:e.target.value})} style={{background:c.bg,color:c.color}}>{Object.entries(PDS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select>
+            <DelBtn onClick={()=>delPd(pd.id)}/>
+          </div>
+        </div>
+        {pd.note&&<div className="pd-note">{pd.note}</div>}
+        {pd.date&&<div className="pd-date">{fmtD(pd.date)}</div>}
+      </div>);})}
+  </>);
+}
+
+function FinanceTab({proj,upd,openModal}){
+  const [sub,setSub]=useState("income");
+  const togSt=id=>upd(p=>({...p,finances:p.finances.map(f=>f.id===id?{...f,status:f.status==="paid"?"unpaid":"paid"}:f)}));
+  const delFin=id=>upd(p=>({...p,finances:p.finances.filter(f=>f.id!==id)}));
+  const delEx=id=>upd(p=>({...p,extras:p.extras.filter(e=>e.id!==id)}));
+  const inc=proj.finances.filter(f=>f.type==="income"),exp=proj.finances.filter(f=>f.type==="expense");
+  const totalIn=inc.reduce((a,f)=>a+Number(f.amt),0);
+  const paidIn=inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
+  const unpaidIn=inc.filter(f=>f.status==="unpaid").reduce((a,f)=>a+Number(f.amt),0);
+  const totalEx=exp.reduce((a,f)=>a+Number(f.amt),0);
+  const exTot=proj.extras.reduce((a,e)=>a+Number(e.amt),0);
+  const renderList=(items,type)=>items.length===0?<Empty icon={type==="income"?"💰":"💸"} text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>:
+    items.map(f=><div key={f.id} className="fin-item">
+      <div style={{flex:1,minWidth:0}}><div className="fin-name">{f.name}</div><div className="fin-date">{fmtD(f.date)}{f.note?` · ${f.note}`:""}</div></div>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end"}}>
+        <div className={`fin-amt ${type==="income"?"fin-in":"fin-ex"}`}>{type==="income"?"+ ":"- "}NT$ {fmtN(f.amt)}</div>
+        <button className={`fin-st-btn ${f.status==="paid"?"fin-paid":"fin-unpaid"}`} onClick={()=>togSt(f.id)}>{f.status==="paid"?"已收/已付":"待收/待付"}</button>
+      </div>
+      <DelBtn onClick={()=>delFin(f.id)}/>
+    </div>);
+  return(<>
+    <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:".75rem",marginBottom:"1.2rem"}}>
+      <div className="fin-stat"><div className="fin-stat-l">合約總收款</div><div className="fin-stat-v" style={{color:"#5A9653"}}>NT$ {fmtN(totalIn)}</div></div>
+      <div className="fin-stat"><div className="fin-stat-l">已收款</div><div className="fin-stat-v" style={{color:"#5A9653"}}>NT$ {fmtN(paidIn)}</div></div>
+      <div className="fin-stat"><div className="fin-stat-l">待收款</div><div className="fin-stat-v" style={{color:"#C4773B"}}>NT$ {fmtN(unpaidIn)}</div></div>
+      <div className="fin-stat"><div className="fin-stat-l">支出合計</div><div className="fin-stat-v" style={{color:"#B04848"}}>NT$ {fmtN(totalEx)}</div></div>
+    </div>
+    <div className="fin-3toggle">
+      <button className={`fin-3tab${sub==="income"?" on":""}`} onClick={()=>setSub("income")}>⬇ 收款</button>
+      <button className={`fin-3tab${sub==="expense"?" on":""}`} onClick={()=>setSub("expense")}>⬆ 支出</button>
+      <button className={`fin-3tab${sub==="extras"?" on":""}`} onClick={()=>setSub("extras")}>＋ 追加單</button>
+    </div>
+    {sub==="income"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finIncome")}>＋ 新增收款</button></div><div className="card">{renderList(inc,"income")}</div></>}
+    {sub==="expense"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("finExpense")}>＋ 新增支出</button></div><div className="card">{renderList(exp,"expense")}</div></>}
+    {sub==="extras"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="btn-ok" onClick={()=>openModal("extra")}>＋ 新增追加單</button></div>
+      <div className="card">{proj.extras.length===0?<Empty icon="📋" text="尚無追加項目" sub="記錄業主追加的工程項目"/>:
+        proj.extras.map(e=><div key={e.id} className="extra-item">
+          <div style={{flex:1}}><div style={{fontSize:".83rem",fontWeight:500}}>{e.title}</div><div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"#6E6860",marginTop:".12rem"}}>{fmtD(e.date)}</div>{e.note&&<div style={{fontSize:".72rem",color:"#6E6860",marginTop:".18rem"}}>{e.note}</div>}</div>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".78rem",color:"#C4773B",flexShrink:0}}>NT$ {fmtN(e.amt)}</div>
+          <DelBtn onClick={()=>delEx(e.id)}/>
+        </div>)}
+        {proj.extras.length>0&&<div className="extra-total"><div className="extra-total-lbl">追加總計</div><div className="extra-total-val">NT$ {fmtN(exTot)}</div></div>}
+      </div>
+    </>}
+  </>);
+}
+
+function TimelineTab({proj,upd,openModal}){
+  const [filter,setFilter]=useState("all");
+  const delTl=id=>upd(p=>({...p,timelines:p.timelines.filter(t=>t.id!==id)}));
+  const sorted=[...proj.timelines].sort((a,b)=>b.date.localeCompare(a.date));
+  const filtered=filter==="all"?sorted:sorted.filter(t=>t.type===filter);
+  return(<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.1rem",flexWrap:"wrap",gap:".4rem"}}>
+      <div style={{display:"flex",gap:".3rem"}}>{["all","site","meet"].map(f=><button key={f} className={`f-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"全部":TLT[f].l}</button>)}</div>
+      <button className="btn-ok" onClick={()=>openModal("tl")}>＋ 新增紀錄</button>
+    </div>
+    {filtered.length===0?<Empty icon="🕐" text="尚無紀錄" sub="新增工地查驗或會議紀錄"/>:
+    filtered.map(tl=>{const c=TLT[tl.type];return(
+      <div key={tl.id} className="tl-item">
+        <div className="tl-icon" style={{background:c.bg}}>{c.icon}</div>
+        <div className="tl-body"><div className="tl-title">{tl.title}</div><div className="tl-meta">{fmtD(tl.date)}</div>{tl.note&&<div className="tl-note">{tl.note}</div>}</div>
+        <span className="tl-tag" style={{background:c.bg,color:c.color}}>{c.l}</span>
+        <DelBtn onClick={()=>delTl(tl.id)}/>
+      </div>);})}
+  </>);
+}
+
+function CalendarTab({proj,calYM,setCalYM}){
+  const {y,m}=calYM;
+  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+  const cells=[];for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const td=todayISO(),prefix=`${y}-${String(m+1).padStart(2,"0")}`;
+  const evs=proj.milestones.flatMap(ms=>{const arr=[];if(ms.start&&ms.start.startsWith(prefix))arr.push({date:ms.start,title:ms.title,color:MSS[ms.status].dot.bg});if(ms.end&&ms.end.startsWith(prefix))arr.push({date:ms.end,title:ms.title+"（結）",color:MSS[ms.status].dot.bg});return arr;});
+  return(<>
+    <div className="cal-hdr">
+      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
+      <span className="cal-month">{y} 年 {MONTHS[m]}</span>
+      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
+    </div>
+    <div className="cal-grid">
+      {WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}
+      {cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(
+        <div key={d} className={`cal-cell${isToday?" today":""}`}>
+          <div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>
+          {dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}
+        </div>);})}
+    </div>
+  </>);
+}
+
+function AllCalendar({data,calYM,setCalYM}){
+  const {y,m}=calYM;
+  const first=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+  const cells=[];for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
+  const td=todayISO(),prefix=`${y}-${String(m+1).padStart(2,"0")}`;
+  const evs=data.projects.flatMap(proj=>proj.milestones.flatMap(ms=>{const arr=[];if(ms.start&&ms.start.startsWith(prefix))arr.push({date:ms.start,title:`${proj.name.slice(0,5)} · ${ms.title}`,color:proj.color});if(ms.end&&ms.end.startsWith(prefix))arr.push({date:ms.end,title:`${proj.name.slice(0,5)} · ${ms.title}（結）`,color:proj.color});return arr;}));
+  return(<>
+    <div className="proj-hdr"><div className="proj-name" style={{fontSize:"1.7rem"}}>📅 總合行事曆</div><div className="proj-meta-r"><span className="proj-meta">All Projects — 整合所有案件的時程</span></div></div>
+    <div className="cal-hdr">
+      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
+      <span className="cal-month">{y} 年 {MONTHS[m]}</span>
+      <button className="cal-nav" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
+    </div>
+    <div style={{marginBottom:".75rem",display:"flex",gap:".4rem",flexWrap:"wrap"}}>{data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".58rem",padding:".15rem .5rem",borderRadius:20,background:p.color+"22",color:p.color,border:`1px solid ${p.color}55`}}>{p.name}</span>)}</div>
+    <div className="cal-grid">
+      {WDAYS.map(w=><div key={w} className="cal-dow">{w}</div>)}
+      {cells.map((d,i)=>{if(!d)return<div key={"_"+i} className="cal-cell empty"/>;const ds=`${prefix}-${String(d).padStart(2,"0")}`,isToday=ds===td,dayEvs=evs.filter(e=>e.date===ds);return(
+        <div key={d} className={`cal-cell${isToday?" today":""}`}>
+          <div className="cal-day">{isToday?<span style={{background:"#C4773B",color:"#fff",width:18,height:18,borderRadius:"50%",display:"inline-flex",alignItems:"center",justifyContent:"center"}}>{d}</span>:d}</div>
+          {dayEvs.map((ev,j)=><div key={j} className="cal-ev" style={{background:ev.color+"22",color:ev.color,borderLeft:`2px solid ${ev.color}`}}>{ev.title}</div>)}
+        </div>);})}
+    </div>
+  </>);
+}
+
+function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM}){
+  const stCfg=STAGE_TAG[proj.stage]||STAGE_TAG.design;
+  const pendCount=proj.pendings.filter(p=>p.status==="urgent"||p.status==="pending").length;
+  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"時間軸"},{id:"pending",l:`待確認${pendCount>0?` (${pendCount})`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
+  return(<>
+    <div className="proj-hdr">
+      <div style={{display:"flex",alignItems:"center",gap:".55rem",marginBottom:".45rem"}}><span className="proj-tag" style={{...stCfg}}>{STAGE_L[proj.stage]}</span></div>
+      <div className="proj-name">{proj.name}</div>
+      <div className="proj-meta-r">
+        <span className="proj-meta">業主 — {proj.owner} ／ {proj.loc}</span>
+        {proj.tel&&<span className="proj-meta">· {proj.tel}</span>}
+        <button className="edit-meta-btn" onClick={()=>openModal("editProj")}>✎ 編輯</button>
+      </div>
+    </div>
+    <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
+    {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="timeline"&&<TimelineTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="pending"&&<PendingTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="cal"&&<CalendarTab proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
+  </>);
+}
+
+function NewProjectModal({close,upd,onCreated}){
+  const [form,setForm]=useState({name:"",owner:"",loc:"",contact:"",tel:"",stage:"design"});
+  const [color,setColor]=useState(PCOLS[0]);
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
+    <h3>新增案件</h3>
+    <label>案件名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：台北信義住宅裝修"/>
+    <label>業主名稱</label><input value={form.owner} onChange={F("owner")} placeholder="業主 / 公司名稱"/>
+    <label>地址 / 地點</label><input value={form.loc} onChange={F("loc")} placeholder="縣市區域"/>
+    <label>聯絡人</label><input value={form.contact} onChange={F("contact")} placeholder="聯絡人姓名"/>
+    <label>聯絡電話</label><input value={form.tel} onChange={F("tel")} placeholder="0912-345-678"/>
+    <label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select>
+    <label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div>
+    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={save}>建立案件</button></div>
+  </div></div>);
+}
+
+function EditProjModal({proj,close,upd}){
+  const [form,setForm]=useState({name:proj.name,owner:proj.owner,loc:proj.loc,contact:proj.contact||"",tel:proj.tel||"",stage:proj.stage});
+  const [color,setColor]=useState(proj.color);
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  const save=()=>{upd(p=>({...p,...form,color}));close();};
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
+    <h3>編輯案件資訊</h3>
+    <label>案件名稱</label><input value={form.name} onChange={F("name")}/>
+    <label>業主名稱</label><input value={form.owner} onChange={F("owner")}/>
+    <label>地址 / 地點</label><input value={form.loc} onChange={F("loc")}/>
+    <label>聯絡人</label><input value={form.contact} onChange={F("contact")}/>
+    <label>聯絡電話</label><input value={form.tel} onChange={F("tel")}/>
+    <label>目前階段</label><select value={form.stage} onChange={F("stage")}>{STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}</select>
+    <label>案件識別色</label><div className="swatches">{PCOLS.map(c=><div key={c} className={`swatch${c===color?" on":""}`} style={{background:c}} onClick={()=>setColor(c)}/>)}</div>
+    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={save}>儲存</button></div>
+  </div></div>);
+}
+
+const MODAL_CFGS={
+  ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"end",l:"完成日期（選填）",type:"date"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",...form}]}));close();}},
+  todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(form,updP,close)=>{if(!form.text||!form.text.trim())return;updP(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...form}]}));close();}},
+  comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容摘要",type:"textarea",ph:"記錄重要決定或確認事項..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(form,updP,close)=>{if(!form.note||!form.note.trim())return;updP(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...form}]}));close();}},
+  pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...form}]}));close();}},
+  finIncome:{title:"新增收款項目",defs:{status:"unpaid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：設計費第一期"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待收款"],["paid","已收款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(form,updP,close)=>{if(!form.name||!form.name.trim()||!form.amt)return;updP(p=>({...p,finances:[...p.finances,{id:uid(),type:"income",status:"unpaid",date:todayISO(),...form,amt:Number(form.amt)}]}));close();}},
+  finExpense:{title:"新增支出項目",defs:{status:"paid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：測量費"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待付款"],["paid","已付款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(form,updP,close)=>{if(!form.name||!form.name.trim()||!form.amt)return;updP(p=>({...p,finances:[...p.finances,{id:uid(),type:"expense",status:"paid",date:todayISO(),...form,amt:Number(form.amt)}]}));close();}},
+  extra:{title:"新增追加單",defs:{},fields:[{k:"title",l:"追加項目 *",type:"text",ph:"例：增設插座8組"},{k:"amt",l:"追加金額 (NT$)",type:"number",ph:"0"},{k:"date",l:"日期",type:"date"},{k:"note",l:"說明",type:"textarea",ph:"追加原因、說明..."}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,extras:[...p.extras,{id:uid(),date:todayISO(),...form,amt:Number(form.amt||0)}]}));close();}},
+  tl:{title:"新增紀錄",defs:{type:"site"},fields:[{k:"type",l:"類型",type:"select",opts:[["site","📷 工地紀錄"],["meet","💬 會議紀錄"]]},{k:"title",l:"標題 *",type:"text",ph:"紀錄標題"},{k:"date",l:"日期",type:"date"},{k:"note",l:"內容說明",type:"textarea",ph:"詳細說明..."}],save:(form,updP,close)=>{if(!form.title||!form.title.trim())return;updP(p=>({...p,timelines:[...p.timelines,{id:uid(),type:"site",date:todayISO(),...form}]}));close();}},
+};
+
+function ItemModal({type,close,updP}){
+  const cfg=MODAL_CFGS[type];
+  const [form,setForm]=useState({...(cfg?cfg.defs||{}:{})});
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  if(!cfg)return null;
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
+    <h3>{cfg.title}</h3>
+    {cfg.fields.map(f=><div key={f.k}><label>{f.l}</label>
+      {f.type==="select"?<select value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)}>{f.opts.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select>:
+       f.type==="textarea"?<textarea value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>:
+       <input type={f.type} value={form[f.k]!==undefined?form[f.k]:""} onChange={F(f.k)} placeholder={f.ph||""}/>}
+    </div>)}
+    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" onClick={()=>cfg.save(form,updP,close)}>儲存</button></div>
+  </div></div>);
+}
+
+function DelProjModal({proj,close,upd,onDeleted}){
+  const confirm=()=>{upd(d=>({...d,projects:d.projects.filter(p=>p.id!==proj.id)}));onDeleted(proj.id);close();};
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal" style={{maxWidth:360}}>
+    <h3 style={{color:"#B04848"}}>🗑 刪除案件</h3>
+    <p style={{fontSize:".87rem",color:"#6E6860",lineHeight:1.7,margin:"1rem 0 1.2rem"}}>確定要刪除「<strong style={{color:"#1A1A18"}}>{proj.name}</strong>」？<br/>所有資料將<strong style={{color:"#B04848"}}>永久刪除</strong>，無法復原。</p>
+    <div className="modal-ft"><button className="btn-cancel" onClick={close}>取消</button><button className="btn-ok" style={{background:"#B04848"}} onClick={confirm}>確認刪除</button></div>
+  </div></div>);
+}
+
+function App(){
+  const [data,setData]=useState(null);
+  const [loading,setLoading]=useState(true);
+  const [pid,setPid]=useState(null);
+  const [tab,setTab]=useState("overview");
+  const [showAllCal,setShowAllCal]=useState(false);
+  const [modal,setModal]=useState(null);
+  const [syncOk,setSyncOk]=useState(false);
+  const [calYM,setCalYM]=useState({y:new Date().getFullYear(),m:new Date().getMonth()});
+  const [delTarget,setDelTarget]=useState(null);
+  const [sbOpen,setSbOpen]=useState(false);
+
+  useEffect(()=>{
+    const d=loadData();
+    setData(d);
+    if(d.projects.length>0)setPid(d.projects[0].id);
+    setLoading(false);
+  },[]);
+
+  const upd=useCallback(fn=>{
+    setData(prev=>{
+      const next=fn(prev);
+      saveData(next);
+      setSyncOk(true);setTimeout(()=>setSyncOk(false),2000);
+      return next;
+    });
+  },[]);
+
+  const updP=useCallback((pid,fn)=>{upd(d=>({...d,projects:d.projects.map(p=>p.id===pid?fn(p):p)}));},[upd]);
+  const proj=data?data.projects.find(p=>p.id===pid)||null:null;
+  const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
+  const closeModal=useCallback(()=>setModal(null),[]);
+  const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
+
+  const handleDeleted=useCallback((deletedId)=>{
+    setData(curr=>{const remaining=curr.projects.filter(p=>p.id!==deletedId);setPid(remaining.length>0?remaining[0].id:null);setTab("overview");setShowAllCal(false);return curr;});
+  },[]);
+
+  const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setSbOpen(false);},[]);
+
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F5F0E8",fontFamily:"'DM Mono',monospace",fontSize:".75rem",color:"#6E6860",flexDirection:"column",gap:"1rem"}}><div style={{fontSize:"2rem",opacity:.3}}>🏠</div>載入中...</div>);
+
+  const dateParts=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,".");
+
+  return(<>
+    <style>{CSS}</style>
+    {modal&&modal.type==="newProj"&&<NewProjectModal close={closeModal} upd={upd} onCreated={handleCreated}/>}
+    {modal&&modal.type==="editProj"&&proj&&<EditProjModal proj={proj} close={closeModal} upd={fn=>updP(pid,fn)}/>}
+    {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
+    {delTarget&&<DelProjModal proj={delTarget} close={()=>setDelTarget(null)} upd={upd} onDeleted={handleDeleted}/>}
+    <div className={`sb-overlay${sbOpen?" show":""}`} onClick={()=>setSbOpen(false)}/>
+
+    <header className="hdr">
+      <div className="hdr-l">
+        <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
+        <div><span className="hdr-studio">Interior Design Studio</span><span className="hdr-title">{showAllCal?"總合行事曆":proj?proj.name:"設計工作室"}</span></div>
+      </div>
+      <div className="hdr-r">
+        <span className={`sync-ok${syncOk?" on":""}`}>✓ 已儲存</span>
+        <span className="hdr-date">{dateParts}</span>
+        <button className="hdr-btn" onClick={()=>{setShowAllCal(v=>!v);setSbOpen(false);}}>{showAllCal?"← 返回":"📅 行事曆"}</button>
+      </div>
+    </header>
+
+    <div className="workspace">
+      <aside className={`sidebar${sbOpen?" open":""}`}>
+        <button className="sb-close" onClick={()=>setSbOpen(false)}>✕ 關閉選單</button>
+        <div className="sb-label">進行中案件</div>
+        {data.projects.map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
+          <div key={p.id} className={`sb-nav${pid===p.id&&!showAllCal?" on":""}`} onClick={()=>selectProj(p.id)}>
+            <div className="sb-hd"><span className="sb-dot" style={{background:p.color}}/><div className="sb-name">{p.name}</div></div>
+            <div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div>
+            <div className="sb-pw"><div className="sb-p" style={{width:pct+"%",background:p.color}}/></div>
+          </div>);})}
+        <hr className="sep"/>
+        <div className={`sb-nav cal${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setSbOpen(false);}}>
+          <div className="sb-hd"><span style={{marginRight:".35rem"}}>📅</span><div className="sb-name">總合行事曆</div></div>
+          <div className="sb-sub">All Projects</div>
+        </div>
+        <hr className="sep"/>
+        {proj&&!showAllCal&&<div style={{padding:".4rem .65rem"}}><button className="del-proj-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>🗑 刪除此案件</button></div>}
+        <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
+      </aside>
+
+      <main className="main">
+        {data.projects.length===0?(
+          <div style={{textAlign:"center",paddingTop:"5rem"}}>
+            <div style={{fontSize:"3rem",marginBottom:"1rem",opacity:.3}}>🏠</div>
+            <div style={{fontFamily:"'Cormorant Garamond',serif",fontSize:"1.8rem",fontWeight:300,marginBottom:".4rem"}}>還沒有任何案件</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"#6E6860",marginBottom:"1.2rem"}}>點擊下方按鈕建立第一個設計案件</div>
+            <button className="btn-ok" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".65rem 2rem"}}>＋ 新增第一個案件</button>
+          </div>
+        ):showAllCal?(
+          <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
+        ):proj?(
+          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM}/>
+        ):(
+          <div style={{textAlign:"center",paddingTop:"4rem",color:"#6E6860",fontFamily:"'DM Mono',monospace",fontSize:".72rem"}}>請從左側選擇案件</div>
+        )}
+      </main>
+    </div>
+  </>);
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
