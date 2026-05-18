@@ -9,7 +9,7 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#E9E9E9;color:#111;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;}#root{min-height:100vh;}</style>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#EDE6D8;color:#2D1F14;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}</style>
 </head>
 <body><div id="root"></div>
 <script type="text/babel">
@@ -35,480 +35,525 @@ const MONTHS=["一月","二月","三月","四月","五月","六月","七月","�
 const WDAYS=["日","一","二","三","四","五","六"];
 const STAGES=["design","drawing","waiting","construction","done"];
 const STAGE_L={design:"設計發展",drawing:"施工圖",waiting:"等待進場",construction:"施工中",done:"竣工驗收"};
-const PCOLS=["#2C2C2E","#48484A","#636366","#8E8E93","#AEAEB2","#3A3A3C","#1C1C1E","#555555"];
-const MSS={
-  done:{l:"已完成",dot:"#3A6B4A",tag:{bg:"#EDF7F2",color:"#3A6B4A"}},
-  doing:{l:"進行中",dot:"#8B6914",tag:{bg:"#FBF7EE",color:"#8B6914"}},
-  pending:{l:"待進行",dot:"#BBBBBB",tag:{bg:"#F5F5F5",color:"#888888"}},
-};
-const PDS={urgent:{l:"緊急",bg:"#FBF0F0",color:"#8B3A3A"},pending:{l:"待處理",bg:"#F5F5F5",color:"#666"},confirmed:{l:"已確認",bg:"#EDF7F2",color:"#3A6B4A"},closed:{l:"已關閉",bg:"#F5F5F5",color:"#AAA"}};
-const PRC={high:{l:"高",bg:"#FBF0F0",color:"#8B3A3A"},mid:{l:"中",bg:"#FBF7EE",color:"#8B6914"},low:{l:"低",bg:"#F5F5F5",color:"#888"}};
-const TLT={site:{l:"工地紀錄",icon:"◉",bg:"#F5F5F5",color:"#555"},meet:{l:"會議紀錄",icon:"◎",bg:"#F5F5F5",color:"#777"}};
+const PCOLS=["#584738","#7A5C44","#9A7A60","#B59E7D","#AAA396","#8B6914","#463929","#CEC1A8"];
+const MSS={done:{l:"已完成",dot:"#4D7A5A",tag:{bg:"#EBF2EC",color:"#4D7A5A"}},doing:{l:"進行中",dot:"#8B6020",tag:{bg:"#F5EFE0",color:"#8B6020"}},pending:{l:"待進行",dot:"#C5B8A5",tag:{bg:"#F0EBE2",color:"#9A9184"}}};
+const PDS={urgent:{l:"緊急",bg:"#F5ECEC",color:"#8B4040"},pending:{l:"待處理",bg:"#F0EBE2",color:"#7A6040"},confirmed:{l:"已確認",bg:"#EBF2EC",color:"#4D7A5A"},closed:{l:"已關閉",bg:"#F0EBE2",color:"#9A9184"}};
+const PRC={high:{l:"高",bg:"#F5ECEC",color:"#8B4040"},mid:{l:"中",bg:"#F5EFE0",color:"#8B6020"},low:{l:"低",bg:"#F0EBE2",color:"#9A9184"}};
+const TLT={site:{l:"工地紀錄",icon:"◉",bg:"#F0EBE2",color:"#7A6040"},meet:{l:"會議紀錄",icon:"◎",bg:"#EDE6D8",color:"#9A9184"}};
 const COMM_CH=["Line","Email","電話","會議"];
 const EXPENSE_CATS=["外包費用","測量費","出差交通","材料樣品","其他"];
 
-/* ── 台灣國定假日 ── */
 const TW_HOLIDAYS={
-  "2025-01-01":"元旦","2025-01-27":"除夕","2025-01-28":"春節","2025-01-29":"春節",
-  "2025-01-30":"春節","2025-01-31":"春節","2025-02-28":"和平紀念日",
-  "2025-04-04":"兒童節清明","2025-05-01":"勞動節","2025-05-31":"端午節",
-  "2025-10-06":"中秋節","2025-10-10":"國慶日",
-  "2026-01-01":"元旦","2026-02-16":"除夕","2026-02-17":"春節","2026-02-18":"春節",
-  "2026-02-19":"春節","2026-02-20":"春節","2026-02-28":"和平紀念日",
-  "2026-04-04":"清明","2026-04-05":"兒童節","2026-05-01":"勞動節",
-  "2026-06-19":"端午節","2026-09-25":"中秋節","2026-10-10":"國慶日",
-  "2027-01-01":"元旦","2027-02-05":"除夕","2027-02-06":"春節","2027-02-07":"春節",
-  "2027-02-08":"春節","2027-02-28":"和平紀念日","2027-04-05":"清明兒童節",
-  "2027-05-01":"勞動節","2027-10-10":"國慶日",
+  "2025-01-01":"元旦","2025-01-27":"除夕","2025-01-28":"春節","2025-01-29":"春節","2025-01-30":"春節","2025-01-31":"春節","2025-02-28":"和平紀念日","2025-04-04":"兒童節清明","2025-05-01":"勞動節","2025-05-31":"端午節","2025-10-06":"中秋節","2025-10-10":"國慶日",
+  "2026-01-01":"元旦","2026-02-16":"除夕","2026-02-17":"春節","2026-02-18":"春節","2026-02-19":"春節","2026-02-20":"春節","2026-02-28":"和平紀念日","2026-04-04":"清明","2026-04-05":"兒童節","2026-05-01":"勞動節","2026-06-19":"端午節","2026-09-25":"中秋節","2026-10-10":"國慶日",
+  "2027-01-01":"元旦","2027-02-05":"除夕","2027-02-06":"春節","2027-02-07":"春節","2027-02-08":"春節","2027-02-28":"和平紀念日","2027-04-05":"清明兒童節","2027-05-01":"勞動節","2027-10-10":"國慶日",
 };
 
-/* ── 農曆資料 ── */
 const LUNAR_DAY_NAMES=["初一","初二","初三","初四","初五","初六","初七","初八","初九","初十","十一","十二","十三","十四","十五","十六","十七","十八","十九","二十","廿一","廿二","廿三","廿四","廿五","廿六","廿七","廿八","廿九","三十"];
-// 各農曆年月初一對應國曆，leapIdx=-1表無閏月
 const LUNAR_YEARS=[
-  {starts:["2025-01-29","2025-02-28","2025-03-29","2025-04-28","2025-05-28","2025-06-27","2025-07-26","2025-08-24","2025-09-23","2025-10-22","2025-11-21","2025-12-20","2026-01-18"],leapIdx:6,names:["正","二","三","四","五","六","閏六","七","八","九","十","冬","臘"]},
-  {starts:["2026-02-17","2026-03-19","2026-04-17","2026-05-17","2026-06-15","2026-07-14","2026-08-13","2026-09-11","2026-10-11","2026-11-09","2026-12-09","2027-01-07"],leapIdx:-1,names:["正","二","三","四","五","六","七","八","九","十","冬","臘"]},
-  {starts:["2027-02-06","2027-03-08","2027-04-06","2027-05-06","2027-06-04","2027-07-04","2027-08-02","2027-08-31","2027-09-30","2027-10-29","2027-11-28","2027-12-28","2028-01-26"],leapIdx:5,names:["正","二","三","四","五","閏五","六","七","八","九","十","冬","臘"]},
+  {starts:["2025-01-29","2025-02-28","2025-03-29","2025-04-28","2025-05-28","2025-06-27","2025-07-26","2025-08-24","2025-09-23","2025-10-22","2025-11-21","2025-12-20","2026-01-18"],names:["正","二","三","四","五","六","閏六","七","八","九","十","冬","臘"]},
+  {starts:["2026-02-17","2026-03-19","2026-04-17","2026-05-17","2026-06-15","2026-07-14","2026-08-13","2026-09-11","2026-10-11","2026-11-09","2026-12-09","2027-01-07"],names:["正","二","三","四","五","六","七","八","九","十","冬","臘"]},
+  {starts:["2027-02-06","2027-03-08","2027-04-06","2027-05-06","2027-06-04","2027-07-04","2027-08-02","2027-08-31","2027-09-30","2027-10-29","2027-11-28","2027-12-28","2028-01-26"],names:["正","二","三","四","五","閏五","六","七","八","九","十","冬","臘"]},
 ];
-
 function solarToLunar(dateStr){
   const target=new Date(dateStr+"T00:00:00");
   const all=[];
-  for(const yr of LUNAR_YEARS){
-    for(let i=0;i<yr.starts.length;i++){
-      all.push({d:new Date(yr.starts[i]+"T00:00:00"),name:yr.names[i]});
-    }
-  }
+  for(const yr of LUNAR_YEARS) for(let i=0;i<yr.starts.length;i++) all.push({d:new Date(yr.starts[i]+"T00:00:00"),name:yr.names[i]});
   all.sort((a,b)=>a.d-b.d);
   let best=null;
-  for(const m of all){
-    if(m.d<=target){
-      const dayIdx=Math.floor((target-m.d)/86400000);
-      if(dayIdx<=29){best={m:m.name,d:LUNAR_DAY_NAMES[dayIdx],isFirst:dayIdx===0};}
-      else best=null;
-    }
-  }
+  for(const m of all){if(m.d<=target){const idx=Math.floor((target-m.d)/86400000);if(idx<=29)best={m:m.name,d:LUNAR_DAY_NAMES[idx],isFirst:idx===0};else best=null;}}
   return best;
 }
 
-const INIT={projects:[
-  {id:"p1",name:"台北信義住宅裝修",owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#2C2C2E",contractAmt:600000,
-    milestones:[
-      {id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},
-      {id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},
-      {id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},
-      {id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"},
-    ],
-    todos:[
-      {id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},
-      {id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},
-      {id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"},
-    ],
-    comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
-    pendings:[
-      {id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20"},
-      {id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27"},
-    ],
-    finances:[
-      {id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},
-      {id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},
-      {id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"},
-    ],
-    extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
-    timelines:[
-      {id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測，確認格局變動可行性"},
-      {id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向，選定主色調"},
-      {id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認，與圖面吻合"},
-    ],
-  },
-  {id:"p2",name:"新北板橋商業空間",owner:"陳小姐",loc:"新北市板橋區",contact:"陳美君",tel:"0988-765-432",stage:"drawing",color:"#48484A",contractAmt:450000,
-    milestones:[
-      {id:"m1",title:"平面規劃完成",status:"done",start:"2026-03-01",end:"2026-03-15",prio:"high"},
-      {id:"m2",title:"3D提案簡報",status:"doing",start:"2026-04-01",end:"2026-04-25",prio:"high"},
-      {id:"m3",title:"施工圖發包",status:"pending",start:"2026-05-15",end:"2026-05-31",prio:"mid"},
-    ],
-    todos:[
-      {id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},
-      {id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},
-      {id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"},
-    ],
-    comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
-    pendings:[
-      {id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},
-      {id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"},
-    ],
-    finances:[
-      {id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},
-      {id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"},
-    ],
-    extras:[],
-    timelines:[
-      {id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格，業主偏好深色系"},
-      {id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸，與建築圖核對無誤"},
-    ],
-  },
-]};
-
-/* ── CSV 匯出 ── */
 function exportCSV(proj){
   const BOM="\uFEFF";
   const h=["類型","項目名稱","分類","金額(NT$)","狀態","日期","備註"];
   const rows=proj.finances.map(f=>[f.type==="income"?"收款":"支出",f.name,f.cat||"",f.amt,f.status==="paid"?"已完成":"待處理",f.date,f.note||""]);
   const csv=BOM+[h,...rows].map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-  const a=document.createElement("a");
-  a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);
-  a.download=`${proj.name}_財務_${todayISO()}.csv`;a.click();
+  const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download=`${proj.name}_財務_${todayISO()}.csv`;a.click();
 }
+
+const INIT={projects:[
+  {id:"p1",name:"台北信義住宅裝修",owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#584738",contractAmt:600000,
+    milestones:[{id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},{id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},{id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},{id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"}],
+    todos:[{id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},{id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},{id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"}],
+    comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
+    pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27"}],
+    finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
+    extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
+    timelines:[{id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測"},{id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向"},{id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認"}]},
+  {id:"p2",name:"新北板橋商業空間",owner:"陳小姐",loc:"新北市板橋區",contact:"陳美君",tel:"0988-765-432",stage:"drawing",color:"#9A7A60",contractAmt:450000,
+    milestones:[{id:"m1",title:"平面規劃完成",status:"done",start:"2026-03-01",end:"2026-03-15",prio:"high"},{id:"m2",title:"3D提案簡報",status:"doing",start:"2026-04-01",end:"2026-04-25",prio:"high"},{id:"m3",title:"施工圖發包",status:"pending",start:"2026-05-15",end:"2026-05-31",prio:"mid"}],
+    todos:[{id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},{id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},{id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"}],
+    comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
+    pendings:[{id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},{id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"}],
+    finances:[{id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},{id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"}],
+    extras:[],
+    timelines:[{id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格"},{id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸"}]}
+]};
 
 const CSS=`
 :root{
-  --bg:#E9E9E9;--sf:#FFFFFF;--sf2:#F7F7F7;--sf3:#F0F0F0;
-  --dark:#1A1A1A;--dark2:#2A2A2A;
-  --t1:#111;--t2:#6B6B6B;--t3:#AAAAAA;
-  --b1:rgba(0,0,0,.07);--b2:rgba(0,0,0,.12);--b3:rgba(0,0,0,.18);
-  --sh:0 1px 4px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.06);
-  --shm:0 8px 32px rgba(0,0,0,.1);
-  --done:#3A6B4A;--done-bg:#EDF7F2;
-  --red:#8B3A3A;--red-bg:#FBF0F0;
-  --amber:#8B6914;--amber-bg:#FBF7EE;
-  --sb:248px;--hh:60px;--bnav:68px;
-  --r:16px;--rs:10px;--rxs:6px;
+  --bg:#EDE6D8; --sf:#F8F4EC; --sf2:#EDE5D3; --sf3:#E3D8C5;
+  --dark:#584738; --dark2:#463929;
+  --acc:#B59E7D; --acc2:#9A8568;
+  --t1:#2D1F14; --t2:#6B5040; --t3:#9A9184; --t4:#C5B8A5;
+  --b1:rgba(88,71,56,.1); --b2:rgba(88,71,56,.18); --b3:rgba(88,71,56,.28);
+  --sh:0 2px 8px rgba(88,71,56,.08),0 1px 3px rgba(88,71,56,.04);
+  --shm:0 8px 28px rgba(88,71,56,.13);
+  --done:#4D7A5A; --done-bg:#EBF2EC;
+  --red:#8B4040; --red-bg:#F5ECEC;
+  --amber:#8B6020; --amber-bg:#F5EFE0;
+  --sb:252px; --hh:60px; --bnav:70px;
+  --r:14px; --rs:10px; --rxs:7px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;line-height:1.6;min-height:100vh;overflow-x:hidden;}
+html,body{background:var(--bg);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;overflow-x:hidden;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;}
 input,select,textarea{font-family:inherit;}
 ::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
-.hdr{position:sticky;top:0;z-index:200;height:var(--hh);background:rgba(255,255,255,.88);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
+
+/* Header */
+.hdr{position:sticky;top:0;z-index:200;height:var(--hh);background:rgba(248,244,236,.92);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
 .hdr-l{display:flex;align-items:center;gap:.85rem;min-width:0;}
-.hdr-logo{font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--t1);flex-shrink:0;}
+.hdr-logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:var(--dark);flex-shrink:0;}
 .hdr-div{width:1px;height:20px;background:var(--b2);flex-shrink:0;}
-.hdr-proj{font-size:.9rem;font-weight:500;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s;}
+.hdr-proj{font-size:.95rem;font-weight:500;color:var(--t2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s;}
 .hdr-proj:hover{color:var(--t1);}
 .hdr-r{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
-.hdr-date{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
-.sync-pip{width:7px;height:7px;border-radius:50%;background:var(--t3);transition:all .3s;flex-shrink:0;}
+.hdr-date{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--t3);}
+.sync-pip{width:7px;height:7px;border-radius:50%;background:var(--t4);transition:all .3s;flex-shrink:0;}
 .sync-pip.on{background:var(--done);}
-.menu-btn{display:none;width:36px;height:36px;border-radius:var(--rxs);align-items:center;justify-content:center;font-size:.95rem;color:var(--t2);border:1px solid var(--b2);transition:all .15s;}
+.menu-btn{display:none;width:38px;height:38px;border-radius:var(--rxs);align-items:center;justify-content:center;font-size:1rem;color:var(--t2);border:1px solid var(--b2);transition:all .15s;}
 .menu-btn:hover{border-color:var(--b3);color:var(--t1);}
-.hdr-btn{font-size:.78rem;font-weight:500;padding:.38rem .9rem;border:1px solid var(--b2);border-radius:20px;color:var(--t2);transition:all .15s;white-space:nowrap;}
-.hdr-btn:hover{border-color:var(--b3);color:var(--t1);background:var(--sf2);}
+.hdr-btn{font-size:.82rem;font-weight:500;padding:.38rem .95rem;border:1px solid var(--b2);border-radius:20px;color:var(--t2);transition:all .15s;white-space:nowrap;}
+.hdr-btn:hover{border-color:var(--acc);color:var(--dark);background:var(--sf2);}
+
+/* Layout */
 .workspace{display:grid;grid-template-columns:var(--sb) 1fr;min-height:calc(100vh - var(--hh));}
+
+/* Sidebar */
 .sidebar{background:var(--sf);border-right:1px solid var(--b1);padding:.85rem .7rem;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
-.sb-sec{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);padding:.55rem .65rem .3rem;margin-top:.3rem;}
-.sb-item{display:flex;align-items:center;gap:.6rem;padding:.7rem .75rem;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;transition:all .15s;color:var(--t2);font-size:.88rem;}
+.sb-sec{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--t3);padding:.55rem .65rem .3rem;margin-top:.3rem;}
+.sb-item{display:flex;align-items:center;gap:.6rem;padding:.72rem .8rem;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;transition:all .15s;color:var(--t2);font-size:.92rem;}
 .sb-item:hover{background:var(--sf2);color:var(--t1);}
-.sb-item.on{background:var(--dark);color:#FFF;border-color:transparent;}
-.sb-item.on .sb-sub{color:rgba(255,255,255,.45);}
-.sb-item.on .sb-bar-track{background:rgba(255,255,255,.15);}
-.sb-item.on .sb-bar-fill{background:rgba(255,255,255,.65);}
+.sb-item.on{background:var(--dark);color:#F8F4EC;}
+.sb-item.on .sb-sub{color:rgba(248,244,236,.45);}
+.sb-item.on .sb-bar-track{background:rgba(248,244,236,.15);}
+.sb-item.on .sb-bar-fill{background:var(--acc);}
 .sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
 .sb-info{flex:1;min-width:0;}
-.sb-name{font-size:.85rem;font-weight:500;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.sb-sub{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--t3);margin-top:.1rem;}
+.sb-name{font-size:.88rem;font-weight:500;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-sub{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);margin-top:.1rem;}
 .sb-bar-track{height:2px;background:var(--sf3);border-radius:1px;overflow:hidden;margin-top:.45rem;}
-.sb-bar-fill{height:100%;background:var(--dark);border-radius:1px;transition:width .5s;}
+.sb-bar-fill{height:100%;background:var(--acc);border-radius:1px;transition:width .5s;}
 .sb-sep{border:none;border-top:1px solid var(--b1);margin:.55rem .3rem;}
-.sb-add{width:100%;padding:.72rem;background:transparent;border:1.5px dashed var(--b2);border-radius:var(--rs);font-size:.82rem;color:var(--t3);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.35rem;}
-.sb-add:hover{border-color:var(--t1);color:var(--t1);}
-.sb-close-btn{display:none;width:100%;padding:.55rem;background:transparent;border:1px solid var(--b2);border-radius:var(--rxs);font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);cursor:pointer;margin-bottom:.5rem;}
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:149;}
+.sb-add{width:100%;padding:.72rem;background:transparent;border:1.5px dashed var(--b2);border-radius:var(--rs);font-size:.85rem;color:var(--t3);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.35rem;}
+.sb-add:hover{border-color:var(--acc);color:var(--dark);}
+.sb-close-btn{display:none;width:100%;padding:.55rem;background:transparent;border:1px solid var(--b2);border-radius:var(--rxs);font-family:'DM Mono',monospace;font-size:.68rem;color:var(--t3);cursor:pointer;margin-bottom:.5rem;}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(45,31,20,.4);z-index:149;}
+
+/* Main */
 .main{padding:2rem 2.2rem 3rem;}
+
+/* Project Header */
 .proj-hdr{margin-bottom:1.8rem;}
 .proj-eyebrow{display:flex;align-items:center;gap:.55rem;margin-bottom:.6rem;}
-.stage-badge{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;padding:.24rem .75rem;border-radius:20px;border:1px solid var(--b2);color:var(--t3);background:var(--sf);}
-.proj-title{font-family:'DM Serif Display',serif;font-size:2.5rem;line-height:1.05;letter-spacing:-.01em;margin-bottom:.55rem;}
+.stage-badge{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;padding:.26rem .8rem;border-radius:20px;border:1px solid var(--b2);color:var(--t2);background:var(--sf);}
+.proj-title{font-family:'DM Serif Display',serif;font-size:2.5rem;line-height:1.05;letter-spacing:-.01em;margin-bottom:.55rem;color:var(--t1);}
 .proj-meta-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;}
-.proj-meta{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
-.meta-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:.22rem .6rem;border:1px solid var(--b2);border-radius:4px;color:var(--t3);cursor:pointer;transition:all .15s;}
-.meta-btn:hover{border-color:var(--b3);color:var(--t2);}
-.del-meta-btn{font-family:'DM Mono',monospace;font-size:.62rem;padding:.22rem .6rem;border:1px solid transparent;border-radius:4px;color:var(--t3);cursor:pointer;transition:all .15s;}
+.proj-meta{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--t3);}
+.meta-btn{font-family:'DM Mono',monospace;font-size:.64rem;padding:.24rem .65rem;border:1px solid var(--b2);border-radius:4px;color:var(--t3);cursor:pointer;transition:all .15s;}
+.meta-btn:hover{border-color:var(--acc);color:var(--dark);background:var(--sf2);}
+.del-meta-btn{font-family:'DM Mono',monospace;font-size:.64rem;padding:.24rem .65rem;border:1px solid transparent;border-radius:4px;color:var(--t3);cursor:pointer;transition:all .15s;}
 .del-meta-btn:hover{border-color:var(--red-bg);color:var(--red);background:var(--red-bg);}
+
+/* Tabs */
 .tabs{display:flex;gap:0;margin-bottom:1.6rem;border-bottom:1.5px solid var(--b1);}
-.tab-btn{font-size:.82rem;padding:.65rem 1.1rem;cursor:pointer;color:var(--t3);white-space:nowrap;transition:all .18s;border:none;background:transparent;position:relative;}
+.tab-btn{font-size:.86rem;padding:.65rem 1.1rem;cursor:pointer;color:var(--t3);white-space:nowrap;transition:all .18s;border:none;background:transparent;position:relative;}
 .tab-btn::after{content:'';position:absolute;bottom:-1.5px;left:0;right:0;height:1.5px;background:transparent;transition:background .18s;}
 .tab-btn:hover{color:var(--t2);}
-.tab-btn.on{color:var(--t1);font-weight:600;}
-.tab-btn.on::after{background:var(--t1);}
-.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bnav);background:rgba(255,255,255,.95);backdrop-filter:blur(16px);border-top:1px solid var(--b1);z-index:100;flex-direction:row;}
+.tab-btn.on{color:var(--dark);font-weight:600;}
+.tab-btn.on::after{background:var(--acc);}
+
+/* Mobile Bottom Nav */
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bnav);background:rgba(248,244,236,.96);backdrop-filter:blur(16px);border-top:1px solid var(--b1);z-index:100;flex-direction:row;}
 .mn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;color:var(--t3);cursor:pointer;transition:color .15s;}
-.mn-btn.on{color:var(--t1);}
-.mn-icon{font-family:'DM Mono',monospace;font-size:.95rem;line-height:1;}
-.mn-label{font-family:'DM Mono',monospace;font-size:.48rem;letter-spacing:.04em;white-space:nowrap;}
-.mn-badge{font-size:.4rem;background:var(--red);color:#fff;border-radius:10px;padding:.05rem .3rem;margin-top:-3px;}
-.prog-card{background:var(--dark);border-radius:var(--r);padding:1.6rem 1.8rem;margin-bottom:1rem;color:#FFF;}
+.mn-btn.on{color:var(--dark);}
+.mn-icon{font-family:'DM Mono',monospace;font-size:1rem;line-height:1;}
+.mn-label{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.04em;white-space:nowrap;}
+.mn-badge{font-size:.42rem;background:var(--red);color:#fff;border-radius:10px;padding:.05rem .3rem;margin-top:-3px;}
+/* 手機底部間距修復 */
+.mobile-spacer{display:none;}
+
+/* Progress Card */
+.prog-card{background:var(--dark);border-radius:var(--r);padding:1.7rem 1.9rem;margin-bottom:1rem;color:#F8F4EC;}
 .prog-top{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.4rem;gap:1rem;}
-.prog-num{font-family:'DM Serif Display',serif;font-size:4rem;line-height:1;color:#FFF;}
-.prog-unit{font-family:'DM Mono',monospace;font-size:.75rem;color:rgba(255,255,255,.4);margin-left:.3rem;}
-.stage-row{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:.85rem;}
-.stage-step{padding:.42rem .15rem;text-align:center;font-family:'DM Mono',monospace;font-size:.52rem;color:rgba(255,255,255,.3);cursor:pointer;border-radius:5px;transition:all .15s;position:relative;}
-.stage-step::before{content:'';display:block;height:2px;background:rgba(255,255,255,.12);border-radius:1px;margin-bottom:.3rem;}
-.stage-step.done-s::before{background:rgba(255,255,255,.55);}
-.stage-step.curr-s::before{background:#FFF;}
-.stage-step.done-s{color:rgba(255,255,255,.55);}
-.stage-step.curr-s{color:#FFF;}
-.stage-step:hover{background:rgba(255,255,255,.06);}
-.prog-track{height:1px;background:rgba(255,255,255,.1);}
-.prog-fill-bar{height:100%;background:rgba(255,255,255,.7);transition:width .6s;}
-.card{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:1.3rem 1.4rem;box-shadow:var(--sh);}
-.card-hd{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
-.add-btn{font-size:.78rem;font-weight:500;padding:.28rem .7rem;border:1px solid var(--b2);border-radius:20px;color:var(--t2);cursor:pointer;transition:all .15s;}
-.add-btn:hover{border-color:var(--t1);color:var(--t1);background:var(--sf2);}
+.prog-num{font-family:'DM Serif Display',serif;font-size:4.2rem;line-height:1;color:#F8F4EC;}
+.prog-unit{font-family:'DM Mono',monospace;font-size:.78rem;color:rgba(248,244,236,.4);margin-left:.3rem;}
+.stage-row{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:.9rem;}
+.stage-step{padding:.44rem .15rem;text-align:center;font-family:'DM Mono',monospace;font-size:.54rem;color:rgba(248,244,236,.3);cursor:pointer;border-radius:5px;transition:all .15s;position:relative;}
+.stage-step::before{content:'';display:block;height:2px;background:rgba(248,244,236,.12);border-radius:1px;margin-bottom:.3rem;}
+.stage-step.done-s::before{background:var(--acc);}
+.stage-step.curr-s::before{background:#F8F4EC;}
+.stage-step.done-s{color:var(--acc);}
+.stage-step.curr-s{color:#F8F4EC;}
+.stage-step:hover{background:rgba(248,244,236,.06);}
+.prog-track{height:1px;background:rgba(248,244,236,.1);}
+.prog-fill-bar{height:100%;background:var(--acc);transition:width .6s;}
+
+/* Cards */
+.card{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:1.35rem 1.45rem;box-shadow:var(--sh);}
+.card-hd{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:1rem;display:flex;justify-content:space-between;align-items:center;}
+.add-btn{font-size:.82rem;font-weight:500;padding:.3rem .75rem;border:1px solid var(--b2);border-radius:20px;color:var(--t2);cursor:pointer;transition:all .15s;}
+.add-btn:hover{border-color:var(--acc);color:var(--dark);background:var(--sf2);}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
 .full{grid-column:1/-1;}
+
+/* Milestones */
 .ms-list{list-style:none;}
-.ms-item{display:flex;gap:.75rem;padding:.72rem 0;border-bottom:1px solid var(--b1);align-items:flex-start;}
+.ms-item{display:flex;gap:.75rem;padding:.75rem 0;border-bottom:1px solid var(--b1);align-items:flex-start;}
 .ms-item:last-child{border-bottom:none;}
-.ms-dot-w{padding-top:.4rem;flex-shrink:0;}
-.ms-dot{width:9px;height:9px;border-radius:50%;border:2px solid;}
+.ms-dot-w{padding-top:.45rem;flex-shrink:0;}
+.ms-dot{width:10px;height:10px;border-radius:50%;border:2px solid;}
 .ms-body{flex:1;min-width:0;}
-.ms-title{font-size:.9rem;font-weight:500;margin-bottom:.18rem;}
-.ms-dates{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
+.ms-title{font-size:.94rem;font-weight:500;margin-bottom:.2rem;color:var(--t1);}
+.ms-dates{font-family:'DM Mono',monospace;font-size:.64rem;color:var(--t3);}
 .ms-r{display:flex;align-items:center;gap:.4rem;flex-shrink:0;flex-wrap:wrap;justify-content:flex-end;}
-.ms-sel{font-family:'DM Mono',monospace;font-size:.6rem;padding:.2rem .5rem;border-radius:6px;border:1px solid var(--b2);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background:var(--sf2);}
-.tag-sm{font-family:'DM Mono',monospace;font-size:.6rem;padding:.18rem .48rem;border-radius:6px;flex-shrink:0;}
-.del-x{background:none;border:none;cursor:pointer;color:var(--t3);font-size:.8rem;padding:.1rem .2rem;transition:color .15s;line-height:1;flex-shrink:0;}
+.ms-sel{font-family:'DM Mono',monospace;font-size:.62rem;padding:.2rem .5rem;border-radius:6px;border:1px solid var(--b2);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background:var(--sf2);}
+.tag-sm{font-family:'DM Mono',monospace;font-size:.62rem;padding:.2rem .5rem;border-radius:6px;flex-shrink:0;}
+.del-x{background:none;border:none;cursor:pointer;color:var(--t4);font-size:.85rem;padding:.1rem .2rem;transition:color .15s;line-height:1;flex-shrink:0;}
 .del-x:hover{color:var(--red);}
-.todo-item{padding:.85rem 0;border-bottom:1px solid var(--b1);}
+
+/* Todos */
+.todo-item{padding:.88rem 0;border-bottom:1px solid var(--b1);}
 .todo-item:last-child{border-bottom:none;}
-.todo-row{display:flex;gap:.8rem;align-items:flex-start;}
-.chk{width:22px;height:22px;border:2px solid var(--b2);border-radius:6px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .18s;background:transparent;font-size:.75rem;color:var(--sf);}
-.chk:hover{border-color:var(--t2);}
-.chk.on{background:var(--t1);border-color:var(--t1);}
-.todo-txt{font-size:.9rem;line-height:1.5;}
+.todo-row{display:flex;gap:.85rem;align-items:flex-start;}
+.chk{width:23px;height:23px;border:2px solid var(--b2);border-radius:6px;flex-shrink:0;cursor:pointer;display:flex;align-items:center;justify-content:center;margin-top:1px;transition:all .18s;background:transparent;font-size:.78rem;color:var(--sf);}
+.chk:hover{border-color:var(--acc);}
+.chk.on{background:var(--dark);border-color:var(--dark);}
+.todo-txt{font-size:.94rem;line-height:1.55;color:var(--t1);}
 .todo-done{text-decoration:line-through;color:var(--t3);}
-.todo-meta{display:flex;align-items:center;gap:.45rem;margin-top:.22rem;flex-wrap:wrap;}
-.todo-due{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--t3);}
+.todo-meta{display:flex;align-items:center;gap:.45rem;margin-top:.24rem;flex-wrap:wrap;}
+.todo-due{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
 .todo-due.ov{color:var(--red);}
-.todo-note{font-size:.78rem;color:var(--t2);margin-top:.25rem;padding:.35rem .55rem;background:var(--sf2);border-radius:6px;border-left:2px solid var(--b2);}
-.comm-item{padding:.85rem 0;border-bottom:1px solid var(--b1);}
+.todo-note{font-size:.8rem;color:var(--t2);margin-top:.25rem;padding:.35rem .55rem;background:var(--sf2);border-radius:6px;border-left:2px solid var(--b2);}
+
+/* Comms */
+.comm-item{padding:.88rem 0;border-bottom:1px solid var(--b1);}
 .comm-item:last-child{border-bottom:none;}
 .comm-hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:.28rem;}
-.comm-who{font-size:.9rem;font-weight:600;}
+.comm-who{font-size:.94rem;font-weight:600;}
 .comm-r{display:flex;align-items:center;gap:.45rem;}
-.comm-when{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
-.comm-note{font-size:.85rem;color:var(--t2);line-height:1.65;}
-.comm-ch{display:inline-block;font-family:'DM Mono',monospace;font-size:.58rem;padding:.16rem .45rem;border:1px solid var(--b2);border-radius:4px;margin-top:.28rem;color:var(--t3);}
+.comm-when{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
+.comm-note{font-size:.9rem;color:var(--t2);line-height:1.65;}
+.comm-ch{display:inline-block;font-family:'DM Mono',monospace;font-size:.62rem;padding:.18rem .48rem;border:1px solid var(--b2);border-radius:4px;margin-top:.28rem;color:var(--t3);}
+
+/* Pending */
 .filt-row{display:flex;gap:.35rem;flex-wrap:wrap;}
-.filt-btn{font-family:'DM Mono',monospace;font-size:.65rem;padding:.28rem .65rem;border:1px solid var(--b2);border-radius:20px;color:var(--t3);cursor:pointer;transition:all .15s;background:var(--sf);}
-.filt-btn:hover{border-color:var(--b3);color:var(--t2);}
-.filt-btn.on{background:var(--dark);border-color:var(--dark);color:#FFF;}
-.pd-item{padding:.95rem 1.1rem;border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:.65rem;background:var(--sf);box-shadow:var(--sh);}
+.filt-btn{font-family:'DM Mono',monospace;font-size:.67rem;padding:.3rem .7rem;border:1px solid var(--b2);border-radius:20px;color:var(--t3);cursor:pointer;transition:all .15s;background:var(--sf);}
+.filt-btn:hover{border-color:var(--acc);color:var(--dark);}
+.filt-btn.on{background:var(--dark);border-color:var(--dark);color:#F8F4EC;}
+.pd-item{padding:1rem 1.15rem;border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:.7rem;background:var(--sf);box-shadow:var(--sh);}
 .pd-item.urg{border-left:3px solid var(--red);}
 .pd-hd{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.28rem;gap:.5rem;}
-.pd-title{font-size:.9rem;font-weight:600;}
-.pd-sel{font-family:'DM Mono',monospace;font-size:.6rem;padding:.2rem .5rem;border-radius:6px;border:1px solid var(--b2);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background:var(--sf2);flex-shrink:0;}
-.pd-note{font-size:.8rem;color:var(--t2);margin-bottom:.22rem;}
-.pd-date{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
+.pd-title{font-size:.94rem;font-weight:600;color:var(--t1);}
+.pd-sel{font-family:'DM Mono',monospace;font-size:.62rem;padding:.2rem .5rem;border-radius:6px;border:1px solid var(--b2);cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background:var(--sf2);flex-shrink:0;}
+.pd-note{font-size:.84rem;color:var(--t2);margin-bottom:.22rem;}
+.pd-date{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
 
-/* ── Finance ── */
-.fin-health{background:var(--dark);border-radius:var(--r);padding:1.5rem 1.6rem;margin-bottom:1rem;color:#FFF;}
-.fin-health-title{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-bottom:1rem;}
+/* Finance */
+.fin-health{background:var(--dark);border-radius:var(--r);padding:1.55rem 1.65rem;margin-bottom:1rem;color:#F8F4EC;}
+.fin-health-title{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(248,244,236,.35);margin-bottom:1rem;}
 .fin-h-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.2rem;}
-.fin-h-stat{background:rgba(255,255,255,.06);border-radius:var(--rs);padding:.85rem .9rem;}
-.fin-h-l{font-family:'DM Mono',monospace;font-size:.56rem;color:rgba(255,255,255,.4);margin-bottom:.4rem;letter-spacing:.06em;}
-.fin-h-v{font-family:'DM Serif Display',serif;font-size:1.3rem;line-height:1.1;}
-.fin-progress-track{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden;margin-bottom:.5rem;}
+.fin-h-stat{background:rgba(248,244,236,.07);border-radius:var(--rs);padding:.9rem 1rem;}
+.fin-h-l{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(248,244,236,.38);margin-bottom:.42rem;letter-spacing:.06em;}
+.fin-h-v{font-family:'DM Serif Display',serif;font-size:1.35rem;line-height:1.1;}
+.fin-progress-track{height:6px;background:rgba(248,244,236,.1);border-radius:3px;overflow:hidden;margin-bottom:.5rem;}
 .fin-progress-fill{height:100%;border-radius:3px;transition:width .6s;}
-.fin-progress-labels{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.56rem;color:rgba(255,255,255,.35);}
+.fin-progress-labels{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(248,244,236,.32);}
 .fin-actions{display:flex;gap:.5rem;margin-bottom:1rem;align-items:center;}
 .fin-toggle{display:flex;gap:.2rem;background:var(--sf2);border-radius:var(--rs);padding:.3rem;flex:1;}
-.fin-tab{flex:1;padding:.45rem;text-align:center;font-family:'DM Mono',monospace;font-size:.65rem;cursor:pointer;border:none;background:transparent;color:var(--t3);transition:all .2s;border-radius:7px;}
-.fin-tab.on{background:var(--sf);color:var(--t1);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
-.fin-item{display:flex;align-items:center;padding:.7rem 0;border-bottom:1px solid var(--b1);gap:.5rem;}
+.fin-tab{flex:1;padding:.46rem;text-align:center;font-family:'DM Mono',monospace;font-size:.67rem;cursor:pointer;border:none;background:transparent;color:var(--t3);transition:all .2s;border-radius:7px;}
+.fin-tab.on{background:var(--sf);color:var(--dark);font-weight:600;box-shadow:0 1px 4px rgba(88,71,56,.1);}
+.fin-item{display:flex;align-items:center;padding:.72rem 0;border-bottom:1px solid var(--b1);gap:.5rem;}
 .fin-item:last-child{border-bottom:none;}
 .fin-info{flex:1;min-width:0;}
-.fin-name{font-size:.88rem;font-weight:500;}
-.fin-date{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--t3);margin-top:.1rem;}
+.fin-name{font-size:.9rem;font-weight:500;color:var(--t1);}
+.fin-date{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);margin-top:.1rem;}
 .fin-r{display:flex;flex-direction:column;align-items:flex-end;gap:.2rem;}
-.fin-amt{font-family:'DM Mono',monospace;font-size:.82rem;}
+.fin-amt{font-family:'DM Mono',monospace;font-size:.84rem;}
 .fin-in{color:var(--done);}
 .fin-ex{color:var(--red);}
-.fin-st{font-family:'DM Mono',monospace;font-size:.58rem;padding:.08rem .36rem;border-radius:4px;cursor:pointer;border:1px solid var(--b2);color:var(--t3);background:transparent;transition:all .15s;}
-.fin-st:hover{border-color:var(--b3);color:var(--t2);}
+.fin-st{font-family:'DM Mono',monospace;font-size:.6rem;padding:.1rem .38rem;border-radius:4px;cursor:pointer;border:1px solid var(--b2);color:var(--t3);background:transparent;transition:all .15s;}
+.fin-st:hover{border-color:var(--acc);color:var(--dark);}
 .extra-total{display:flex;justify-content:space-between;align-items:baseline;padding-top:.85rem;margin-top:.45rem;border-top:1px solid var(--b2);}
-.extra-total-l{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
-.extra-total-v{font-family:'DM Serif Display',serif;font-size:1.4rem;}
-.csv-btn{font-family:'DM Mono',monospace;font-size:.65rem;padding:.42rem .8rem;border:1px solid var(--b2);border-radius:20px;color:var(--t3);cursor:pointer;transition:all .15s;white-space:nowrap;}
-.csv-btn:hover{border-color:var(--t1);color:var(--t1);}
+.extra-total-l{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
+.extra-total-v{font-family:'DM Serif Display',serif;font-size:1.45rem;color:var(--t1);}
+.csv-btn{font-family:'DM Mono',monospace;font-size:.67rem;padding:.44rem .85rem;border:1px solid var(--b2);border-radius:20px;color:var(--t2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.csv-btn:hover{border-color:var(--acc);color:var(--dark);}
 
-/* ── Timeline ── */
+/* Timeline */
 .tl-item{display:flex;gap:.9rem;padding:.9rem 0;border-bottom:1px solid var(--b1);align-items:flex-start;}
 .tl-item:last-child{border-bottom:none;}
-.tl-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;background:var(--sf2);border:1px solid var(--b1);color:var(--t2);}
+.tl-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.05rem;flex-shrink:0;background:var(--sf2);border:1px solid var(--b1);color:var(--t2);}
 .tl-body{flex:1;}
-.tl-title{font-size:.9rem;font-weight:600;margin-bottom:.1rem;}
-.tl-date{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--t3);}
-.tl-note{font-size:.8rem;color:var(--t2);line-height:1.5;margin-top:.2rem;}
-.tl-tag{font-family:'DM Mono',monospace;font-size:.58rem;padding:.18rem .5rem;border-radius:6px;border:1px solid var(--b2);color:var(--t3);flex-shrink:0;}
+.tl-title{font-size:.94rem;font-weight:600;margin-bottom:.1rem;color:var(--t1);}
+.tl-date{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
+.tl-note{font-size:.84rem;color:var(--t2);line-height:1.5;margin-top:.2rem;}
+.tl-tag{font-family:'DM Mono',monospace;font-size:.6rem;padding:.2rem .55rem;border-radius:6px;border:1px solid var(--b2);color:var(--t3);flex-shrink:0;}
 
-/* ── Calendar ── */
-.cal-wrapper{padding:.5rem 0;}
-.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;}
-.cal-nav-btn{font-family:'DM Mono',monospace;font-size:.68rem;padding:.32rem .75rem;border:1px solid var(--b2);border-radius:6px;color:var(--t3);cursor:pointer;transition:all .15s;background:var(--sf);}
-.cal-nav-btn:hover{border-color:var(--b3);color:var(--t2);}
-.cal-m-lbl{font-family:'DM Serif Display',serif;font-size:1.5rem;}
-.cal-legend{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:.85rem;}
-.cal-legend-item{display:flex;align-items:center;gap:.3rem;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--t3);}
-.cal-legend-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+/* ── CALENDAR (全新設計) ── */
+.cal-shell{display:flex;flex-direction:column;gap:1rem;}
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem;}
+.cal-nav-btn{font-family:'DM Mono',monospace;font-size:.7rem;padding:.34rem .8rem;border:1px solid var(--b2);border-radius:6px;color:var(--t2);cursor:pointer;transition:all .15s;background:var(--sf);}
+.cal-nav-btn:hover{border-color:var(--acc);color:var(--dark);background:var(--sf2);}
+.cal-m-lbl{font-family:'DM Serif Display',serif;font-size:1.55rem;color:var(--t1);}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
-.cal-dow{text-align:center;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--t3);padding:.4rem .2rem;}
-.cal-dow:first-child,.cal-dow:last-child{color:var(--red);}
-.cal-cell{min-height:82px;background:var(--sf);border:1px solid var(--b1);border-radius:8px;padding:.28rem .3rem;overflow:hidden;position:relative;}
-.cal-cell.empty{background:transparent;border-color:transparent;}
-.cal-cell.today{border-color:var(--t1);border-width:1.5px;}
-.cal-cell.holiday-cell{background:#FFFBFB;}
-.cal-cell.weekend-cell{background:#FAFAFA;}
-.cal-top-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:.15rem;}
-.cal-day-n{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t2);}
-.cal-day-n.weekend{color:var(--red);}
-.cal-day-n.today-n{width:20px;height:20px;background:var(--t1);color:#fff;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.58rem;}
-.cal-lunar-lbl{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--t3);}
-.cal-lunar-lbl.first{color:var(--done);font-weight:600;}
-.cal-holiday-lbl{font-family:'DM Mono',monospace;font-size:.48rem;color:var(--red);margin-bottom:.12rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.cal-ms-bar{height:14px;margin:1px 0;display:flex;align-items:center;font-size:.46rem;padding:0 4px;overflow:hidden;white-space:nowrap;border-radius:4px;font-weight:500;}
-.cal-ms-bar.ms-start{border-radius:6px 3px 3px 6px;}
-.cal-ms-bar.ms-end{border-radius:3px 6px 6px 3px;}
-.cal-ms-bar.ms-mid{border-radius:0;}
-.cal-ms-bar.ms-solo{border-radius:6px;}
-.cal-dots{display:flex;gap:2px;flex-wrap:wrap;margin-top:2px;}
-.cal-dot{width:5px;height:5px;border-radius:50%;flex-shrink:0;}
+.cal-dow{text-align:center;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);padding:.38rem .2rem;}
+.cal-dow.wknd{color:var(--red);}
+.cal-cell{background:var(--sf);border:1px solid var(--b1);border-radius:8px;padding:.28rem .28rem .32rem;cursor:pointer;transition:all .15s;min-height:54px;position:relative;}
+.cal-cell:hover{border-color:var(--acc2);background:var(--sf2);}
+.cal-cell.empty{background:transparent;border-color:transparent;pointer-events:none;}
+.cal-cell.today-cell{border-color:var(--acc);border-width:1.5px;}
+.cal-cell.sel-cell{background:var(--dark);border-color:var(--dark);}
+.cal-cell.holiday-bg{background:#F8F0EC;}
+.cal-cell.wknd-cell{background:#F5F0EA;}
+.cal-day-n{font-family:'DM Mono',monospace;font-size:.68rem;color:var(--t2);display:block;margin-bottom:.12rem;}
+.sel-cell .cal-day-n{color:#F8F4EC;}
+.cal-cell.today-cell .cal-day-n{color:var(--dark);font-weight:700;}
+.sel-cell.today-cell .cal-day-n{color:#F8F4EC;}
+.cal-lunar-t{font-family:'DM Mono',monospace;font-size:.5rem;color:var(--t3);display:block;}
+.sel-cell .cal-lunar-t{color:rgba(248,244,236,.5);}
+.cal-lunar-t.first-day{color:var(--done);font-weight:600;}
+.cal-holiday-t{font-family:'DM Mono',monospace;font-size:.46rem;color:var(--red);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;margin-top:.08rem;}
+.cal-event-dots{display:flex;gap:2px;flex-wrap:wrap;margin-top:.18rem;}
+.cal-dot{width:4px;height:4px;border-radius:50%;flex-shrink:0;}
+.cal-ms-strip{height:3px;border-radius:0;margin-top:2px;}
+.cal-ms-strip.start{border-radius:2px 0 0 2px;}
+.cal-ms-strip.end{border-radius:0 2px 2px 0;}
+.cal-ms-strip.solo{border-radius:2px;}
 
-/* ── Modal ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
-.modal{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:2rem 2.2rem 1.6rem;width:min(500px,92vw);box-shadow:0 24px 64px rgba(0,0,0,.15);max-height:88vh;overflow-y:auto;}
-.modal h3{font-family:'DM Serif Display',serif;font-size:1.65rem;margin-bottom:1.3rem;}
-.modal label{display:block;font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.12em;color:var(--t3);margin-bottom:.3rem;margin-top:.85rem;text-transform:uppercase;}
-.modal input,.modal select,.modal textarea{width:100%;padding:.6rem .8rem;border:1.5px solid var(--b2);border-radius:var(--rxs);background:var(--sf2);color:var(--t1);font-size:.9rem;outline:none;transition:border-color .15s;}
-.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--t1);}
+/* Day Detail Panel */
+.day-panel{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);box-shadow:var(--sh);overflow:hidden;}
+.day-panel-hdr{padding:1rem 1.35rem;background:var(--dark);display:flex;align-items:baseline;gap:.75rem;}
+.day-panel-date{font-family:'DM Serif Display',serif;font-size:1.55rem;color:#F8F4EC;}
+.day-panel-weekday{font-family:'DM Mono',monospace;font-size:.7rem;color:rgba(248,244,236,.5);}
+.day-panel-lunar{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(248,244,236,.45);margin-left:auto;}
+.day-panel-body{padding:1rem 1.35rem;}
+.day-event-group{margin-bottom:.85rem;}
+.day-event-group:last-child{margin-bottom:0;}
+.day-event-group-title{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.13em;text-transform:uppercase;color:var(--t3);margin-bottom:.55rem;}
+.day-event-card{display:flex;align-items:flex-start;gap:.65rem;padding:.65rem .8rem;border-radius:var(--rxs);border:1px solid var(--b1);margin-bottom:.4rem;background:var(--bg);}
+.day-event-card:last-child{margin-bottom:0;}
+.day-event-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;font-family:'DM Mono',monospace;}
+.day-event-body{flex:1;min-width:0;}
+.day-event-title{font-size:.9rem;font-weight:600;color:var(--t1);margin-bottom:.12rem;}
+.day-event-meta{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
+.day-empty{text-align:center;padding:2rem 1rem;color:var(--t3);}
+.day-empty-icon{font-size:1.5rem;display:block;margin-bottom:.5rem;opacity:.2;}
+.day-empty-txt{font-size:.9rem;}
+
+/* Modal */
+.overlay{position:fixed;inset:0;background:rgba(45,31,20,.5);z-index:1000;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.modal{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:2rem 2.2rem 1.6rem;width:min(500px,92vw);box-shadow:0 24px 64px rgba(45,31,20,.18);max-height:88vh;overflow-y:auto;}
+.modal h3{font-family:'DM Serif Display',serif;font-size:1.7rem;margin-bottom:1.3rem;color:var(--t1);}
+.modal label{display:block;font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.12em;color:var(--t3);margin-bottom:.3rem;margin-top:.85rem;text-transform:uppercase;}
+.modal input,.modal select,.modal textarea{width:100%;padding:.62rem .82rem;border:1.5px solid var(--b2);border-radius:var(--rxs);background:var(--sf2);color:var(--t1);font-size:.94rem;outline:none;transition:border-color .15s;}
+.modal input:focus,.modal select:focus,.modal textarea:focus{border-color:var(--acc);}
 .modal textarea{resize:vertical;min-height:72px;}
 .modal-ft{display:flex;justify-content:flex-end;gap:.6rem;margin-top:1.5rem;}
-.btn-ghost{font-size:.8rem;font-weight:500;padding:.52rem 1.1rem;background:transparent;border:1.5px solid var(--b2);border-radius:var(--rxs);color:var(--t2);cursor:pointer;transition:all .18s;}
-.btn-ghost:hover{border-color:var(--b3);color:var(--t1);}
-.btn-solid{font-size:.8rem;font-weight:600;padding:.52rem 1.35rem;background:var(--dark);border:none;border-radius:var(--rxs);color:#FFF;cursor:pointer;transition:all .18s;}
+.btn-ghost{font-size:.84rem;font-weight:500;padding:.54rem 1.1rem;background:transparent;border:1.5px solid var(--b2);border-radius:var(--rxs);color:var(--t2);cursor:pointer;transition:all .18s;}
+.btn-ghost:hover{border-color:var(--acc);color:var(--dark);}
+.btn-solid{font-size:.84rem;font-weight:600;padding:.54rem 1.35rem;background:var(--dark);border:none;border-radius:var(--rxs);color:#F8F4EC;cursor:pointer;transition:all .18s;}
 .btn-solid:hover{background:var(--dark2);}
-.btn-danger{font-size:.8rem;font-weight:500;padding:.52rem 1.2rem;background:var(--red-bg);border:1px solid rgba(139,58,58,.2);border-radius:var(--rxs);color:var(--red);cursor:pointer;}
+.btn-danger{font-size:.84rem;font-weight:500;padding:.54rem 1.2rem;background:var(--red-bg);border:1px solid rgba(139,64,64,.2);border-radius:var(--rxs);color:var(--red);cursor:pointer;}
 .swatches{display:flex;gap:.45rem;flex-wrap:wrap;margin-top:.4rem;}
 .swatch{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2.5px solid transparent;transition:all .15s;}
 .swatch:hover{transform:scale(1.15);}
-.swatch.on{border-color:var(--t1);transform:scale(1.1);}
+.swatch.on{border-color:var(--dark);transform:scale(1.1);}
 .empty{text-align:center;padding:2.5rem 1rem;}
 .empty-icon{font-family:'DM Mono',monospace;font-size:1.2rem;display:block;margin-bottom:.7rem;opacity:.15;}
-.empty-txt{font-size:.9rem;color:var(--t3);}
+.empty-txt{font-size:.94rem;color:var(--t3);}
 
 /* Responsive */
 @media(max-width:960px){:root{--sb:220px;} .main{padding:1.6rem 1.5rem 2rem;}}
 @media(max-width:680px){
   .workspace{grid-template-columns:1fr;}
-  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;width:272px;height:100%;transform:translateX(-110%);box-shadow:none;}
-  .sidebar.open{transform:translateX(0);box-shadow:12px 0 40px rgba(0,0,0,.12);}
+  .sidebar{position:fixed;left:0;top:0;bottom:0;z-index:150;width:278px;height:100%;transform:translateX(-110%);box-shadow:none;}
+  .sidebar.open{transform:translateX(0);box-shadow:12px 0 40px rgba(45,31,20,.15);}
   .sb-overlay.show{display:block;}
   .sb-close-btn{display:block;}
   .menu-btn{display:flex;}
   .hdr-date{display:none;}
-  .main{padding:1.1rem .9rem calc(var(--bnav)+1.5rem);}
+  /* 修復：主內容不被底部欄位遮住 */
+  .main{padding:1.1rem .95rem 0;overflow-y:auto;}
+  .mobile-spacer{display:block;height:calc(var(--bnav) + 1rem);}
   .proj-title{font-size:2rem;}
   .grid2{grid-template-columns:1fr;}
   .tabs{display:none;}
   .mobile-nav{display:flex;}
   .fin-h-grid{grid-template-columns:1fr 1fr;}
   .prog-num{font-size:3.2rem;}
-  .cal-cell{min-height:66px;}
-  .cal-ms-bar{height:12px;font-size:.42rem;}
+  .cal-cell{min-height:48px;}
+  .day-panel-date{font-size:1.3rem;}
 }
 @media(max-width:400px){.fin-h-grid{grid-template-columns:1fr;}}
 `;
 
-const Tag=({cfg,children})=><span style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",padding:".18rem .48rem",borderRadius:6,...cfg}}>{children}</span>;
+const Tag=({cfg,children})=><span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",padding:".2rem .5rem",borderRadius:6,...cfg}}>{children}</span>;
 const DelX=({onClick})=><button className="del-x" onClick={e=>{e.stopPropagation();onClick();}}>✕</button>;
-const Empty=({icon,text})=><div className="empty"><span className="empty-icon">{icon||"○"}</span><div className="empty-txt">{text}</div></div>;
+const Empty=({text})=><div className="empty"><span className="empty-icon">○</span><div className="empty-txt">{text}</div></div>;
 
-/* ── 行事曆輔助：取得某日的事件 ── */
-function getDayEvents(dateStr, proj, allProjects){
-  const events={milestones:[],todos:[],pendings:[]};
-  const projects=proj?[proj]:allProjects||[];
+/* ── 取得某日詳細事件 ── */
+function getDayDetail(dateStr,proj,allProjects){
+  const items={milestones:[],todos:[],pendings:[]};
+  const projects=proj?[proj]:(allProjects||[]);
   for(const p of projects){
     for(const ms of p.milestones){
-      const s=ms.start, e=ms.end||ms.start;
-      if(dateStr>=s&&dateStr<=e){
-        const pos=s===e?"solo":dateStr===s?"start":dateStr===e?"end":"mid";
-        events.milestones.push({...ms,pos,projColor:p.color});
-      }
+      const s=ms.start,e=ms.end||ms.start;
+      if(dateStr>=s&&dateStr<=e) items.milestones.push({...ms,projName:p.name,projColor:p.color,isStart:dateStr===s,isEnd:dateStr===e||(!ms.end&&dateStr===s)});
     }
-    for(const t of p.todos){
-      if(t.due===dateStr) events.todos.push(t);
-    }
-    for(const pd of p.pendings){
-      if(pd.date===dateStr) events.pendings.push(pd);
-    }
+    for(const t of p.todos) if(t.due===dateStr) items.todos.push({...t,projName:p.name});
+    for(const pd of p.pendings) if(pd.date===dateStr) items.pendings.push({...pd,projName:p.name});
   }
-  return events;
+  return items;
 }
 
-/* ── CalCell ── */
-function CalCell({d,prefix,isToday,dow,proj,allProjects}){
-  const ds=`${prefix}-${String(d).padStart(2,"0")}`;
-  const isWeekend=dow===0||dow===6;
-  const holiday=TW_HOLIDAYS[ds];
-  const lunar=solarToLunar(ds);
-  const evts=getDayEvents(ds,proj,allProjects);
-  const classN=["cal-cell",isToday?"today":"",holiday?"holiday-cell":"",isWeekend&&!holiday?"weekend-cell":""].filter(Boolean).join(" ");
+/* ── 取得某日是否有事件（用於日格點點顯示）── */
+function getDayDots(dateStr,proj,allProjects){
+  const detail=getDayDetail(dateStr,proj,allProjects);
+  return {
+    hasMilestone:detail.milestones.length>0,
+    hasTodo:detail.todos.length>0,
+    hasPending:detail.pendings.length>0,
+    milestoneStatuses:detail.milestones.map(m=>m.status),
+  };
+}
+
+/* ── 日期格式化 ── */
+function fmtFullDate(dateStr){
+  if(!dateStr)return"";
+  const d=new Date(dateStr+"T00:00:00");
+  const weekdays=["週日","週一","週二","週三","週四","週五","週六"];
+  return{
+    full:`${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日`,
+    weekday:weekdays[d.getDay()],
+  };
+}
+
+/* ── DayDetailPanel ── */
+function DayDetailPanel({dateStr,proj,allProjects}){
+  if(!dateStr)return null;
+  const detail=getDayDetail(dateStr,proj,allProjects);
+  const lunar=solarToLunar(dateStr);
+  const holiday=TW_HOLIDAYS[dateStr];
+  const fmt=fmtFullDate(dateStr);
+  const hasAny=detail.milestones.length>0||detail.todos.length>0||detail.pendings.length>0;
   return(
-    <div className={classN}>
-      <div className="cal-top-row">
-        <span className={["cal-day-n",isWeekend?"weekend":"",isToday?"today-n":""].filter(Boolean).join(" ")}>{d}</span>
-        {lunar&&<span className={["cal-lunar-lbl",lunar.isFirst?"first":""].filter(Boolean).join(" ")}>{lunar.isFirst?`${lunar.m}月`:lunar.d}</span>}
+    <div className="day-panel">
+      <div className="day-panel-hdr">
+        <span className="day-panel-date">{fmt.full}</span>
+        <span className="day-panel-weekday">{fmt.weekday}{holiday?` · ${holiday}`:""}</span>
+        {lunar&&<span className="day-panel-lunar">{lunar.isFirst?`農曆${lunar.m}月初一`:`${lunar.m}月${lunar.d}`}</span>}
       </div>
-      {holiday&&<div className="cal-holiday-lbl">{holiday}</div>}
-      {evts.milestones.slice(0,2).map((ms,i)=>{
-        const c=MSS[ms.status].dot;
-        const showTitle=ms.pos==="start"||ms.pos==="solo";
-        return(<div key={i} className={`cal-ms-bar ms-${ms.pos}`} style={{background:c+"22",color:c,borderLeft:ms.pos==="start"||ms.pos==="solo"?`2px solid ${c}`:""}}>
-          {showTitle&&<span style={{overflow:"hidden",textOverflow:"ellipsis"}}>{ms.title}</span>}
-        </div>);
-      })}
-      {(evts.todos.length>0||evts.pendings.length>0)&&(
-        <div className="cal-dots">
-          {evts.todos.slice(0,3).map((t,i)=><span key={i} className="cal-dot" style={{background:t.done?"#3A6B4A":"#8B6914"}} title={t.text}/>)}
-          {evts.pendings.slice(0,2).map((p,i)=><span key={i} className="cal-dot" style={{background:p.status==="urgent"?"#8B3A3A":"#888"}} title={p.title}/>)}
-        </div>
-      )}
+      <div className="day-panel-body">
+        {!hasAny&&<div className="day-empty"><span className="day-empty-icon">○</span><div className="day-empty-txt">這天沒有排程</div></div>}
+        {detail.milestones.length>0&&<div className="day-event-group">
+          <div className="day-event-group-title">里程碑</div>
+          {detail.milestones.map((ms,i)=>{
+            const c=MSS[ms.status];
+            const pos=ms.isStart&&ms.isEnd?"單日":ms.isStart?"開始":ms.isEnd?"結束":"進行中";
+            return(<div key={i} className="day-event-card">
+              <div className="day-event-icon" style={{background:c.tag.bg,color:c.dot}}>{ms.status==="done"?"✓":ms.status==="doing"?"→":"○"}</div>
+              <div className="day-event-body">
+                <div className="day-event-title">{ms.title}</div>
+                <div className="day-event-meta">{ms.projName} · {pos} · {c.l}</div>
+              </div>
+            </div>);
+          })}
+        </div>}
+        {detail.todos.length>0&&<div className="day-event-group">
+          <div className="day-event-group-title">待辦截止</div>
+          {detail.todos.map((t,i)=>{
+            const c=PRC[t.prio];
+            return(<div key={i} className="day-event-card" style={{opacity:t.done?.7:1}}>
+              <div className="day-event-icon" style={{background:c.bg,color:c.color}}>{t.done?"✓":"!"}</div>
+              <div className="day-event-body">
+                <div className="day-event-title" style={{textDecoration:t.done?"line-through":"none"}}>{t.text}</div>
+                <div className="day-event-meta">{t.projName} · 優先度{c.l}{t.done?" · 已完成":""}</div>
+              </div>
+            </div>);
+          })}
+        </div>}
+        {detail.pendings.length>0&&<div className="day-event-group">
+          <div className="day-event-group-title">待確認事項</div>
+          {detail.pendings.map((pd,i)=>{
+            const c=PDS[pd.status];
+            return(<div key={i} className="day-event-card">
+              <div className="day-event-icon" style={{background:c.bg,color:c.color}}>◎</div>
+              <div className="day-event-body">
+                <div className="day-event-title">{pd.title}</div>
+                <div className="day-event-meta">{pd.projName} · {c.l}</div>
+              </div>
+            </div>);
+          })}
+        </div>}
+      </div>
     </div>
   );
 }
 
-/* ── CalGrid ── */
-function CalGrid({calYM,setCalYM,proj,allProjects,legend}){
+/* ── CalendarView ── */
+function CalendarView({proj,allProjects,calYM,setCalYM}){
+  const [selDay,setSelDay]=useState(todayISO());
   const {y,m}=calYM;
   const first=new Date(y,m,1).getDay();
   const dim=new Date(y,m+1,0).getDate();
   const cells=[];for(let i=0;i<first;i++)cells.push(null);for(let d=1;d<=dim;d++)cells.push(d);
   const td=todayISO();
   const prefix=`${y}-${String(m+1).padStart(2,"0")}`;
-  return(<div className="cal-wrapper">
-    <div className="cal-nav-row">
-      <button className="cal-nav-btn" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
-      <span className="cal-m-lbl">{y} 年 {MONTHS[m]}</span>
-      <button className="cal-nav-btn" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
+
+  return(
+    <div className="cal-shell">
+      {/* 月份導航 */}
+      <div className="cal-nav-row">
+        <button className="cal-nav-btn" onClick={()=>setCalYM(({y,m})=>m===0?{y:y-1,m:11}:{y,m:m-1})}>← 上月</button>
+        <span className="cal-m-lbl">{y} 年 {MONTHS[m]}</span>
+        <button className="cal-nav-btn" onClick={()=>setCalYM(({y,m})=>m===11?{y:y+1,m:0}:{y,m:m+1})}>下月 →</button>
+      </div>
+      {/* 月份格 */}
+      <div className="cal-grid">
+        {WDAYS.map((w,i)=><div key={w} className={`cal-dow${i===0||i===6?" wknd":""}`}>{w}</div>)}
+        {cells.map((d,i)=>{
+          if(!d)return<div key={"_"+i} className="cal-cell empty"/>;
+          const ds=`${prefix}-${String(d).padStart(2,"0")}`;
+          const dow=(first+d-1)%7;
+          const isToday=ds===td, isSel=ds===selDay, isWknd=dow===0||dow===6;
+          const holiday=TW_HOLIDAYS[ds];
+          const lunar=solarToLunar(ds);
+          const dots=getDayDots(ds,proj,allProjects);
+          const cls=["cal-cell",isToday?"today-cell":"",isSel?"sel-cell":"",holiday&&!isSel?"holiday-bg":"",isWknd&&!holiday&&!isSel?"wknd-cell":""].filter(Boolean).join(" ");
+          return(
+            <div key={d} className={cls} onClick={()=>setSelDay(ds)}>
+              <span className={`cal-day-n${isWknd&&!isSel?" wknd":""}`}>{d}</span>
+              {lunar&&<span className={`cal-lunar-t${lunar.isFirst?" first-day":""}`}>{lunar.isFirst?`${lunar.m}月`:lunar.d}</span>}
+              {holiday&&!isSel&&<span className="cal-holiday-t">{holiday}</span>}
+              {/* 里程碑色條 */}
+              {dots.milestoneStatuses.slice(0,2).map((st,j)=><div key={j} className="cal-ms-strip" style={{background:MSS[st].dot+"55"}}/>)}
+              {/* 事件點 */}
+              {(dots.hasTodo||dots.hasPending)&&<div className="cal-event-dots">
+                {dots.hasTodo&&<span className="cal-dot" style={{background:"#8B6020"}}/>}
+                {dots.hasPending&&<span className="cal-dot" style={{background:"#8B4040"}}/>}
+              </div>}
+            </div>
+          );
+        })}
+      </div>
+      {/* 選定日事件詳情 */}
+      <DayDetailPanel dateStr={selDay} proj={proj} allProjects={allProjects}/>
     </div>
-    {legend&&<div className="cal-legend">
-      <div className="cal-legend-item"><span className="cal-legend-dot" style={{background:"#3A6B4A"}}/><span>已完成里程碑</span></div>
-      <div className="cal-legend-item"><span className="cal-legend-dot" style={{background:"#8B6914"}}/><span>進行中里程碑</span></div>
-      <div className="cal-legend-item"><span className="cal-legend-dot" style={{background:"#BBB"}}/><span>待進行里程碑</span></div>
-      <div className="cal-legend-item"><span className="cal-legend-dot" style={{background:"#8B6914"}}/><span>待辦截止</span></div>
-      <div className="cal-legend-item"><span className="cal-legend-dot" style={{background:"#8B3A3A"}}/><span>緊急待確認</span></div>
-      <div className="cal-legend-item"><span style={{width:16,height:8,background:"#FFFBFB",border:"1px solid #8B3A3A44",borderRadius:2,display:"inline-block"}}/><span>國定假日</span></div>
-    </div>}
-    <div className="cal-grid">
-      {WDAYS.map((w,i)=><div key={w} className="cal-dow" style={i===0||i===6?{color:"var(--red)"}:{}}>{w}</div>)}
-      {cells.map((d,i)=>{
-        if(!d)return<div key={"_"+i} className="cal-cell empty"/>;
-        const ds=`${prefix}-${String(d).padStart(2,"0")}`;
-        const dow=(first+d-1)%7;
-        return<CalCell key={d} d={d} prefix={prefix} isToday={ds===td} dow={dow} proj={proj} allProjects={allProjects}/>;
-      })}
-    </div>
-  </div>);
+  );
 }
 
 /* ── OverviewTab ── */
@@ -522,11 +567,10 @@ function OverviewTab({proj,upd,openModal}){
   return(<>
     <div className="prog-card full" style={{marginBottom:"1rem"}}>
       <div className="prog-top">
-        <div>
-          <span className="prog-num">{pct}</span><span className="prog-unit">%</span>
-          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"rgba(255,255,255,.4)",marginTop:".3rem"}}>{done} / {total} 里程碑完成</div>
+        <div><span className="prog-num">{pct}</span><span className="prog-unit">%</span>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"rgba(248,244,236,.4)",marginTop:".3rem"}}>{done} / {total} 里程碑完成</div>
         </div>
-        <select value={proj.stage} onChange={e=>upd(p=>({...p,stage:e.target.value}))} style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:".22rem .65rem",background:"rgba(255,255,255,.08)",color:"rgba(255,255,255,.6)",cursor:"pointer",outline:"none"}}>
+        <select value={proj.stage} onChange={e=>upd(p=>({...p,stage:e.target.value}))} style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",border:"1px solid rgba(248,244,236,.18)",borderRadius:7,padding:".24rem .7rem",background:"rgba(248,244,236,.08)",color:"rgba(248,244,236,.65)",cursor:"pointer",outline:"none"}}>
           {STAGES.map(s=><option key={s} value={s}>{STAGE_L[s]}</option>)}
         </select>
       </div>
@@ -617,7 +661,6 @@ function FinanceTab({proj,upd,openModal}){
   const grossProfit=collected-totalExp;
   const invoicePct=contractAmt>0?Math.min(100,Math.round(totalInvoiced/contractAmt*100)):0;
   const collectPct=contractAmt>0?Math.min(100,Math.round(collected/contractAmt*100)):0;
-
   const rl=(items,type)=>items.length===0?<Empty text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>:
     items.map(f=><div key={f.id} className="fin-item">
       <div className="fin-info"><div className="fin-name">{f.name}</div><div className="fin-date">{fmtD(f.date)}{f.cat?` · ${f.cat}`:""}{f.note?` · ${f.note}`:""}</div></div>
@@ -627,51 +670,24 @@ function FinanceTab({proj,upd,openModal}){
       </div>
       <DelX onClick={()=>delFin(f.id)}/>
     </div>);
-
   return(<>
-    {/* Financial Health Card */}
     <div className="fin-health">
-      <div className="fin-health-title">財務概況 — Financial Health</div>
+      <div className="fin-health-title">Financial Health — 財務概況</div>
       <div className="fin-h-grid">
-        <div className="fin-h-stat">
-          <div className="fin-h-l">合約金額</div>
-          <div className="fin-h-v" style={{color:"#FFF"}}>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".75rem",color:"rgba(255,255,255,.3)"}}>未設定</span>}</div>
-        </div>
-        <div className="fin-h-stat">
-          <div className="fin-h-l">已請款</div>
-          <div className="fin-h-v" style={{color:"rgba(255,255,255,.8)"}}>NT${fmtN(totalInvoiced)}</div>
-        </div>
-        <div className="fin-h-stat">
-          <div className="fin-h-l">已收款</div>
-          <div className="fin-h-v" style={{color:"#80C880"}}>NT${fmtN(collected)}</div>
-        </div>
-        <div className="fin-h-stat">
-          <div className="fin-h-l">待收款</div>
-          <div className="fin-h-v" style={{color:"#E0C880"}}>NT${fmtN(outstanding)}</div>
-        </div>
-        <div className="fin-h-stat">
-          <div className="fin-h-l">未請款</div>
-          <div className="fin-h-v" style={{color:"rgba(255,255,255,.5)"}}>NT${fmtN(Math.max(0,unbilled))}</div>
-        </div>
-        <div className="fin-h-stat">
-          <div className="fin-h-l">毛利 (已收-支出)</div>
-          <div className="fin-h-v" style={{color:grossProfit>=0?"#80C880":"#E08080"}}>NT${fmtN(grossProfit)}</div>
-        </div>
+        <div className="fin-h-stat"><div className="fin-h-l">合約金額</div><div className="fin-h-v" style={{color:"#F8F4EC"}}>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定</span>}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">已請款</div><div className="fin-h-v" style={{color:"rgba(248,244,236,.8)"}}>NT${fmtN(totalInvoiced)}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">已收款</div><div className="fin-h-v" style={{color:"#A8C8A8"}}>NT${fmtN(collected)}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">待收款</div><div className="fin-h-v" style={{color:"#D4C080"}}>NT${fmtN(outstanding)}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">未請款</div><div className="fin-h-v" style={{color:"rgba(248,244,236,.45)"}}>NT${fmtN(Math.max(0,unbilled))}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">毛利</div><div className="fin-h-v" style={{color:grossProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(grossProfit)}</div></div>
       </div>
       {contractAmt>0&&<>
-        <div className="fin-progress-track">
-          <div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(255,255,255,.35)"}}/>
-        </div>
+        <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(181,158,125,.6)"}}/></div>
         <div style={{height:4}}/>
-        <div className="fin-progress-track">
-          <div className="fin-progress-fill" style={{width:collectPct+"%",background:"#80C880"}}/>
-        </div>
-        <div className="fin-progress-labels" style={{marginTop:".4rem"}}>
-          <span>請款率 {invoicePct}%</span><span>收款率 {collectPct}%</span>
-        </div>
+        <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:collectPct+"%",background:"#A8C8A8"}}/></div>
+        <div className="fin-progress-labels" style={{marginTop:".4rem"}}><span>請款率 {invoicePct}%</span><span>收款率 {collectPct}%</span></div>
       </>}
     </div>
-
     <div className="fin-actions">
       <div className="fin-toggle">
         <button className={`fin-tab${sub==="income"?" on":""}`} onClick={()=>setSub("income")}>收款項目</button>
@@ -680,7 +696,6 @@ function FinanceTab({proj,upd,openModal}){
       </div>
       <button className="csv-btn" onClick={()=>exportCSV(proj)}>↓ CSV</button>
     </div>
-
     {sub==="income"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finIncome")}>＋ 新增</button></div><div className="card">{rl(inc,"income")}</div></>}
     {sub==="expense"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finExpense")}>＋ 新增</button></div><div className="card">{rl(exp,"expense")}</div></>}
     {sub==="extras"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("extra")}>＋ 新增</button></div>
@@ -743,7 +758,9 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM}){
     {tab==="timeline"&&<TimelineTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="pending"&&<PendingTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
-    {tab==="cal"&&<CalGrid calYM={calYM} setCalYM={setCalYM} proj={proj} legend={true}/>}
+    {tab==="cal"&&<CalendarView proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
+    {/* 修復1：手機底部間距，避免被 MobileNav 遮住 */}
+    <div className="mobile-spacer"/>
     <MobileNav tab={tab} setTab={setTab} pendCount={pendCount}/>
   </>);
 }
@@ -752,14 +769,13 @@ function AllCalendar({data,calYM,setCalYM}){
   return(<>
     <div className="proj-hdr">
       <div className="proj-title">總合行事曆</div>
-      <div className="proj-meta-row">
-        <span className="proj-meta">All Projects — 整合所有案件時程</span>
-      </div>
+      <div className="proj-meta-row"><span className="proj-meta">All Projects</span></div>
       <div style={{display:"flex",gap:".4rem",flexWrap:"wrap",marginTop:".6rem"}}>
-        {data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",padding:".16rem .55rem",borderRadius:20,border:"1px solid rgba(0,0,0,.12)",color:p.color}}>{p.name}</span>)}
+        {data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",padding:".18rem .58rem",borderRadius:20,border:"1px solid var(--b2)",color:p.color,background:"var(--sf)"}}>{p.name}</span>)}
       </div>
     </div>
-    <CalGrid calYM={calYM} setCalYM={setCalYM} allProjects={data.projects} legend={true}/>
+    <CalendarView allProjects={data.projects} calYM={calYM} setCalYM={setCalYM}/>
+    <div className="mobile-spacer"/>
   </>);
 }
 
@@ -804,7 +820,7 @@ function DelProjModal({proj,close,upd,onDeleted}){
   const confirm=()=>{upd(d=>({...d,projects:d.projects.filter(p=>p.id!==proj.id)}));onDeleted(proj.id);close();};
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal" style={{maxWidth:400}}>
     <h3>刪除案件</h3>
-    <p style={{fontSize:".9rem",color:"var(--t2)",lineHeight:1.7,margin:"1rem 0 1.4rem"}}>確定要刪除「<strong style={{color:"var(--t1)"}}>{proj.name}</strong>」？<br/>所有資料將永久刪除，無法復原。</p>
+    <p style={{fontSize:".95rem",color:"var(--t2)",lineHeight:1.7,margin:"1rem 0 1.4rem"}}>確定要刪除「<strong style={{color:"var(--t1)"}}>{proj.name}</strong>」？<br/>所有資料將永久刪除，無法復原。</p>
     <div className="modal-ft"><button className="btn-ghost" onClick={close}>取消</button><button className="btn-danger" onClick={confirm}>確認刪除</button></div>
   </div></div>);
 }
@@ -836,7 +852,6 @@ function ItemModal({type,close,updP}){
   </div></div>);
 }
 
-/* ── App ── */
 function App(){
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -852,7 +867,6 @@ function App(){
 
   useEffect(()=>{
     loadData().then(d=>{setData(d);if(d.projects.length>0)setPid(d.projects[0].id);setLoading(false);});
-    // 修復1：每20秒輪詢，若本裝置5秒內無存檔，則從伺服器拉取最新資料
     const poll=setInterval(async()=>{
       if(Date.now()-lastSaveTime.current<5000)return;
       try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length)setData(rows[0].data);}catch(e){}
@@ -860,15 +874,7 @@ function App(){
     return()=>clearInterval(poll);
   },[]);
 
-  const upd=useCallback(fn=>{
-    setData(prev=>{
-      const next=fn(prev);
-      lastSaveTime.current=Date.now();
-      saveData(next).then(()=>{setSyncOk(true);setTimeout(()=>setSyncOk(false),2500);});
-      return next;
-    });
-  },[]);
-
+  const upd=useCallback(fn=>{setData(prev=>{const next=fn(prev);lastSaveTime.current=Date.now();saveData(next).then(()=>{setSyncOk(true);setTimeout(()=>setSyncOk(false),2500);});return next;});},[]);
   const updP=useCallback((pid,fn)=>{upd(d=>({...d,projects:d.projects.map(p=>p.id===pid?fn(p):p)}));},[upd]);
   const proj=data?.projects.find(p=>p.id===pid)||null;
   const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
@@ -878,7 +884,7 @@ function App(){
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);},[]);
   const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setSbOpen(false);},[]);
 
-  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#E9E9E9",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#CCCCCC"}}>ID Studio</div>);
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>ID Studio</div>);
 
   const dateParts=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,".");
 
@@ -886,7 +892,7 @@ function App(){
     <style>{CSS}</style>
     {modal?.type==="newProj"&&<NewProjModal close={closeModal} upd={upd} onCreated={handleCreated}/>}
     {modal?.type==="editProj"&&proj&&<EditProjModal proj={proj} close={closeModal} upd={fn=>updP(pid,fn)}/>}
-       {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
+    {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
     {delTarget&&<DelProjModal proj={delTarget} close={()=>setDelTarget(null)} upd={upd} onDeleted={handleDeleted}/>}
     <div className={`sb-overlay${sbOpen?" show":""}`} onClick={()=>setSbOpen(false)}/>
 
@@ -898,7 +904,7 @@ function App(){
         <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
-        <div className={`sync-pip${syncOk?" on":""}`} title={syncOk?"已同步":""}/>
+        <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
         <button className="hdr-btn" onClick={()=>{setShowAllCal(v=>!v);setSbOpen(false);}}>{showAllCal?"返回案件":"行事曆"}</button>
       </div>
@@ -926,16 +932,16 @@ function App(){
       <main className="main">
         {data.projects.length===0?(
           <div style={{textAlign:"center",paddingTop:"6rem"}}>
-            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"2.5rem",fontWeight:400,marginBottom:".6rem"}}>尚無任何案件</div>
-            <div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
-            <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".85rem"}}>＋ 新增案件</button>
+            <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"2.5rem",fontWeight:400,marginBottom:".6rem",color:"var(--t1)"}}>尚無任何案件</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
+            <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
         ):showAllCal?(
           <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
         ):proj?(
           <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM}/>
         ):(
-          <div style={{textAlign:"center",paddingTop:"5rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".72rem"}}>← 請從左側選擇案件</div>
+          <div style={{textAlign:"center",paddingTop:"5rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".78rem"}}>← 請從左側選擇案件</div>
         )}
       </main>
     </div>
