@@ -866,10 +866,16 @@ function App(){
   const lastSaveTime=useRef(0);
 
   useEffect(()=>{
-    loadData().then(d=>{setData(d);if(d.projects.length>0)setPid(d.projects[0].id);setLoading(false);});
+    loadData().then(d=>{
+      setData(d);
+      if(d.projects.length>0)setPid(d.projects[0].id);
+      setLoading(false);
+      // 啟動通知檢查
+      requestAndCheckNotifications(d);
+    });
     const poll=setInterval(async()=>{
       if(Date.now()-lastSaveTime.current<5000)return;
-      try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length)setData(rows[0].data);}catch(e){}
+      try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length){setData(rows[0].data);requestAndCheckNotifications(rows[0].data);}}catch(e){}
     },20000);
     return()=>clearInterval(poll);
   },[]);
@@ -906,6 +912,7 @@ function App(){
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
+        {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
         <button className="hdr-btn" onClick={()=>{setShowAllCal(v=>!v);setSbOpen(false);}}>{showAllCal?"返回案件":"行事曆"}</button>
       </div>
     </header>
@@ -946,6 +953,109 @@ function App(){
       </main>
     </div>
   </>);
+}
+
+
+/* ═══════════════════════════════════
+   通知系統 — Notification System
+   ═══════════════════════════════════ */
+const NOTIF_KEY_PREFIX = "ids-notif-shown-";
+
+function getTodayNotifKey() {
+  return NOTIF_KEY_PREFIX + todayISO();
+}
+
+function getShownSet() {
+  try {
+    const raw = localStorage.getItem(getTodayNotifKey());
+    return new Set(JSON.parse(raw || "[]"));
+  } catch { return new Set(); }
+}
+
+function markShown(ids) {
+  try {
+    const existing = getShownSet();
+    ids.forEach(id => existing.add(id));
+    localStorage.setItem(getTodayNotifKey(), JSON.stringify([...existing]));
+    // 清理舊 key（保留最近 3 天）
+    const keep = new Set([0,1,2].map(n => {
+      const d = new Date(); d.setDate(d.getDate()-n);
+      return NOTIF_KEY_PREFIX + d.toISOString().slice(0,10);
+    }));
+    Object.keys(localStorage).filter(k=>k.startsWith(NOTIF_KEY_PREFIX)&&!keep.has(k)).forEach(k=>localStorage.removeItem(k));
+  } catch {}
+}
+
+function showNotif(title, body, tag) {
+  if (Notification.permission !== "granted") return;
+  try {
+    new Notification(title, {
+      body,
+      tag,
+      icon: "https://chuan-06.vercel.app/favicon.ico",
+      badge: "https://chuan-06.vercel.app/favicon.ico",
+      requireInteraction: false,
+      silent: false,
+    });
+  } catch(e) {}
+}
+
+async function requestAndCheckNotifications(data) {
+  if (!("Notification" in window)) return;
+
+  // 第一次開啟時詢問權限
+  if (Notification.permission === "default") {
+    await Notification.requestPermission();
+  }
+  if (Notification.permission !== "granted") return;
+
+  const today = todayISO();
+  const tomorrow = (() => {
+    const d = new Date(); d.setDate(d.getDate()+1);
+    return d.toISOString().slice(0,10);
+  })();
+
+  const shown = getShownSet();
+  const newShown = [];
+
+  for (const proj of (data.projects || [])) {
+    // ── 待辦事項 ──
+    for (const todo of (proj.todos || [])) {
+      if (todo.done) continue;
+      const base = `todo-${todo.id}`;
+      if (todo.due < today) {
+        const id = `${base}-overdue`;
+        if (!shown.has(id)) {
+          showNotif("⚠️ 逾期未完成", `${todo.text}\n📁 ${proj.name}`, id);
+          newShown.push(id);
+        }
+      } else if (todo.due === today) {
+        const id = `${base}-today`;
+        if (!shown.has(id)) {
+          showNotif("📌 今日截止事項", `${todo.text}\n📁 ${proj.name}`, id);
+          newShown.push(id);
+        }
+      } else if (todo.due === tomorrow) {
+        const id = `${base}-tomorrow`;
+        if (!shown.has(id)) {
+          showNotif("⏰ 明日截止提醒", `${todo.text}\n📁 ${proj.name}`, id);
+          newShown.push(id);
+        }
+      }
+    }
+
+    // ── 緊急待確認 ──
+    for (const pd of (proj.pendings || [])) {
+      if (pd.status !== "urgent") continue;
+      const id = `pend-${pd.id}-${today}`;
+      if (!shown.has(id)) {
+        showNotif("🚨 緊急事項待確認", `${pd.title}\n📁 ${proj.name}`, id);
+        newShown.push(id);
+      }
+    }
+  }
+
+  if (newShown.length > 0) markShown(newShown);
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
