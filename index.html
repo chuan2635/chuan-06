@@ -875,7 +875,7 @@ function App(){
     });
     const poll=setInterval(async()=>{
       if(Date.now()-lastSaveTime.current<5000)return;
-      try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length){setData(rows[0].data);requestAndCheckNotifications(rows[0].data);}}catch(e){}
+      try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length){setData(rows[0].data);/* 注意：polling 不呼叫通知，避免重複推送 */}}catch(e){}
     },20000);
     return()=>clearInterval(poll);
   },[]);
@@ -961,6 +961,10 @@ function App(){
    ═══════════════════════════════════ */
 const NOTIF_KEY_PREFIX = "ids-notif-shown-";
 
+// 節流：每次 session 最多檢查一次，避免 polling 重複觸發
+let _notifSessionDone = false;
+let _notifLastRun = 0;
+
 function getTodayNotifKey() {
   return NOTIF_KEY_PREFIX + todayISO();
 }
@@ -1000,8 +1004,22 @@ function showNotif(title, body, tag) {
   } catch(e) {}
 }
 
-async function requestAndCheckNotifications(data) {
+async function requestAndCheckNotifications(data, force=false) {
   if (!("Notification" in window)) return;
+
+  // 只在早上 8 點之後才發送通知（符合使用者設定）
+  const nowDate = new Date();
+  if (nowDate.getHours() < 8) return;
+
+  // 節流：同一天只執行一次（早上 8 點後第一次開啟頁面才觸發）
+  const todayKey = "ids-notif-done-" + todayISO();
+  if (!force && localStorage.getItem(todayKey)) return;
+  localStorage.setItem(todayKey, "1");
+  // 清理 3 天前的 key
+  [1,2,3].forEach(n => {
+    const d = new Date(); d.setDate(d.getDate()-n);
+    localStorage.removeItem("ids-notif-done-" + d.toISOString().slice(0,10));
+  });
 
   // 第一次開啟時詢問權限
   if (Notification.permission === "default") {
