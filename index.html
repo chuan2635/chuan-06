@@ -74,21 +74,23 @@ function exportCSV(proj){
 }
 
 const INIT={projects:[
-  {id:"p1",name:"台北信義住宅裝修",owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#584738",contractAmt:600000,
+  {id:"p1",name:"台北信義住宅裝修",archived:false,owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#584738",contractAmt:600000,
     milestones:[{id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},{id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},{id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},{id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"}],
     todos:[{id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},{id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},{id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
     pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27"}],
     finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
+    financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],
     timelines:[{id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測"},{id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向"},{id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認"}]},
-  {id:"p2",name:"新北板橋商業空間",owner:"陳小姐",loc:"新北市板橋區",contact:"陳美君",tel:"0988-765-432",stage:"drawing",color:"#9A7A60",contractAmt:450000,
+  {id:"p2",name:"新北板橋商業空間",archived:false,owner:"陳小姐",loc:"新北市板橋區",contact:"陳美君",tel:"0988-765-432",stage:"drawing",color:"#9A7A60",contractAmt:450000,
     milestones:[{id:"m1",title:"平面規劃完成",status:"done",start:"2026-03-01",end:"2026-03-15",prio:"high"},{id:"m2",title:"3D提案簡報",status:"doing",start:"2026-04-01",end:"2026-04-25",prio:"high"},{id:"m3",title:"施工圖發包",status:"pending",start:"2026-05-15",end:"2026-05-31",prio:"mid"}],
     todos:[{id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},{id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},{id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
     pendings:[{id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},{id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"}],
     finances:[{id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},{id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"}],
     extras:[],
+    financeTodos:[{id:"ftt3",text:"確認合約簽署完成",done:false,due:"2026-05-15",note:""},{id:"ftt4",text:"發送設計費第一期請款單",done:false,due:"2026-05-20",note:""}],
     timelines:[{id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格"},{id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸"}]}
 ]};
 
@@ -376,6 +378,81 @@ input,select,textarea{font-family:inherit;}
 .empty-icon{font-family:'DM Mono',monospace;font-size:1.2rem;display:block;margin-bottom:.7rem;opacity:.15;}
 .empty-txt{font-size:.94rem;color:var(--t3);}
 
+
+/* ── 里程碑內嵌編輯 ── */
+.ms-item-wrap{list-style:none;}
+.ms-item{display:flex;gap:.75rem;padding:.72rem 0 .5rem;border-bottom:1px solid var(--b1);align-items:flex-start;cursor:pointer;}
+.ms-item:last-of-type{border-bottom:none;}
+.ms-item:hover{background:var(--sf2);margin:0 -.5rem;padding:.72rem .5rem .5rem;border-radius:var(--rxs);}
+.edit-toggle{background:none;border:1px solid var(--b2);border-radius:4px;cursor:pointer;color:var(--t3);font-size:.72rem;padding:.12rem .42rem;transition:all .15s;flex-shrink:0;}
+.edit-toggle:hover,.edit-toggle.on{border-color:var(--acc);color:var(--dark);background:var(--sf2);}
+.ms-edit-panel{background:var(--sf2);border:1px solid var(--b2);border-radius:var(--rxs);padding:1rem 1.1rem;margin:.25rem 0 .6rem;}
+.ms-edit-grid{display:grid;grid-template-columns:1fr 1fr;gap:.55rem .8rem;margin-bottom:.8rem;}
+.ms-edit-grid .fw{grid-column:1/-1;}
+.ef{display:flex;flex-direction:column;gap:.2rem;}
+.ef label{font-family:'DM Mono',monospace;font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--t3);}
+.ef input,.ef select,.ef textarea{padding:.42rem .6rem;border:1.5px solid var(--b2);border-radius:var(--rxs);background:var(--sf);color:var(--t1);font-size:.86rem;outline:none;font-family:inherit;transition:border-color .15s;}
+.ef input:focus,.ef select:focus,.ef textarea:focus{border-color:var(--acc);}
+.ef textarea{resize:vertical;min-height:52px;font-size:.82rem;}
+.ms-edit-ft{display:flex;justify-content:flex-end;gap:.45rem;}
+/* ── 整合待辦視圖 ── */
+.at-proj-hd{display:flex;align-items:center;gap:.55rem;margin-bottom:.65rem;padding:.45rem 0;}
+.at-proj-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.at-proj-name{font-size:.9rem;font-weight:600;color:var(--t1);}
+.at-proj-count{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
+.at-todo-row{display:flex;gap:.8rem;align-items:flex-start;padding:.8rem 0;border-bottom:1px solid var(--b1);}
+.at-todo-row:last-child{border-bottom:none;}
+.at-todo-info{flex:1;min-width:0;}
+.at-todo-proj{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--t3);margin-bottom:.18rem;}
+/* ── 財務待辦 ── */
+.fin-todo-section{margin-top:1.2rem;}
+
+/* ── Dashboard ── */
+.dash-wrap{max-width:860px;}
+.dash-greeting{font-family:'DM Serif Display',serif;font-size:2.6rem;line-height:1.05;color:var(--t1);}
+.dash-date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--t3);margin-top:.3rem;}
+.dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.5rem 0 1.8rem;}
+.dash-stat{background:var(--sf);border:1px solid var(--b1);border-radius:var(--r);padding:1rem 1.2rem;cursor:pointer;transition:all .18s;box-shadow:var(--sh);}
+.dash-stat:hover{border-color:var(--acc);box-shadow:var(--shm);}
+.dash-stat.red{background:var(--red-bg);border-color:rgba(139,64,64,.15);}
+.dash-stat-n{font-family:'DM Serif Display',serif;font-size:2.4rem;line-height:1;color:var(--t1);margin-bottom:.3rem;}
+.dash-stat.red .dash-stat-n{color:var(--red);}
+.dash-stat-l{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--t3);letter-spacing:.07em;}
+.dash-sec{margin-bottom:1.6rem;}
+.dash-sec-hd{display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem;}
+.dash-sec-title{font-family:'DM Mono',monospace;font-size:.62rem;letter-spacing:.15em;text-transform:uppercase;color:var(--t3);}
+.dash-sec-count{font-family:'DM Mono',monospace;font-size:.6rem;background:var(--sf3);padding:.12rem .42rem;border-radius:10px;color:var(--t2);}
+.dash-item{display:flex;align-items:center;gap:.75rem;padding:.8rem 1rem;background:var(--sf);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:.38rem;cursor:pointer;transition:all .15s;box-shadow:var(--sh);}
+.dash-item:hover{border-color:var(--b2);transform:translateY(-1px);box-shadow:var(--shm);}
+.dash-item.ov{border-left:3px solid var(--red);}
+.dash-item.td{border-left:3px solid var(--amber);}
+.dash-item.ug{border-left:3px solid var(--red);}
+.dash-item.wk{border-left:3px solid var(--acc);}
+.dash-item-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.dash-item-body{flex:1;min-width:0;}
+.dash-item-title{font-size:.9rem;font-weight:500;color:var(--t1);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-item-meta{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);margin-top:.1rem;display:flex;gap:.5rem;}
+.dash-item-badge{font-family:'DM Mono',monospace;font-size:.56rem;padding:.1rem .36rem;border-radius:4px;flex-shrink:0;}
+.phc{display:flex;align-items:center;gap:.9rem;padding:.95rem 1.1rem;background:var(--sf);border:1px solid var(--b1);border-radius:var(--rs);margin-bottom:.5rem;cursor:pointer;transition:all .18s;box-shadow:var(--sh);}
+.phc:hover{border-color:var(--acc);box-shadow:var(--shm);}
+.phc-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.phc-info{flex:1;min-width:0;}
+.phc-name{font-size:.9rem;font-weight:600;color:var(--t1);}
+.phc-stage{font-family:'DM Mono',monospace;font-size:.6rem;color:var(--t3);margin-top:.08rem;}
+.phc-track-wrap{width:32%;}
+.phc-track-labels{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:.58rem;color:var(--t3);margin-bottom:.2rem;}
+.phc-track{height:4px;background:var(--sf3);border-radius:2px;overflow:hidden;}
+.phc-fill{height:100%;border-radius:2px;transition:width .5s;}
+.phc-badges{display:flex;gap:.3rem;flex-shrink:0;}
+.phc-badge{font-family:'DM Mono',monospace;font-size:.58rem;padding:.14rem .42rem;border-radius:5px;white-space:nowrap;}
+.sb-urgent-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 5px rgba(139,64,64,.4);}
+
+/* ── 歸檔 ── */
+.archived-banner{background:var(--sf2);border:1px solid var(--b2);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;}
+.archived-banner-txt{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
+.archived-badge{font-family:'DM Mono',monospace;font-size:.56rem;padding:.14rem .5rem;border-radius:10px;background:var(--sf3);color:var(--t3);}
+.sb-archive-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;padding:.45rem .65rem;cursor:pointer;transition:all .15s;border:none;background:transparent;}
+.sb-archive-toggle:hover{color:var(--t2);}
 /* Responsive */
 @media(max-width:960px){:root{--sb:220px;} .main{padding:1.6rem 1.5rem 2rem;}}
 @media(max-width:680px){
@@ -556,6 +633,58 @@ function CalendarView({proj,allProjects,calYM,setCalYM}){
   );
 }
 
+/* ── MilestoneItem（可內嵌編輯）── */
+function fmtDT(date,time){if(!date)return"—";let s=fmtD(date);if(time)s+=` ${time}`;return s;}
+function MilestoneItem({ms,updMs,delMs}){
+  const [open,setOpen]=useState(false);
+  const [form,setForm]=useState({...ms});
+  const cv=MSS[ms.status];
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  const save=()=>{updMs(ms.id,form);setOpen(false);};
+  return(
+    <li className="ms-item-wrap">
+      <div className="ms-item" onClick={()=>setOpen(v=>!v)}>
+        <div className="ms-dot-w"><div className="ms-dot" style={{borderColor:cv.dot,background:ms.status==="done"?cv.dot:"transparent"}}/></div>
+        <div className="ms-body">
+          <div className="ms-title">{ms.title}</div>
+          <div className="ms-dates">{fmtDT(ms.start,ms.startTime)}{ms.end?` → ${fmtDT(ms.end,ms.endTime)}`:""}</div>
+          {ms.note&&<div style={{fontSize:".78rem",color:"var(--t3)",marginTop:".12rem"}}>{ms.note}</div>}
+        </div>
+        <div className="ms-r">
+          <span className="tag-sm" style={cv.tag}>{cv.l}</span>
+          <Tag cfg={PRC[ms.prio]}>{PRC[ms.prio].l}</Tag>
+          <button className={`edit-toggle${open?" on":""}`} onClick={e=>{e.stopPropagation();setOpen(v=>!v);}}>✎</button>
+          <DelX onClick={()=>delMs(ms.id)}/>
+        </div>
+      </div>
+      {open&&<div className="ms-edit-panel">
+        <div className="ms-edit-grid">
+          <div className="ef fw"><label>里程碑名稱</label><input value={form.title||""} onChange={F("title")}/></div>
+          <div className="ef"><label>狀態</label>
+            <select value={form.status||"pending"} onChange={F("status")}>
+              {Object.entries(MSS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+            </select>
+          </div>
+          <div className="ef"><label>優先級</label>
+            <select value={form.prio||"mid"} onChange={F("prio")}>
+              {Object.entries(PRC).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+            </select>
+          </div>
+          <div className="ef"><label>開始日期</label><input type="date" value={form.start||""} onChange={F("start")}/></div>
+          <div className="ef"><label>開始時間</label><input type="time" value={form.startTime||""} onChange={F("startTime")}/></div>
+          <div className="ef"><label>結束日期</label><input type="date" value={form.end||""} onChange={F("end")}/></div>
+          <div className="ef"><label>結束時間</label><input type="time" value={form.endTime||""} onChange={F("endTime")}/></div>
+          <div className="ef fw"><label>備註說明</label><textarea value={form.note||""} onChange={F("note")} placeholder="備註..."/></div>
+        </div>
+        <div className="ms-edit-ft">
+          <button className="btn-ghost" onClick={()=>{setForm({...ms});setOpen(false);}}>取消</button>
+          <button className="btn-solid" onClick={save}>儲存</button>
+        </div>
+      </div>}
+    </li>
+  );
+}
+
 /* ── OverviewTab ── */
 function OverviewTab({proj,upd,openModal}){
   const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
@@ -581,15 +710,7 @@ function OverviewTab({proj,upd,openModal}){
       <div className="card">
         <div className="card-hd">里程碑<button className="add-btn" onClick={()=>openModal("ms")}>＋ 新增</button></div>
         {proj.milestones.length===0?<Empty text="尚無里程碑"/>:
-        <ul className="ms-list">{proj.milestones.map(m=>{const c=MSS[m.status];return(
-          <li key={m.id} className="ms-item">
-            <div className="ms-dot-w"><div className="ms-dot" style={{borderColor:c.dot,background:m.status==="done"?c.dot:"transparent"}}/></div>
-            <div className="ms-body"><div className="ms-title">{m.title}</div><div className="ms-dates">{fmtD(m.start)}{m.end?` → ${fmtD(m.end)}`:""}</div></div>
-            <div className="ms-r">
-              <select className="ms-sel" value={m.status} onChange={e=>updMs(m.id,{status:e.target.value})} style={c.tag}>{Object.entries(MSS).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}</select>
-              <Tag cfg={PRC[m.prio]}>{PRC[m.prio].l}</Tag><DelX onClick={()=>delMs(m.id)}/>
-            </div>
-          </li>);})}</ul>}
+        <ul className="ms-list">{proj.milestones.map(m=><MilestoneItem key={m.id} ms={m} updMs={updMs} delMs={delMs}/>)}</ul>}
       </div>
       <div className="card">
         <div className="card-hd">待辦事項<button className="add-btn" onClick={()=>openModal("todo")}>＋ 新增</button></div>
@@ -731,8 +852,211 @@ function TimelineTab({proj,upd,openModal}){
   </>);
 }
 
-function MobileNav({tab,setTab,pendCount}){
-  const items=[{id:"overview",l:"概覽",icon:"⊞"},{id:"timeline",l:"時間軸",icon:"≡"},{id:"pending",l:"待確認",icon:"◎",badge:pendCount},{id:"finance",l:"財務",icon:"◇"},{id:"cal",l:"行事曆",icon:"▦"}];
+/* ── DashboardView ── */
+function getGreeting(){
+  const h=new Date().getHours();
+  if(h<5)return"夜深了";if(h<9)return"早安";if(h<12)return"上午好";
+  if(h<14)return"午安";if(h<18)return"下午好";if(h<22)return"晚安";return"夜深了";
+}
+function DashboardView({data,upd,selectProj,setShowAllTodos,setShowDash,setAllTodosFilter}){
+  const today=todayISO();
+  const nextWeek=(()=>{const d=new Date();d.setDate(d.getDate()+7);return d.toISOString().slice(0,10);})();
+  const wd=["日","一","二","三","四","五","六"];
+  const lunar=solarToLunar(today);
+  const dateStr=new Date().toLocaleDateString("zh-TW",{month:"long",day:"numeric"});
+  const weekday="週"+wd[new Date().getDay()];
+  const overdue=[],dueToday=[],thisWeek=[],urgentPd=[];
+  for(const proj of data.projects.filter(p=>!p.archived)){
+    const ps=proj.name.length>8?proj.name.slice(0,7)+"…":proj.name;
+    for(const t of(proj.todos||[])){
+      if(t.done)continue;
+      const item={...t,projName:ps,projColor:proj.color,projId:proj.id};
+      if(t.due<today)overdue.push(item);
+      else if(t.due===today)dueToday.push(item);
+      else if(t.due&&t.due<=nextWeek)thisWeek.push(item);
+    }
+    for(const pd of(proj.pendings||[])){
+      if(pd.status==="urgent")urgentPd.push({...pd,projName:ps,projColor:proj.color,projId:proj.id});
+    }
+  }
+  thisWeek.sort((a,b)=>a.due.localeCompare(b.due));
+  const alertCount=overdue.length+dueToday.length+urgentPd.length;
+  const totalPending=data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0);
+  const togTodo=(projId,todoId)=>upd(d=>({...d,projects:d.projects.map(p=>p.id===projId?{...p,todos:p.todos.map(t=>t.id===todoId?{...t,done:!t.done}:t)}:p)}));
+
+  function DItem({item,cls,badge,bs,onCheck}){
+    return(<div className={"dash-item "+cls} onClick={()=>selectProj(item.projId)}>
+      <span className="dash-item-dot" style={{background:item.projColor}}/>
+      <div className="dash-item-body">
+        <div className="dash-item-title">{item.text||item.title}</div>
+        <div className="dash-item-meta">
+          <span>{item.projName}</span>
+          {item.due&&<span>{fmtD(item.due)}</span>}
+        </div>
+      </div>
+      <span className="dash-item-badge" style={bs}>{badge}</span>
+      {onCheck&&<button className={"chk"+(item.done?" on":"")} style={{flexShrink:0}} onClick={e=>{e.stopPropagation();onCheck();}}>{item.done?"✓":""}</button>}
+    </div>);
+  }
+
+  return(<div className="dash-wrap">
+    <div style={{marginBottom:"1.8rem"}}>
+      <div className="dash-greeting">{getGreeting()}</div>
+      <div className="dash-date">{dateStr} {weekday}{lunar?` · 農曆${lunar.m}月${lunar.d}`:""}</div>
+    </div>
+    <div className="dash-stats">
+      <div className={"dash-stat"+(alertCount>0?" red":"")} onClick={()=>{setShowAllTodos(true);setAllTodosFilter("overdue");setShowDash(false);}}>
+        <div className="dash-stat-n">{alertCount}</div>
+        <div className="dash-stat-l">需要立即處理</div>
+      </div>
+      <div className="dash-stat" onClick={()=>{setShowAllTodos(true);setAllTodosFilter("pending");setShowDash(false);}}>
+        <div className="dash-stat-n">{totalPending}</div>
+        <div className="dash-stat-l">件待辦事項</div>
+      </div>
+      <div className="dash-stat">
+        <div className="dash-stat-n">{data.projects.length}</div>
+        <div className="dash-stat-l">進行中案件</div>
+      </div>
+    </div>
+    {overdue.length>0&&<div className="dash-sec">
+      <div className="dash-sec-hd"><span className="dash-sec-title">⚠ 逾期未完成</span><span className="dash-sec-count">{overdue.length}</span></div>
+      {overdue.map(t=><DItem key={t.id} item={t} cls="ov" badge="逾期" bs={{background:"var(--red-bg)",color:"var(--red)"}} onCheck={()=>togTodo(t.projId,t.id)}/>)}
+    </div>}
+    {dueToday.length>0&&<div className="dash-sec">
+      <div className="dash-sec-hd"><span className="dash-sec-title">📌 今日截止</span><span className="dash-sec-count">{dueToday.length}</span></div>
+      {dueToday.map(t=><DItem key={t.id} item={t} cls="td" badge="今天" bs={{background:"var(--amber-bg)",color:"var(--amber)"}} onCheck={()=>togTodo(t.projId,t.id)}/>)}
+    </div>}
+    {urgentPd.length>0&&<div className="dash-sec">
+      <div className="dash-sec-hd"><span className="dash-sec-title">🚨 緊急待確認</span><span className="dash-sec-count">{urgentPd.length}</span></div>
+      {urgentPd.map(p=><DItem key={p.id} item={p} cls="ug" badge="緊急" bs={{background:"var(--red-bg)",color:"var(--red)"}}/>)}
+    </div>}
+    {thisWeek.length>0&&<div className="dash-sec">
+      <div className="dash-sec-hd"><span className="dash-sec-title">本週截止</span><span className="dash-sec-count">{thisWeek.length}</span></div>
+      {thisWeek.map(t=><DItem key={t.id} item={t} cls="wk" badge={fmtD(t.due)} bs={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"var(--t3)"}} onCheck={()=>togTodo(t.projId,t.id)}/>)}
+    </div>}
+    {alertCount===0&&thisWeek.length===0&&<div style={{textAlign:"center",padding:"1.5rem 0 1rem",color:"var(--t3)"}}>
+      <div style={{fontSize:"1.8rem",marginBottom:".5rem",opacity:.3}}>✓</div>
+      <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem"}}>目前沒有緊急事項</div>
+    </div>}
+    <div>
+      <div className="dash-sec-hd" style={{marginBottom:".8rem"}}><span className="dash-sec-title">案件總覽</span></div>
+      {data.projects.filter(p=>!p.archived).map(proj=>{
+        const done=(proj.milestones||[]).filter(m=>m.status==="done").length;
+        const total=(proj.milestones||[]).length;
+        const pct=total?Math.round(done/total*100):0;
+        const pending=(proj.todos||[]).filter(t=>!t.done).length;
+        const urgent=(proj.pendings||[]).filter(p=>p.status==="urgent").length;
+        const next=(proj.milestones||[]).find(m=>m.status!=="done");
+        return(<div key={proj.id} className="phc" onClick={()=>selectProj(proj.id)}>
+          <span className="phc-dot" style={{background:proj.color}}/>
+          <div className="phc-info">
+            <div className="phc-name">{proj.name}</div>
+            <div className="phc-stage">{STAGE_L[proj.stage]}{next?` · ${next.title}`:""}</div>
+          </div>
+          <div className="phc-track-wrap">
+            <div className="phc-track-labels"><span>{pct}%</span><span>{done}/{total} 里程碑</span></div>
+            <div className="phc-track"><div className="phc-fill" style={{width:pct+"%",background:pct===100?"var(--done)":"var(--acc)"}}/></div>
+          </div>
+          <div className="phc-badges">
+            {pending>0&&<span className="phc-badge" style={{background:"var(--sf2)",color:"var(--t2)"}}>{pending} 待辦</span>}
+            {urgent>0&&<span className="phc-badge" style={{background:"var(--red-bg)",color:"var(--red)"}}>⚠ {urgent}</span>}
+          </div>
+        </div>);
+      })}
+    </div>
+    <div className="mobile-spacer"/>
+  </div>);
+}
+
+/* ── AllTodosView ── */
+function AllTodosView({data,upd,initialFilter}){
+  const [filter,setFilter]=useState(initialFilter||"pending");
+  const [sortBy,setSortBy]=useState("due");
+  const today=todayISO();
+
+  const all=data.projects.filter(p=>!p.archived).flatMap(proj=>
+    (proj.todos||[]).map(t=>({...t,projId:proj.id,projName:proj.name,projColor:proj.color}))
+  );
+  const counts={
+    pending:all.filter(t=>!t.done).length,
+    overdue:all.filter(t=>!t.done&&t.due&&t.due<today).length,
+    today:all.filter(t=>t.due===today&&!t.done).length,
+    all:all.length,
+    done:all.filter(t=>t.done).length,
+  };
+
+  let shown=filter==="pending"?all.filter(t=>!t.done):
+            filter==="overdue"?all.filter(t=>!t.done&&t.due&&t.due<today):
+            filter==="today"?all.filter(t=>t.due===today&&!t.done):
+            filter==="done"?all.filter(t=>t.done):all;
+
+  const pv={high:0,mid:1,low:2};
+  if(sortBy==="due") shown=[...shown].sort((a,b)=>{if(!a.due&&!b.due)return 0;if(!a.due)return 1;if(!b.due)return -1;return a.due.localeCompare(b.due);});
+  else if(sortBy==="prio") shown=[...shown].sort((a,b)=>pv[a.prio]-pv[b.prio]);
+  else if(sortBy==="proj") shown=[...shown].sort((a,b)=>a.projName.localeCompare(b.projName));
+
+  const togTodo=(projId,todoId)=>upd(d=>({...d,projects:d.projects.map(p=>p.id===projId?{...p,todos:p.todos.map(t=>t.id===todoId?{...t,done:!t.done}:t)}:p)}));
+
+  // group by project
+  const groups={};
+  for(const t of shown){
+    if(!groups[t.projId])groups[t.projId]={name:t.projName,color:t.projColor,items:[]};
+    groups[t.projId].items.push(t);
+  }
+
+  return(<>
+    <div className="proj-hdr">
+      <div className="proj-title">所有待辦</div>
+      <div className="proj-meta-row">
+        <span className="proj-meta">整合所有案件 · {shown.length} 件顯示</span>
+      </div>
+    </div>
+    <div style={{display:"flex",gap:".4rem",marginBottom:"1rem",flexWrap:"wrap",alignItems:"center"}}>
+      <div className="filt-row">
+        {[["pending",`待完成 ${counts.pending}`],["overdue",`逾期 ${counts.overdue}`],["today",`今日 ${counts.today}`],["all",`全部 ${counts.all}`],["done",`已完成 ${counts.done}`]].map(([f,l])=>(
+          <button key={f} className={`filt-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{l}</button>
+        ))}
+      </div>
+      <div style={{marginLeft:"auto",display:"flex",gap:".3rem",alignItems:"center"}}>
+        <span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)"}}>排序</span>
+        {[["due","截止日"],["prio","優先度"],["proj","案件"]].map(([s,l])=>(
+          <button key={s} className={`filt-btn${sortBy===s?" on":""}`} onClick={()=>setSortBy(s)} style={{fontSize:".6rem"}}>{l}</button>
+        ))}
+      </div>
+    </div>
+    {shown.length===0&&<Empty text="沒有符合條件的待辦事項"/>}
+    {Object.values(groups).map(g=>(
+      <div key={g.name} style={{marginBottom:"1.25rem"}}>
+        <div className="at-proj-hd">
+          <span className="at-proj-dot" style={{background:g.color}}/>
+          <span className="at-proj-name">{g.name}</span>
+          <span className="at-proj-count">{g.items.length} 件</span>
+        </div>
+        <div className="card">
+          {g.items.map(t=>{
+            const over=t.due&&!t.done&&t.due<today;
+            return(<div key={t.id} className="at-todo-row">
+              <button className={`chk${t.done?" on":""}`} onClick={()=>togTodo(t.projId,t.id)}>{t.done?"✓":""}</button>
+              <div className="at-todo-info">
+                <div className={`todo-txt${t.done?" todo-done":""}`}>{t.text}</div>
+                <div className="todo-meta">
+                  {t.due&&<span className={`todo-due${over?" ov":""}`}>{fmtD(t.due)}</span>}
+                  <Tag cfg={PRC[t.prio]}>{PRC[t.prio].l}</Tag>
+                  {t.done&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"var(--done)"}}>已完成</span>}
+                </div>
+                {t.note&&<div className="todo-note">{t.note}</div>}
+              </div>
+            </div>);
+          })}
+        </div>
+      </div>
+    ))}
+    <div className="mobile-spacer"/>
+  </>);
+}
+
+function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,setShowAllCal}){
+  const items=[{id:"__dash",l:"今日",icon:"⌂",dash:true},{id:"overview",l:"概覽",icon:"⊞"},{id:"pending",l:"待確認",icon:"◎",badge:pendCount},{id:"finance",l:"財務",icon:"◇"},{id:"cal",l:"行事曆",icon:"▦"}];
   return(<nav className="mobile-nav">{items.map(it=>(<button key={it.id} className={`mn-btn${tab===it.id?" on":""}`} onClick={()=>setTab(it.id)}>
     <span className="mn-icon">{it.icon}</span>
     {it.badge>0&&<span className="mn-badge">{it.badge}</span>}
@@ -740,17 +1064,25 @@ function MobileNav({tab,setTab,pendCount}){
   </button>))}</nav>);
 }
 
-function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM}){
+function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget}){
   const pendCount=proj.pendings.filter(p=>p.status==="urgent"||p.status==="pending").length;
   const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"時間軸"},{id:"pending",l:`待確認${pendCount>0?` (${pendCount})`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
   return(<>
+    {proj.archived&&<div className="archived-banner">
+      <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
+      <button className="add-btn" onClick={()=>upd(p=>({...p,archived:false,archivedAt:undefined}))}>↩ 恢復案件</button>
+    </div>}
     <div className="proj-hdr">
-      <div className="proj-eyebrow"><span className="stage-badge">{STAGE_L[proj.stage]}</span></div>
+      <div className="proj-eyebrow">
+        <span className="stage-badge">{STAGE_L[proj.stage]}</span>
+        {proj.archived&&<span className="archived-badge">已歸檔</span>}
+      </div>
       <div className="proj-title">{proj.name}</div>
       <div className="proj-meta-row">
         <span className="proj-meta">{proj.owner} · {proj.loc}</span>
         {proj.tel&&<span className="proj-meta">· {proj.tel}</span>}
         <button className="meta-btn" onClick={()=>openModal("editProj")}>編輯</button>
+        {!proj.archived&&<button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>setArchiveTarget(proj)}>✓ 歸檔</button>}
       </div>
     </div>
     <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
@@ -761,7 +1093,7 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM}){
     {tab==="cal"&&<CalendarView proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
     {/* 修復1：手機底部間距，避免被 MobileNav 遮住 */}
     <div className="mobile-spacer"/>
-    <MobileNav tab={tab} setTab={setTab} pendCount={pendCount}/>
+    <MobileNav tab={tab} setTab={setTab} pendCount={pendCount} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal}/>
   </>);
 }
 
@@ -774,17 +1106,36 @@ function AllCalendar({data,calYM,setCalYM}){
         {data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",padding:".18rem .58rem",borderRadius:20,border:"1px solid var(--b2)",color:p.color,background:"var(--sf)"}}>{p.name}</span>)}
       </div>
     </div>
-    <CalendarView allProjects={data.projects} calYM={calYM} setCalYM={setCalYM}/>
+    <CalendarView allProjects={data.projects.filter(p=>!p.archived)} calYM={calYM} setCalYM={setCalYM}/>
     <div className="mobile-spacer"/>
   </>);
 }
 
 /* ── Modals ── */
+
+function ArchiveModal({proj,close,upd,onArchived}){
+  const doArchive=()=>{
+    upd(d=>({...d,projects:d.projects.map(p=>p.id===proj.id?{...p,archived:true,archivedAt:todayISO()}:p)}));
+    onArchived(proj.id);close();
+  };
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal" style={{maxWidth:420}}>
+    <h3>歸檔案件</h3>
+    <p style={{fontSize:".9rem",color:"var(--t2)",lineHeight:1.7,margin:"1rem 0 1.4rem"}}>
+      「<strong style={{color:"var(--t1)"}}>{proj.name}</strong>」完成後將移至歸檔。<br/>
+      所有資料都會保留，可隨時從側欄「歸檔案件」恢復。
+    </p>
+    <div className="modal-ft">
+      <button className="btn-ghost" onClick={close}>取消</button>
+      <button className="btn-solid" onClick={doArchive}>✓ 確認歸檔</button>
+    </div>
+  </div></div>);
+}
+
 function NewProjModal({close,upd,onCreated}){
   const [form,setForm]=useState({name:"",owner:"",loc:"",contact:"",tel:"",stage:"design",contractAmt:""});
   const [color,setColor]=useState(PCOLS[0]);
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
-  const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,contractAmt:Number(form.contractAmt||0),milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
+  const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,contractAmt:Number(form.contractAmt||0),archived:false,milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
     <h3>新增案件</h3>
     <label>案件名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：台北信義住宅裝修"/>
@@ -826,7 +1177,8 @@ function DelProjModal({proj,close,upd,onDeleted}){
 }
 
 const MC={
-  ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"end",l:"完成日期",type:"date"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",...f}]}));c();}},
+  ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"startTime",l:"開始時間",type:"time"},{k:"end",l:"完成日期",type:"date"},{k:"endTime",l:"結束時間",type:"time"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註",type:"textarea",ph:"備註說明..."}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",note:"",...f}]}));c();}},
+  finTodo:{title:"新增財務待辦",defs:{},fields:[{k:"text",l:"待辦事項 *",type:"text",ph:"例：追繳設計費第二期"},{k:"due",l:"截止日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,financeTodos:[...(p.financeTodos||[]),{id:uid(),done:false,...f}]}));c();}},
   todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...f}]}));c();}},
   comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容",type:"textarea",ph:"記錄重要決定..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.note?.trim())return;u(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...f}]}));c();}},
   pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...f}]}));c();}},
@@ -858,20 +1210,26 @@ function App(){
   const [pid,setPid]=useState(null);
   const [tab,setTab]=useState("overview");
   const [showAllCal,setShowAllCal]=useState(false);
+  const [showAllTodos,setShowAllTodos]=useState(false);
+  const [allTodosFilter,setAllTodosFilter]=useState("pending");
+  const [showDash,setShowDash]=useState(true);
   const [modal,setModal]=useState(null);
   const [syncOk,setSyncOk]=useState(false);
   const [calYM,setCalYM]=useState({y:new Date().getFullYear(),m:new Date().getMonth()});
   const [delTarget,setDelTarget]=useState(null);
+  const [archiveTarget,setArchiveTarget]=useState(null);
+  const [sbArchiveOpen,setSbArchiveOpen]=useState(false);
   const [sbOpen,setSbOpen]=useState(false);
   const lastSaveTime=useRef(0);
 
   useEffect(()=>{
     loadData().then(d=>{
       setData(d);
-      if(d.projects.length>0)setPid(d.projects[0].id);
+      // 預設顯示 Dashboard
       setLoading(false);
       // 啟動通知檢查
       requestAndCheckNotifications(d);
+      setShowDash(true);
     });
     const poll=setInterval(async()=>{
       if(Date.now()-lastSaveTime.current<5000)return;
@@ -886,9 +1244,12 @@ function App(){
   const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
-  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);return curr;});},[ ]);
-  const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setSbOpen(false);},[]);
+  const handleArchived=useCallback((archivedId)=>{
+    setData(curr=>{const r=curr.projects.filter(p=>!p.archived||p.id!==archivedId);const active=curr.projects.filter(p=>!p.archived&&p.id!==archivedId);setPid(active.length>0?active[0].id:null);setShowDash(true);return curr;});
+  },[]);
+  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);return curr;});},[ ]);
+  const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>ID Studio</div>);
 
@@ -899,6 +1260,7 @@ function App(){
     {modal?.type==="newProj"&&<NewProjModal close={closeModal} upd={upd} onCreated={handleCreated}/>}
     {modal?.type==="editProj"&&proj&&<EditProjModal proj={proj} close={closeModal} upd={fn=>updP(pid,fn)}/>}
     {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
+    {archiveTarget&&<ArchiveModal proj={archiveTarget} close={()=>setArchiveTarget(null)} upd={upd} onArchived={handleArchived}/>}
     {delTarget&&<DelProjModal proj={delTarget} close={()=>setDelTarget(null)} upd={upd} onDeleted={handleDeleted}/>}
     <div className={`sb-overlay${sbOpen?" show":""}`} onClick={()=>setSbOpen(false)}/>
 
@@ -907,19 +1269,25 @@ function App(){
         <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
         <span className="hdr-logo">ID Studio</span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showDash?"今日總覽":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
         {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
-        <button className="hdr-btn" onClick={()=>{setShowAllCal(v=>!v);setSbOpen(false);}}>{showAllCal?"返回案件":"行事曆"}</button>
+        <button className="hdr-btn" onClick={()=>{if(showDash){setShowDash(false);}else if(showAllCal||showAllTodos){setShowAllCal(false);setShowAllTodos(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showDash||showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
       </div>
     </header>
 
     <div className="workspace">
       <aside className={`sidebar${sbOpen?" open":""}`}>
         <button className="sb-close-btn" onClick={()=>setSbOpen(false)}>✕ 關閉</button>
+        <div className={`sb-item${showDash?" on":""}`} onClick={()=>{setShowDash(true);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
+          <span style={{fontSize:".95rem",color:"var(--t3)"}}>⌂</span>
+          <div className="sb-info"><div className="sb-name">今日總覽</div><div className="sb-sub">Dashboard</div></div>
+          {(()=>{const n=data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done&&t.due&&t.due<todayISO()).length+(p.pendings||[]).filter(x=>x.status==="urgent").length,0);return n>0?<span className="sb-urgent-dot"/>:null;})()}
+        </div>
+        <hr className="sb-sep"/>
         <div className="sb-sec">Cases</div>
         {data.projects.map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
           <div key={p.id} className={`sb-item${pid===p.id&&!showAllCal?" on":""}`} onClick={()=>selectProj(p.id)}>
@@ -927,12 +1295,19 @@ function App(){
             <div className="sb-info"><div className="sb-name">{p.name}</div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-bar-track"><div className="sb-bar-fill" style={{width:pct+"%"}}/></div></div>
           </div>);})}
         <hr className="sb-sep"/>
-        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setSbOpen(false);}}>
+        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setAllTodosFilter("pending");setSbOpen(false);}}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
+          <div className="sb-info">
+            <div className="sb-name">所有待辦</div>
+            <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
+          </div>
+        </div>
+        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
           <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
         </div>
         <hr className="sb-sep"/>
-        {proj&&!showAllCal&&<div style={{padding:".2rem .5rem"}}><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除此案件</button></div>}
+        {proj&&!showAllCal&&!proj.archived&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
         <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
       </aside>
 
@@ -943,10 +1318,12 @@ function App(){
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
             <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
+        ):showAllTodos?(
+          <AllTodosView data={data} upd={upd}/>
         ):showAllCal?(
           <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
         ):proj?(
-          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM}/>
+          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal} setArchiveTarget={setArchiveTarget}/>
         ):(
           <div style={{textAlign:"center",paddingTop:"5rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".78rem"}}>← 請從左側選擇案件</div>
         )}
