@@ -78,7 +78,7 @@ const INIT={projects:[
     milestones:[{id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},{id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},{id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},{id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"}],
     todos:[{id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},{id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},{id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
-    pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20",msId:"m3"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27",msId:"m4"}],
+    pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27"}],
     finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
     financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],
@@ -447,24 +447,6 @@ input,select,textarea{font-family:inherit;}
 .phc-badge{font-family:'DM Mono',monospace;font-size:.58rem;padding:.14rem .42rem;border-radius:5px;white-space:nowrap;}
 .sb-urgent-dot{width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;box-shadow:0 0 5px rgba(139,64,64,.4);}
 
-/* ── 活動日誌 ── */
-.act-type-bar{display:flex;gap:.3rem;margin-bottom:1.1rem;flex-wrap:wrap;}
-.act-item{display:flex;gap:.85rem;padding:.9rem 0;border-bottom:1px solid var(--b1);align-items:flex-start;}
-.act-item:last-child{border-bottom:none;}
-.act-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:.95rem;flex-shrink:0;border:1px solid var(--b1);}
-.act-body{flex:1;}
-.act-title{font-size:.9rem;font-weight:600;margin-bottom:.1rem;color:var(--t1);}
-.act-who{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--acc);margin-bottom:.08rem;}
-.act-date{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
-.act-note{font-size:.82rem;color:var(--t2);line-height:1.55;margin-top:.2rem;}
-.act-ch{display:inline-block;font-family:'DM Mono',monospace;font-size:.58rem;padding:.14rem .42rem;border:1px solid var(--b2);border-radius:4px;margin-top:.22rem;color:var(--t3);}
-.act-tag{font-family:'DM Mono',monospace;font-size:.6rem;padding:.18rem .5rem;border-radius:6px;border:1px solid var(--b2);color:var(--t3);flex-shrink:0;}
-/* 待確認里程碑關聯 */
-.pd-ms-link{font-family:'DM Mono',monospace;font-size:.6rem;padding:.14rem .48rem;border-radius:4px;background:var(--sf2);color:var(--t3);border:1px solid var(--b2);display:inline-flex;align-items:center;gap:.3rem;margin-top:.22rem;}
-/* 里程碑相關待確認 */
-.ms-pending-row{display:flex;align-items:center;gap:.5rem;padding:.32rem .55rem;background:var(--red-bg);border-radius:4px;margin-top:.25rem;}
-.ms-pending-dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;}
-.ms-pending-txt{font-size:.76rem;color:var(--red);}
 /* ── 歸檔 ── */
 .archived-banner{background:var(--sf2);border:1px solid var(--b2);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;}
 .archived-banner-txt{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
@@ -653,7 +635,7 @@ function CalendarView({proj,allProjects,calYM,setCalYM}){
 
 /* ── MilestoneItem（可內嵌編輯）── */
 function fmtDT(date,time){if(!date)return"—";let s=fmtD(date);if(time)s+=` ${time}`;return s;}
-function MilestoneItem({ms,updMs,delMs,relatedPendings}){
+function MilestoneItem({ms,updMs,delMs}){
   const [open,setOpen]=useState(false);
   const [form,setForm]=useState({...ms});
   const cv=MSS[ms.status];
@@ -667,13 +649,6 @@ function MilestoneItem({ms,updMs,delMs,relatedPendings}){
           <div className="ms-title">{ms.title}</div>
           <div className="ms-dates">{fmtDT(ms.start,ms.startTime)}{ms.end?` → ${fmtDT(ms.end,ms.endTime)}`:""}</div>
           {ms.note&&<div style={{fontSize:".78rem",color:"var(--t3)",marginTop:".12rem"}}>{ms.note}</div>}
-          {(relatedPendings||[]).map(pd=>(
-            <div key={pd.id} className="ms-pending-row">
-              <span className="ms-pending-dot"/>
-              <span className="ms-pending-txt">{pd.title}</span>
-              <span style={{fontFamily:"'DM Mono',monospace",fontSize:".56rem",marginLeft:"auto",color:"var(--red)",flexShrink:0}}>{PDS[pd.status].l}</span>
-            </div>
-          ))}
         </div>
         <div className="ms-r">
           <span className="tag-sm" style={cv.tag}>{cv.l}</span>
@@ -711,7 +686,7 @@ function MilestoneItem({ms,updMs,delMs,relatedPendings}){
 }
 
 /* ── OverviewTab ── */
-function OverviewTab({proj,upd,openModal,setTab}){
+function OverviewTab({proj,upd,openModal}){
   const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
   const updMs=(id,ch)=>upd(p=>({...p,milestones:p.milestones.map(m=>m.id===id?{...m,...ch}:m)}));
   const delMs=id=>upd(p=>({...p,milestones:p.milestones.filter(m=>m.id!==id)}));
@@ -735,7 +710,7 @@ function OverviewTab({proj,upd,openModal,setTab}){
       <div className="card">
         <div className="card-hd">里程碑<button className="add-btn" onClick={()=>openModal("ms")}>＋ 新增</button></div>
         {proj.milestones.length===0?<Empty text="尚無里程碑"/>:
-        <ul className="ms-list">{proj.milestones.map(m=><MilestoneItem key={m.id} ms={m} updMs={updMs} delMs={delMs} relatedPendings={(proj.pendings||[]).filter(pd=>pd.msId===m.id&&(pd.status==="urgent"||pd.status==="pending"))}/>)}</ul>}
+        <ul className="ms-list">{proj.milestones.map(m=><MilestoneItem key={m.id} ms={m} updMs={updMs} delMs={delMs}/>)}</ul>}
       </div>
       <div className="card">
         <div className="card-hd">待辦事項<button className="add-btn" onClick={()=>openModal("todo")}>＋ 新增</button></div>
@@ -753,28 +728,14 @@ function OverviewTab({proj,upd,openModal,setTab}){
             </div>
           </div>);})}
       </div>
-      {/* 最近活動預覽（點擊跳活動日誌） */}
-      {(()=>{
-        const recent=[
-          ...(proj.timelines||[]).map(t=>({...t,_type:"tl"})),
-          ...(proj.comms||[]).map(c=>({...c,_type:"comm",title:c.who})),
-        ].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,3);
-        if(recent.length===0)return null;
-        return(<div className="card full">
-          <div className="card-hd">最近活動<button className="add-btn" onClick={()=>setTab("timeline")}>查看全部 →</button></div>
-          {recent.map(item=>{
-            const cfg=(item.type==="meet")?{icon:"◎",color:"var(--t2)"}:item._type==="comm"?{icon:"💬",color:"var(--acc)"}:{icon:"◉",color:"var(--t2)"};
-            return(<div key={item.id} style={{display:"flex",gap:".65rem",alignItems:"flex-start",padding:".65rem 0",borderBottom:"1px solid var(--b1)"}}>
-              <span style={{fontSize:".85rem",color:cfg.color,flexShrink:0,marginTop:".05rem"}}>{cfg.icon}</span>
-              <div style={{flex:1,minWidth:0}}>
-                <div style={{fontSize:".88rem",fontWeight:500,color:"var(--t1)"}}>{item.title||item.who}</div>
-                {item.note&&<div style={{fontSize:".8rem",color:"var(--t2)",lineHeight:1.5,marginTop:".1rem"}}>{item.note.slice(0,80)}{item.note.length>80?"…":""}</div>}
-                <div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"var(--t3)",marginTop:".1rem"}}>{fmtD(item.date)}</div>
-              </div>
-            </div>);
-          })}
-        </div>);
-      })()}
+      <div className="card full">
+        <div className="card-hd">溝通記錄<button className="add-btn" onClick={()=>openModal("comm")}>＋ 新增</button></div>
+        {(proj.comms||[]).length===0?<Empty text="尚無溝通記錄"/>:
+        (proj.comms||[]).map(c=><div key={c.id} className="comm-item">
+          <div className="comm-hd"><div className="comm-who">{c.who}</div><div className="comm-r"><span className="comm-when">{fmtD(c.date)}</span><DelX onClick={()=>delComm(c.id)}/></div></div>
+          <div className="comm-note">{c.note}</div><span className="comm-ch">{c.ch}</span>
+        </div>)}
+      </div>
     </div>
   </>);
 }
@@ -800,10 +761,7 @@ function PendingTab({proj,upd,openModal}){
           </div>
         </div>
         {pd.note&&<div className="pd-note">{pd.note}</div>}
-        <div style={{display:"flex",alignItems:"center",gap:".5rem",flexWrap:"wrap"}}>
-          {pd.date&&<div className="pd-date">{fmtD(pd.date)}</div>}
-          {pd.msId&&(()=>{const ms=(proj.milestones||[]).find(m=>m.id===pd.msId);return ms?<span className="pd-ms-link">◈ {ms.title}</span>:null;})()}
-        </div>
+        {pd.date&&<div className="pd-date">{fmtD(pd.date)}</div>}
       </div>);})}
   </>);
 }
@@ -874,54 +832,23 @@ function FinanceTab({proj,upd,openModal}){
   </>);
 }
 
-/* 活動類型定義（含 comm 合併進來）*/
-const ACT_TYPES={
-  site:{l:"工地紀錄",icon:"◉",bg:"var(--sf2)",color:"var(--t2)"},
-  meet:{l:"會議紀錄",icon:"◎",bg:"var(--sf2)",color:"var(--t2)"},
-  comm:{l:"業主溝通",icon:"💬",bg:"var(--sf2)",color:"var(--acc)"},
-};
-function ActivityLogTab({proj,upd,openModal}){
+function TimelineTab({proj,upd,openModal}){
   const [filter,setFilter]=useState("all");
   const delTl=id=>upd(p=>({...p,timelines:p.timelines.filter(t=>t.id!==id)}));
-  const delComm=id=>upd(p=>({...p,comms:(p.comms||[]).filter(c=>c.id!==id)}));
-
-  /* 合併 timelines + comms，統一格式 */
-  const all=[
-    ...(proj.timelines||[]).map(t=>({...t,_src:"tl"})),
-    ...(proj.comms||[]).map(c=>({id:c.id,_src:"comm",type:"comm",title:c.who,note:c.note,date:c.date,ch:c.ch})),
-  ].sort((a,b)=>b.date.localeCompare(a.date));
-
-  const filtered=filter==="all"?all:all.filter(x=>x.type===filter);
-  const counts={all:all.length,site:all.filter(x=>x.type==="site").length,meet:all.filter(x=>x.type==="meet").length,comm:all.filter(x=>x.type==="comm").length};
-
+  const sorted=[...proj.timelines].sort((a,b)=>b.date.localeCompare(a.date));
+  const filtered=filter==="all"?sorted:sorted.filter(t=>t.type===filter);
   return(<>
-    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.1rem",flexWrap:"wrap",gap:".5rem"}}>
-      <div className="act-type-bar">
-        {[["all",`全部 ${counts.all}`],["site",`工地紀錄 ${counts.site}`],["meet",`會議紀錄 ${counts.meet}`],["comm",`業主溝通 ${counts.comm}`]].map(([f,l])=>(
-          <button key={f} className={`filt-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{l}</button>
-        ))}
-      </div>
-      <div style={{display:"flex",gap:".4rem"}}>
-        <button className="add-btn" onClick={()=>openModal("tl")}>＋ 工地 / 會議</button>
-        <button className="add-btn" onClick={()=>openModal("comm")}>＋ 業主溝通</button>
-      </div>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.3rem",flexWrap:"wrap",gap:".5rem"}}>
+      <div className="filt-row">{["all","site","meet"].map(f=><button key={f} className={`filt-btn${filter===f?" on":""}`} onClick={()=>setFilter(f)}>{f==="all"?"全部":TLT[f].l}</button>)}</div>
+      <button className="add-btn" onClick={()=>openModal("tl")}>＋ 新增</button>
     </div>
-    {filtered.length===0?<Empty text="尚無記錄"/>:
-    filtered.map(item=>{
-      const cfg=ACT_TYPES[item.type]||ACT_TYPES.site;
-      return(<div key={item.id} className="act-item">
-        <div className="act-icon" style={{background:cfg.bg,color:cfg.color}}>{cfg.icon}</div>
-        <div className="act-body">
-          {item.type==="comm"&&<div className="act-who">{item.title}</div>}
-          {item.type!=="comm"&&<div className="act-title">{item.title}</div>}
-          <div className="act-date">{fmtD(item.date)}</div>
-          {item.note&&<div className="act-note">{item.note}</div>}
-          {item.ch&&<span className="act-ch">{item.ch}</span>}
-        </div>
-        <span className="act-tag">{cfg.l}</span>
-        <DelX onClick={()=>item._src==="comm"?delComm(item.id):delTl(item.id)}/>
-      </div>);
-    })}
+    {filtered.length===0?<Empty text="尚無紀錄"/>:
+    filtered.map(tl=>{const c=TLT[tl.type];return(
+      <div key={tl.id} className="tl-item">
+        <div className="tl-icon">{c.icon}</div>
+        <div className="tl-body"><div className="tl-title">{tl.title}</div><div className="tl-date">{fmtD(tl.date)}</div>{tl.note&&<div className="tl-note">{tl.note}</div>}</div>
+        <span className="tl-tag">{c.l}</span><DelX onClick={()=>delTl(tl.id)}/>
+      </div>);})}
   </>);
 }
 
@@ -1139,7 +1066,7 @@ function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,se
 
 function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget}){
   const pendCount=proj.pendings.filter(p=>p.status==="urgent"||p.status==="pending").length;
-  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"pending",l:`待確認${pendCount>0?` (${pendCount})`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"時間軸"},{id:"pending",l:`待確認${pendCount>0?` (${pendCount})`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
@@ -1159,8 +1086,8 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,set
       </div>
     </div>
     <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
-    {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal} setTab={setTab}/>}
-    {tab==="timeline"&&<ActivityLogTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="timeline"&&<TimelineTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="pending"&&<PendingTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="cal"&&<CalendarView proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
@@ -1254,19 +1181,18 @@ const MC={
   finTodo:{title:"新增財務待辦",defs:{},fields:[{k:"text",l:"待辦事項 *",type:"text",ph:"例：追繳設計費第二期"},{k:"due",l:"截止日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,financeTodos:[...(p.financeTodos||[]),{id:uid(),done:false,...f}]}));c();}},
   todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...f}]}));c();}},
   comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容",type:"textarea",ph:"記錄重要決定..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.note?.trim())return;u(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...f}]}));c();}},
-  pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...f}]}));c();},msLinkable:true},
+  pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...f}]}));c();}},
   finIncome:{title:"新增收款項目",defs:{status:"unpaid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：設計費第一期"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"cat",l:"分類",type:"select",opts:[["設計費","設計費"],["監造費","監造費"],["工程款","工程款"],["其他","其他"]]},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待收款"],["paid","已收款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.name?.trim()||!f.amt)return;u(p=>({...p,finances:[...p.finances,{id:uid(),type:"income",status:"unpaid",date:todayISO(),...f,amt:Number(f.amt)}]}));c();}},
   finExpense:{title:"新增支出項目",defs:{status:"paid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：測量費"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"cat",l:"分類",type:"select",opts:EXPENSE_CATS.map(c=>[c,c])},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待付款"],["paid","已付款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.name?.trim()||!f.amt)return;u(p=>({...p,finances:[...p.finances,{id:uid(),type:"expense",status:"paid",date:todayISO(),...f,amt:Number(f.amt)}]}));c();}},
   extra:{title:"新增追加單",defs:{},fields:[{k:"title",l:"追加項目 *",type:"text",ph:"例：增設插座8組"},{k:"amt",l:"追加金額 (NT$)",type:"number",ph:"0"},{k:"date",l:"日期",type:"date"},{k:"note",l:"說明",type:"textarea",ph:"追加原因..."}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,extras:[...p.extras,{id:uid(),date:todayISO(),...f,amt:Number(f.amt||0)}]}));c();}},
-  tl:{title:"新增工地 / 會議紀錄",defs:{type:"site"},fields:[{k:"type",l:"類型",type:"select",opts:[["site","工地紀錄"],["meet","會議紀錄"]]},{k:"title",l:"標題 *",type:"text",ph:"紀錄標題"},{k:"date",l:"日期",type:"date"},{k:"note",l:"內容說明",type:"textarea",ph:"詳細說明..."}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,timelines:[...p.timelines,{id:uid(),type:"site",date:todayISO(),...f}]}));c();}},
+  tl:{title:"新增紀錄",defs:{type:"site"},fields:[{k:"type",l:"類型",type:"select",opts:[["site","工地紀錄"],["meet","會議紀錄"]]},{k:"title",l:"標題 *",type:"text",ph:"紀錄標題"},{k:"date",l:"日期",type:"date"},{k:"note",l:"內容說明",type:"textarea",ph:"詳細說明..."}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,timelines:[...p.timelines,{id:uid(),type:"site",date:todayISO(),...f}]}));c();}},
 };
 
-function ItemModal({type,close,updP,proj}){
+function ItemModal({type,close,updP}){
   const cfg=MC[type];
   const [form,setForm]=useState({...(cfg?.defs||{})});
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
   if(!cfg)return null;
-  const milestones=proj?.milestones||[];
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
     <h3>{cfg.title}</h3>
     {cfg.fields.map(f=><div key={f.k}><label>{f.l}</label>
@@ -1274,13 +1200,6 @@ function ItemModal({type,close,updP,proj}){
        f.type==="textarea"?<textarea value={form[f.k]??""} onChange={F(f.k)} placeholder={f.ph||""}/>:
        <input type={f.type} value={form[f.k]??""} onChange={F(f.k)} placeholder={f.ph||""}/>}
     </div>)}
-    {cfg.msLinkable&&milestones.length>0&&<div>
-      <label>關聯里程碑（選填）</label>
-      <select value={form.msId||""} onChange={F("msId")}>
-        <option value="">— 不關聯</option>
-        {milestones.map(m=><option key={m.id} value={m.id}>{m.title}</option>)}
-      </select>
-    </div>}
     <div className="modal-ft"><button className="btn-ghost" onClick={close}>取消</button><button className="btn-solid" onClick={()=>cfg.save(form,updP,close)}>儲存</button></div>
   </div></div>);
 }
@@ -1338,7 +1257,7 @@ function App(){
     <style>{CSS}</style>
     {modal?.type==="newProj"&&<NewProjModal close={closeModal} upd={upd} onCreated={handleCreated}/>}
     {modal?.type==="editProj"&&proj&&<EditProjModal proj={proj} close={closeModal} upd={fn=>updP(pid,fn)}/>}
-    {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj} proj={proj}/>}
+    {modal&&!["newProj","editProj"].includes(modal.type)&&<ItemModal type={modal.type} close={closeModal} updP={updProj}/>}
     {archiveTarget&&<ArchiveModal proj={archiveTarget} close={()=>setArchiveTarget(null)} upd={upd} onArchived={handleArchived}/>}
     {delTarget&&<DelProjModal proj={delTarget} close={()=>setDelTarget(null)} upd={upd} onDeleted={handleDeleted}/>}
     <div className={`sb-overlay${sbOpen?" show":""}`} onClick={()=>setSbOpen(false)}/>
