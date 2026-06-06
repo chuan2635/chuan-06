@@ -1,6 +1,5 @@
 {
   "name": "idstudio-ai-renderer",
   "version": "1.0.0",
-  "engines": { "node": ">=18" },
-  "type": "module"
+  "engines": { "node": ">=18" }
 }
