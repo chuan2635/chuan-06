@@ -22,7 +22,7 @@ module.exports = async function handler(req, res) {
 
     const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
 
-    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-image:generateContent?key=${apiKey}`;
+    const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
     const geminiResponse = await fetch(geminiUrl, {
       method: 'POST',
@@ -34,7 +34,7 @@ module.exports = async function handler(req, res) {
             { text: renderPrompt }
           ]
         }],
-        generationConfig: { responseModalities: ['IMAGE'] }
+        generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
       })
     });
 
