@@ -948,8 +948,6 @@ function DashboardView({data,upd,selectProj,setShowAllTodos,setShowDash,setAllTo
       else if(t.due===today)dueToday.push(item);
       else if(t.due&&t.due<=nextWeek)thisWeek.push(item);
     }
-    );
-    }
   }
   thisWeek.sort((a,b)=>a.due.localeCompare(b.due));
   const alertCount=overdue.length+dueToday.length;
@@ -1135,7 +1133,7 @@ function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,se
 
 function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget}){
   const pendCount=0;
-  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},)`:""}`},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
