@@ -73,12 +73,14 @@ function exportCSV(proj){
   const a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download=`${proj.name}_財務_${todayISO()}.csv`;a.click();
 }
 
-const INIT={projects:[
+const INIT={materialLibrary:[],
+  projects:[
   {id:"p1",name:"台北信義住宅裝修",archived:false,owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#584738",contractAmt:600000,
     milestones:[{id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},{id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},{id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},{id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"}],
     todos:[{id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},{id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},{id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
     pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20",msId:"m3"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27",msId:"m4"}],
+    materials:[{id:"mt1",name:"橡木實木地板",category:"地板",brand:"永記木業",spec:"15mm×180mm",supplier:"永記木業",imageUrl:"",notes:"自然木節紋，溫暖色調",inLibrary:false}],
     finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
     financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],
@@ -88,6 +90,7 @@ const INIT={projects:[
     todos:[{id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},{id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},{id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
     pendings:[{id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},{id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"}],
+    materials:[],
     finances:[{id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},{id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"}],
     extras:[],
     financeTodos:[{id:"ftt3",text:"確認合約簽署完成",done:false,due:"2026-05-15",note:""},{id:"ftt4",text:"發送設計費第一期請款單",done:false,due:"2026-05-20",note:""}],
@@ -465,6 +468,18 @@ input,select,textarea{font-family:inherit;}
 .ms-pending-row{display:flex;align-items:center;gap:.5rem;padding:.32rem .55rem;background:var(--red-bg);border-radius:4px;margin-top:.25rem;}
 .ms-pending-dot{width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;}
 .ms-pending-txt{font-size:.76rem;color:var(--red);}
+/* ── 材質表 ── */
+.mat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.85rem;margin-bottom:1rem;}
+.mat-card{background:var(--sf);border:1px solid var(--b1);border-radius:var(--rs);overflow:hidden;box-shadow:var(--sh);transition:all .15s;cursor:default;}
+.mat-card:hover{box-shadow:var(--shm);border-color:var(--b2);}
+.mat-img{width:100%;height:110px;object-fit:cover;background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:2rem;color:var(--t4);}
+.mat-img img{width:100%;height:110px;object-fit:cover;}
+.mat-body{padding:.65rem .75rem;}
+.mat-name{font-size:.88rem;font-weight:600;color:var(--t1);margin-bottom:.15rem;}
+.mat-cat{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--acc);margin-bottom:.2rem;}
+.mat-info{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--t3);line-height:1.5;}
+.mat-actions{display:flex;gap:.3rem;padding:.4rem .75rem .6rem;border-top:1px solid var(--b1);}
+.lib-badge{font-family:'DM Mono',monospace;font-size:.56rem;padding:.1rem .38rem;border-radius:4px;background:var(--done-bg);color:var(--done);}
 /* ── 歸檔 ── */
 .archived-banner{background:var(--sf2);border:1px solid var(--b2);border-radius:var(--rs);padding:.75rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.75rem;}
 .archived-banner-txt{font-family:'DM Mono',monospace;font-size:.65rem;color:var(--t3);}
@@ -651,6 +666,48 @@ function CalendarView({proj,allProjects,calYM,setCalYM}){
   );
 }
 
+/* ── TodoItem（可內嵌編輯）── */
+function TodoItem({todo,onToggle,onUpdate,onDelete}){
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState({text:todo.text,due:todo.due||"",note:todo.note||"",prio:todo.prio||"mid"});
+  const over=todo.due&&!todo.done&&todo.due<todayISO();
+  if(editing) return(
+    <div className="todo-item" style={{background:"var(--sf2)",borderRadius:"var(--rxs)",padding:".65rem .75rem",margin:".15rem 0"}}>
+      <div className="ms-edit-grid">
+        <div className="ef fw"><label>事項名稱</label><input value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))}/></div>
+        <div className="ef"><label>截止日期</label><input type="date" value={form.due} onChange={e=>setForm(f=>({...f,due:e.target.value}))}/></div>
+        <div className="ef"><label>優先級</label>
+          <select value={form.prio} onChange={e=>setForm(f=>({...f,prio:e.target.value}))}>
+            {Object.entries(PRC).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
+          </select>
+        </div>
+        <div className="ef fw"><label>備註</label><textarea value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></div>
+      </div>
+      <div className="ms-edit-ft">
+        <button className="btn-ghost" onClick={()=>{setForm({text:todo.text,due:todo.due||"",note:todo.note||"",prio:todo.prio||"mid"});setEditing(false);}}>取消</button>
+        <button className="btn-solid" onClick={()=>{onUpdate(form);setEditing(false);}}>儲存</button>
+      </div>
+    </div>
+  );
+  return(
+    <div className="todo-item">
+      <div className="todo-row">
+        <button className={"chk"+(todo.done?" on":"")} onClick={onToggle}>{todo.done?"✓":""}</button>
+        <div style={{flex:1,minWidth:0}}>
+          <div className={"todo-txt"+(todo.done?" todo-done":"")}>{todo.text}</div>
+          <div className="todo-meta">
+            {todo.due&&<span className={"todo-due"+(over?" ov":"")}>{fmtD(todo.due)}</span>}
+            <Tag cfg={PRC[todo.prio]}>{PRC[todo.prio].l}</Tag>
+          </div>
+          {todo.note&&<div className="todo-note">{todo.note}</div>}
+        </div>
+        <button className={"edit-toggle"+(editing?" on":"")} onClick={()=>setEditing(true)}>✎</button>
+        <DelX onClick={onDelete}/>
+      </div>
+    </div>
+  );
+}
+
 /* ── MilestoneItem（可內嵌編輯）── */
 function fmtDT(date,time){if(!date)return"—";let s=fmtD(date);if(time)s+=` ${time}`;return s;}
 function MilestoneItem({ms,updMs,delMs,relatedPendings}){
@@ -710,6 +767,118 @@ function MilestoneItem({ms,updMs,delMs,relatedPendings}){
   );
 }
 
+/* ── MaterialsTab ── */
+function MaterialsTab({proj,upd,data,updGlobal}){
+  const [showAddModal,setShowAddModal]=useState(false);
+  const [showLibModal,setShowLibModal]=useState(false);
+  const [editMat,setEditMat]=useState(null);
+  const materials=proj.materials||[];
+  const library=(data.materialLibrary||[]);
+
+  const delMat=id=>upd(p=>({...p,materials:(p.materials||[]).filter(m=>m.id!==id)}));
+  const saveToLib=mat=>{
+    const exists=library.find(m=>m.id===mat.id);
+    if(!exists) updGlobal(d=>({...d,materialLibrary:[...(d.materialLibrary||[]),{...mat,inLibrary:true}]}));
+    upd(p=>({...p,materials:(p.materials||[]).map(m=>m.id===mat.id?{...m,inLibrary:true}:m)}));
+  };
+  const importFromLib=mat=>{
+    const already=materials.find(m=>m.id===mat.id||m.name===mat.name);
+    if(already){alert("此材質已在本案件中");return;}
+    upd(p=>({...p,materials:[...(p.materials||[]),{...mat,id:Math.random().toString(36).slice(2,8)}]}));
+    setShowLibModal(false);
+  };
+
+  return(<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.1rem",flexWrap:"wrap",gap:".5rem"}}>
+      <div style={{display:"flex",gap:".4rem"}}>
+        <button className="add-btn" onClick={()=>{setEditMat(null);setShowAddModal(true);}}>＋ 新增材質</button>
+        {library.length>0&&<button className="add-btn" onClick={()=>setShowLibModal(true)}>📚 從材質庫選取</button>}
+      </div>
+      <span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)"}}>{materials.length} 項材質</span>
+    </div>
+    {materials.length===0?<Empty text="尚無材質，點「新增材質」開始建立"/>:
+    <div className="mat-grid">{materials.map(mat=>(
+      <div key={mat.id} className="mat-card">
+        <div className="mat-img">
+          {mat.imageUrl?<img src={mat.imageUrl} alt={mat.name} onError={e=>{e.target.style.display="none";e.target.nextSibling&&(e.target.nextSibling.style.display="flex");}}/>:<span>🪵</span>}
+        </div>
+        <div className="mat-body">
+          <div className="mat-name">{mat.name}</div>
+          {mat.category&&<div className="mat-cat">{mat.category}</div>}
+          <div className="mat-info">
+            {mat.brand&&<div>{mat.brand}</div>}
+            {mat.spec&&<div>{mat.spec}</div>}
+            {mat.supplier&&<div>{mat.supplier}</div>}
+            {mat.notes&&<div style={{marginTop:".2rem",color:"var(--t2)",fontSize:".76rem",fontFamily:"inherit"}}>{mat.notes}</div>}
+          </div>
+          {mat.inLibrary&&<span className="lib-badge" style={{marginTop:".35rem",display:"inline-block"}}>已存入材質庫</span>}
+        </div>
+        <div className="mat-actions">
+          <button className="edit-toggle" style={{fontSize:".7rem"}} onClick={()=>{setEditMat(mat);setShowAddModal(true);}}>✎ 編輯</button>
+          {!mat.inLibrary&&<button className="edit-toggle" style={{fontSize:".7rem",color:"var(--done)"}} onClick={()=>saveToLib(mat)}>存入庫</button>}
+          <button className="del-x" onClick={()=>delMat(mat.id)}>✕</button>
+        </div>
+      </div>
+    ))}</div>}
+
+    {/* 新增/編輯 Modal */}
+    {showAddModal&&<MatModal mat={editMat} close={()=>{setShowAddModal(false);setEditMat(null);}}
+      onSave={form=>{
+        if(editMat) upd(p=>({...p,materials:(p.materials||[]).map(m=>m.id===editMat.id?{...m,...form}:m)}));
+        else upd(p=>({...p,materials:[...(p.materials||[]),{id:Math.random().toString(36).slice(2,8),...form,inLibrary:false}]}));
+        setShowAddModal(false);setEditMat(null);
+      }}/>}
+
+    {/* 材質庫選取 Modal */}
+    {showLibModal&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setShowLibModal(false)}>
+      <div className="modal">
+        <h3>材質庫</h3>
+        {library.length===0?<Empty text="材質庫是空的"/>:
+        <div className="mat-grid" style={{maxHeight:"60vh",overflowY:"auto"}}>{library.map(mat=>(
+          <div key={mat.id} className="mat-card" onClick={()=>importFromLib(mat)} style={{cursor:"pointer"}}>
+            <div className="mat-img">{mat.imageUrl?<img src={mat.imageUrl} alt={mat.name}/>:<span>🪵</span>}</div>
+            <div className="mat-body">
+              <div className="mat-name">{mat.name}</div>
+              {mat.category&&<div className="mat-cat">{mat.category}</div>}
+              <div className="mat-info">{mat.supplier&&<div>{mat.supplier}</div>}</div>
+            </div>
+          </div>
+        ))}</div>}
+        <div className="modal-ft"><button className="btn-ghost" onClick={()=>setShowLibModal(false)}>關閉</button></div>
+      </div>
+    </div>}
+  </>);
+}
+
+function MatModal({mat,close,onSave}){
+  const [form,setForm]=useState({name:mat?.name||"",category:mat?.category||"",brand:mat?.brand||"",spec:mat?.spec||"",supplier:mat?.supplier||"",imageUrl:mat?.imageUrl||"",notes:mat?.notes||""});
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  const cats=["地板","磁磚","牆面","天花板","系統櫃","廚具","衛浴","照明","五金","布料","石材","其他"];
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}>
+    <div className="modal">
+      <h3>{mat?"編輯材質":"新增材質"}</h3>
+      <label>材質名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：橡木實木地板"/>
+      <label>分類</label>
+      <select value={form.category} onChange={F("category")}>
+        <option value="">— 選擇分類</option>
+        {cats.map(c=><option key={c} value={c}>{c}</option>)}
+      </select>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:".6rem"}}>
+        <div><label>品牌</label><input value={form.brand} onChange={F("brand")} placeholder="品牌名稱"/></div>
+        <div><label>規格</label><input value={form.spec} onChange={F("spec")} placeholder="15mm×180mm"/></div>
+      </div>
+      <label>廠商/供應商</label><input value={form.supplier} onChange={F("supplier")} placeholder="廠商名稱"/>
+      <label>圖片網址（選填）</label><input value={form.imageUrl} onChange={F("imageUrl")} placeholder="https://..."/>
+      {form.imageUrl&&<img src={form.imageUrl} style={{width:"100%",height:120,objectFit:"cover",borderRadius:"var(--rxs)",marginTop:".4rem"}} onError={e=>e.target.style.display="none"}/>}
+      <label>備註說明</label><textarea value={form.notes} onChange={F("notes")} placeholder="顏色、質感、適用空間..."/>
+      <div className="modal-ft">
+        <button className="btn-ghost" onClick={close}>取消</button>
+        <button className="btn-solid" onClick={()=>{if(form.name.trim())onSave(form);}}>儲存</button>
+      </div>
+    </div>
+  </div>);
+}
+
 /* ── OverviewTab ── */
 function OverviewTab({proj,upd,openModal,setTab}){
   const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
@@ -740,18 +909,10 @@ function OverviewTab({proj,upd,openModal,setTab}){
       <div className="card">
         <div className="card-hd">待辦事項<button className="add-btn" onClick={()=>openModal("todo")}>＋ 新增</button></div>
         {proj.todos.length===0?<Empty text="尚無待辦事項"/>:
-        proj.todos.map(t=>{const over=t.due&&!t.done&&t.due<todayISO();return(
-          <div key={t.id} className="todo-item">
-            <div className="todo-row">
-              <button className={`chk${t.done?" on":""}`} onClick={()=>togTodo(t.id)}>{t.done?"✓":""}</button>
-              <div style={{flex:1,minWidth:0}}>
-                <div className={`todo-txt${t.done?" todo-done":""}`}>{t.text}</div>
-                <div className="todo-meta">{t.due&&<span className={`todo-due${over?" ov":""}`}>{fmtD(t.due)}</span>}<Tag cfg={PRC[t.prio]}>{PRC[t.prio].l}</Tag></div>
-                {t.note&&<div className="todo-note">{t.note}</div>}
-              </div>
-              <DelX onClick={()=>delTodo(t.id)}/>
-            </div>
-          </div>);})}
+        proj.todos.map(t=><TodoItem key={t.id} todo={t}
+          onToggle={()=>togTodo(t.id)}
+          onUpdate={ch=>upd(p=>({...p,todos:p.todos.map(x=>x.id===t.id?{...x,...ch}:x)}))}
+          onDelete={()=>delTodo(t.id)}/>)}
       </div>
       {/* 最近活動預覽（點擊跳活動日誌） */}
       {(()=>{
@@ -874,6 +1035,45 @@ function FinanceTab({proj,upd,openModal}){
   </>);
 }
 
+/* ── ActItem（活動日誌可編輯）── */
+function ActItem({item,cfg,onUpdate,onDelete}){
+  const [editing,setEditing]=useState(false);
+  const [form,setForm]=useState({title:item.title||"",note:item.note||"",date:item.date||"",ch:item.ch||""});
+  if(editing) return(
+    <div style={{background:"var(--sf2)",borderRadius:"var(--rxs)",padding:".65rem .75rem",margin:".15rem 0"}}>
+      <div className="ms-edit-grid">
+        <div className="ef fw"><label>{item.type==="comm"?"對象":"標題"}</label><input value={form.title} onChange={e=>setForm(f=>({...f,title:e.target.value}))}/></div>
+        <div className="ef"><label>日期</label><input type="date" value={form.date} onChange={e=>setForm(f=>({...f,date:e.target.value}))}/></div>
+        {item.type==="comm"&&<div className="ef"><label>管道</label>
+          <select value={form.ch} onChange={e=>setForm(f=>({...f,ch:e.target.value}))}>
+            {["Line","Email","電話","會議"].map(ch=><option key={ch} value={ch}>{ch}</option>)}
+          </select>
+        </div>}
+        <div className="ef fw"><label>內容說明</label><textarea value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></div>
+      </div>
+      <div className="ms-edit-ft">
+        <button className="btn-ghost" onClick={()=>{setForm({title:item.title||"",note:item.note||"",date:item.date||"",ch:item.ch||""});setEditing(false);}}>取消</button>
+        <button className="btn-solid" onClick={()=>{onUpdate(form);setEditing(false);}}>儲存</button>
+      </div>
+    </div>
+  );
+  return(
+    <div className="act-item">
+      <div className="act-icon" style={{background:cfg.bg,color:cfg.color}}>{cfg.icon}</div>
+      <div className="act-body">
+        {item.type==="comm"&&<div className="act-who">{item.title}</div>}
+        {item.type!=="comm"&&<div className="act-title">{item.title}</div>}
+        <div className="act-date">{fmtD(item.date)}</div>
+        {item.note&&<div className="act-note">{item.note}</div>}
+        {item.ch&&<span className="act-ch">{item.ch}</span>}
+      </div>
+      <span className="act-tag">{cfg.l}</span>
+      <button className="edit-toggle" onClick={()=>setEditing(true)}>✎</button>
+      <DelX onClick={onDelete}/>
+    </div>
+  );
+}
+
 /* 活動類型定義（含 comm 合併進來）*/
 const ACT_TYPES={
   site:{l:"工地紀錄",icon:"◉",bg:"var(--sf2)",color:"var(--t2)"},
@@ -922,6 +1122,45 @@ function ActivityLogTab({proj,upd,openModal}){
         <DelX onClick={()=>item._src==="comm"?delComm(item.id):delTl(item.id)}/>
       </div>);
     })}
+  </>);
+}
+
+/* ── ArchivedView ── */
+function ArchivedView({data,upd,selectProj,setShowArchived}){
+  const archived=data.projects.filter(p=>p.archived);
+  const restore=id=>{upd(d=>({...d,projects:d.projects.map(p=>p.id===id?{...p,archived:false,archivedAt:undefined}:p)}));};
+  return(<>
+    <div className="proj-hdr">
+      <div className="proj-title">歸檔案件</div>
+      <div className="proj-meta-row"><span className="proj-meta">完成或暫停的案件 · {archived.length} 件</span></div>
+    </div>
+    {archived.length===0&&<Empty text="目前沒有歸檔案件"/>}
+    {archived.map(proj=>{
+      const done=(proj.milestones||[]).filter(m=>m.status==="done").length;
+      const total=(proj.milestones||[]).length;
+      const pct=total?Math.round(done/total*100):0;
+      const contractAmt=Number(proj.contractAmt||0);
+      const collected=(proj.finances||[]).filter(f=>f.type==="income"&&f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
+      return(<div key={proj.id} style={{background:"var(--sf)",border:"1px solid var(--b1)",borderRadius:"var(--r)",padding:"1.2rem 1.4rem",marginBottom:".75rem",boxShadow:"var(--sh)",opacity:.85}}>
+        <div style={{display:"flex",alignItems:"center",gap:".75rem",marginBottom:".65rem"}}>
+          <span style={{width:10,height:10,borderRadius:"50%",background:proj.color,flexShrink:0,display:"inline-block"}}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:".95rem",fontWeight:600,color:"var(--t1)"}}>{proj.name}</div>
+            <div style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)",marginTop:".1rem"}}>{proj.owner?proj.owner+" · ":""}{STAGE_L[proj.stage]}{proj.archivedAt?" · 歸檔 "+fmtD(proj.archivedAt):""}</div>
+          </div>
+          <div style={{display:"flex",gap:".4rem"}}>
+            <button className="add-btn" onClick={()=>selectProj(proj.id)}>查看</button>
+            <button className="add-btn" style={{color:"var(--done)"}} onClick={()=>{restore(proj.id);setShowArchived(false);}}>↩ 恢復</button>
+          </div>
+        </div>
+        <div style={{display:"flex",gap:"1.2rem",flexWrap:"wrap"}}>
+          <span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)"}}>里程碑 {pct}% ({done}/{total})</span>
+          {contractAmt>0&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)"}}>合約 NT${fmtN(contractAmt)}</span>}
+          {collected>0&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--done)"}}>已收 NT${fmtN(collected)}</span>}
+        </div>
+      </div>);
+    })}
+    <div className="mobile-spacer"/>
   </>);
 }
 
@@ -1131,9 +1370,9 @@ function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,se
   </button>))}</nav>);
 }
 
-function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget}){
+function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget,data,updGlobal}){
   const pendCount=0;
-  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
@@ -1156,6 +1395,7 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,set
     {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal} setTab={setTab}/>}
     {tab==="timeline"&&<ActivityLogTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
+    {tab==="materials"&&<MaterialsTab proj={proj} upd={upd} data={data} updGlobal={updGlobal}/>}
     {tab==="cal"&&<CalendarView proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
     {/* 修復1：手機底部間距，避免被 MobileNav 遮住 */}
     <div className="mobile-spacer"/>
@@ -1292,7 +1532,7 @@ function App(){
   const [calYM,setCalYM]=useState({y:new Date().getFullYear(),m:new Date().getMonth()});
   const [delTarget,setDelTarget]=useState(null);
   const [archiveTarget,setArchiveTarget]=useState(null);
-  const [sbArchiveOpen,setSbArchiveOpen]=useState(false);
+  const [showArchived,setShowArchived]=useState(false);
   const [sbOpen,setSbOpen]=useState(false);
   const lastSaveTime=useRef(0);
 
@@ -1319,9 +1559,9 @@ function App(){
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
   const handleArchived=useCallback(()=>{setPid(null);setShowDash(true);},[]);
-  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);return curr;});},[ ]);
+  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);return curr;});},[ ]);
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setSbOpen(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>ID Studio</div>);
 
@@ -1341,7 +1581,7 @@ function App(){
         <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
         <span className="hdr-logo">ID Studio</span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showDash?"今日總覽":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showArchived?"歸檔案件":showDash?"今日總覽":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
@@ -1374,10 +1614,17 @@ function App(){
             <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
           </div>
         </div>
-        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setSbOpen(false);}}>
+        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
           <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
         </div>
+        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
+          <div className="sb-info">
+            <div className="sb-name">歸檔案件</div>
+            <div className="sb-sub">{data.projects.filter(p=>p.archived).length} 件已歸檔</div>
+          </div>
+        </div>}
         <hr className="sb-sep"/>
         {proj&&!showAllCal&&!proj.archived&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
         <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
@@ -1390,6 +1637,8 @@ function App(){
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
             <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
+        ):showArchived?(
+          <ArchivedView data={data} upd={upd} selectProj={selectProj} setShowArchived={setShowArchived}/>
         ):showDash?(
           <DashboardView data={data} upd={upd} selectProj={selectProj} setShowAllTodos={setShowAllTodos} setShowDash={setShowDash} setAllTodosFilter={setAllTodosFilter}/>
         ):showAllTodos?(
@@ -1397,7 +1646,7 @@ function App(){
         ):showAllCal?(
           <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
         ):proj?(
-          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal} setArchiveTarget={setArchiveTarget}/>
+          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal} setArchiveTarget={setArchiveTarget} data={data} updGlobal={upd}/>
         ):(
           <div style={{textAlign:"center",paddingTop:"5rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".78rem"}}>← 請從左側選擇案件</div>
         )}
