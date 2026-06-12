@@ -501,7 +501,8 @@ input,select,textarea{font-family:inherit;}
   .mobile-spacer{display:block;height:calc(var(--bnav) + 1rem);}
   .proj-title{font-size:2rem;}
   .grid2{grid-template-columns:1fr;}
-  .tabs{display:none;}
+  .tabs{display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;white-space:nowrap;gap:0;padding-bottom:2px;scrollbar-width:none;}
+  .tabs::-webkit-scrollbar{display:none;}
   .mobile-nav{display:flex;}
   .fin-h-grid{grid-template-columns:1fr 1fr;}
   .prog-num{font-size:3.2rem;}
@@ -1601,7 +1602,7 @@ function App(){
         </div>
         <hr className="sb-sep"/>
         <div className="sb-sec">Cases</div>
-        {data.projects.map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
+        {data.projects.filter(p=>!p.archived).map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
           <div key={p.id} className={`sb-item${pid===p.id&&!showAllCal&&!showAllTodos&&!showDash?" on":""}`} onClick={()=>selectProj(p.id)}>
             <span className="sb-dot" style={{background:p.color}}/>
             <div className="sb-info"><div className="sb-name">{p.name}</div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-bar-track"><div className="sb-bar-fill" style={{width:pct+"%"}}/></div></div>
