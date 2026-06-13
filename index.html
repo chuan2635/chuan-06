@@ -74,13 +74,14 @@ function exportCSV(proj){
 }
 
 const INIT={materialLibrary:[],
+  hardwareLibrary:[],
   projects:[
   {id:"p1",name:"台北信義住宅裝修",archived:false,owner:"王先生",loc:"台北市信義區",contact:"王大明",tel:"0912-345-678",stage:"construction",color:"#584738",contractAmt:600000,
     milestones:[{id:"m1",title:"概念提案簡報",status:"done",start:"2026-01-10",end:"2026-01-20",prio:"high"},{id:"m2",title:"施工圖完成",status:"done",start:"2026-02-01",end:"2026-02-28",prio:"high"},{id:"m3",title:"廚具丈量確認",status:"doing",start:"2026-04-15",end:"2026-04-30",prio:"mid"},{id:"m4",title:"木作進場",status:"pending",start:"2026-05-10",end:"2026-05-25",prio:"high"}],
     todos:[{id:"td1",text:"確認業主選材",done:true,due:"2026-04-20",note:"",prio:"high"},{id:"td2",text:"訂製廚具尺寸確認",done:false,due:"2026-05-25",note:"需業主到廠確認",prio:"high"},{id:"td3",text:"衛浴設備採購清單",done:false,due:"2026-06-01",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 王先生",note:"確認木作顏色選用霧白，邊框採不銹鋼收邊。",ch:"Line",date:"2026-05-08"}],
     pendings:[{id:"pd1",title:"廚具廠商報價確認",status:"pending",note:"需業主簽核追加單",date:"2026-05-20",msId:"m3"},{id:"pd2",title:"地磚施工範圍變更",status:"urgent",note:"業主要求延伸至陽台",date:"2026-05-27",msId:"m4"}],
-    materials:[{id:"mt1",name:"橡木實木地板",category:"地板",brand:"永記木業",spec:"15mm×180mm",supplier:"永記木業",imageUrl:"",notes:"自然木節紋，溫暖色調",inLibrary:false}],
+    hardware:[],materials:[{id:"mt1",name:"橡木實木地板",category:"地板",brand:"永記木業",spec:"15mm×180mm",supplier:"永記木業",imageUrl:"",notes:"自然木節紋，溫暖色調",inLibrary:false}],
     finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
     financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],
@@ -90,7 +91,7 @@ const INIT={materialLibrary:[],
     todos:[{id:"td1",text:"平面圖業主確認",done:true,due:"2026-03-20",note:"",prio:"high"},{id:"td2",text:"3D效果圖第二輪修改",done:false,due:"2026-04-30",note:"",prio:"high"},{id:"td3",text:"燈具廠商比價",done:false,due:"2026-05-10",note:"",prio:"mid"}],
     comms:[{id:"c1",who:"業主 — 陳小姐",note:"確認風格方向為輕奢，主色用深綠配金屬收邊。",ch:"Email",date:"2026-03-06"}],
     pendings:[{id:"pd1",title:"招牌設計方向確認",status:"confirmed",note:"已確認採用立體字",date:"2026-04-10"},{id:"pd2",title:"店面外觀材質選定",status:"pending",note:"待業主確認石材或磚面",date:"2026-05-05"}],
-    materials:[],
+    hardware:[],materials:[],
     finances:[{id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},{id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"}],
     extras:[],
     financeTodos:[{id:"ftt3",text:"確認合約簽署完成",done:false,due:"2026-05-15",note:""},{id:"ftt4",text:"發送設計費第一期請款單",done:false,due:"2026-05-20",note:""}],
@@ -185,8 +186,8 @@ input,select,textarea{font-family:inherit;}
 .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;height:var(--bnav);background:rgba(248,244,236,.96);backdrop-filter:blur(16px);border-top:1px solid var(--b1);z-index:100;flex-direction:row;}
 .mn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent;border:none;color:var(--t3);cursor:pointer;transition:color .15s;}
 .mn-btn.on{color:var(--dark);}
-.mn-icon{font-family:'DM Mono',monospace;font-size:1rem;line-height:1;}
-.mn-label{font-family:'DM Mono',monospace;font-size:.5rem;letter-spacing:.04em;white-space:nowrap;}
+.mn-icon{font-family:'DM Mono',monospace;font-size:1.1rem;line-height:1;}
+.mn-label{font-family:'DM Mono',monospace;font-size:.65rem;letter-spacing:.04em;white-space:nowrap;}
 .mn-badge{font-size:.42rem;background:var(--red);color:#fff;border-radius:10px;padding:.05rem .3rem;margin-top:-3px;}
 /* 手機底部間距修復 */
 .mobile-spacer{display:none;}
@@ -851,6 +852,56 @@ function MaterialsTab({proj,upd,data,updGlobal}){
   </>);
 }
 
+/* ── 圖片壓縮上傳工具 ── */
+function compressImage(file,maxPx=600,quality=0.72){
+  return new Promise(resolve=>{
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const ratio=Math.min(maxPx/img.width,maxPx/img.height,1);
+        const canvas=document.createElement('canvas');
+        canvas.width=Math.round(img.width*ratio);
+        canvas.height=Math.round(img.height*ratio);
+        canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+        resolve(canvas.toDataURL('image/jpeg',quality));
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+function ImageUpload({value,onChange}){
+  const inputRef=useRef(null);
+  const [loading,setLoading]=useState(false);
+  async function handleFile(e){
+    const file=e.target.files?.[0];
+    if(!file)return;
+    setLoading(true);
+    try{const b64=await compressImage(file);onChange(b64);}
+    finally{setLoading(false);}
+  }
+  return(<div>
+    <input ref={inputRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleFile}/>
+    <div onClick={()=>inputRef.current?.click()}
+      style={{border:"1.5px dashed var(--b2)",borderRadius:"var(--rxs)",cursor:"pointer",
+        overflow:"hidden",minHeight:110,display:"flex",alignItems:"center",justifyContent:"center",
+        background:"var(--sf2)",transition:"border-color .15s"}}
+      onMouseEnter={e=>e.currentTarget.style.borderColor="var(--acc)"}
+      onMouseLeave={e=>e.currentTarget.style.borderColor="var(--b2)"}>
+      {loading?<span style={{fontFamily:"'DM Mono',monospace",fontSize:".7rem",color:"var(--t3)"}}>壓縮中...</span>:
+       value?<img src={value} style={{width:"100%",maxHeight:200,objectFit:"cover"}} alt="材質圖"/>:
+       <div style={{textAlign:"center",padding:"1rem"}}>
+         <div style={{fontSize:"1.5rem",marginBottom:".3rem",opacity:.35}}>📷</div>
+         <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>點擊上傳圖片</div>
+         <div style={{fontFamily:"'DM Mono',monospace",fontSize:".58rem",color:"var(--t4)",marginTop:".2rem"}}>支援 JPG / PNG，自動壓縮</div>
+       </div>}
+    </div>
+    {value&&<button className="btn-ghost" style={{fontSize:".7rem",marginTop:".3rem"}}
+      onClick={e=>{e.stopPropagation();onChange("");}}>✕ 移除圖片</button>}
+  </div>);
+}
+
 function MatModal({mat,close,onSave}){
   const [form,setForm]=useState({name:mat?.name||"",category:mat?.category||"",brand:mat?.brand||"",spec:mat?.spec||"",supplier:mat?.supplier||"",imageUrl:mat?.imageUrl||"",notes:mat?.notes||""});
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
@@ -858,7 +909,9 @@ function MatModal({mat,close,onSave}){
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}>
     <div className="modal">
       <h3>{mat?"編輯材質":"新增材質"}</h3>
-      <label>材質名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：橡木實木地板"/>
+      <label>材質圖片</label>
+      <ImageUpload value={form.imageUrl} onChange={v=>setForm(f=>({...f,imageUrl:v}))}/>
+      <label style={{marginTop:".6rem"}}>材質名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：橡木實木地板"/>
       <label>分類</label>
       <select value={form.category} onChange={F("category")}>
         <option value="">— 選擇分類</option>
@@ -869,9 +922,113 @@ function MatModal({mat,close,onSave}){
         <div><label>規格</label><input value={form.spec} onChange={F("spec")} placeholder="15mm×180mm"/></div>
       </div>
       <label>廠商/供應商</label><input value={form.supplier} onChange={F("supplier")} placeholder="廠商名稱"/>
-      <label>圖片網址（選填）</label><input value={form.imageUrl} onChange={F("imageUrl")} placeholder="https://..."/>
-      {form.imageUrl&&<img src={form.imageUrl} style={{width:"100%",height:120,objectFit:"cover",borderRadius:"var(--rxs)",marginTop:".4rem"}} onError={e=>e.target.style.display="none"}/>}
       <label>備註說明</label><textarea value={form.notes} onChange={F("notes")} placeholder="顏色、質感、適用空間..."/>
+      <div className="modal-ft">
+        <button className="btn-ghost" onClick={close}>取消</button>
+        <button className="btn-solid" onClick={()=>{if(form.name.trim())onSave(form);}}>儲存</button>
+      </div>
+    </div>
+  </div>);
+}
+
+/* ── HardwareTab + HardwareModal ── */
+function HardwareTab({proj,upd,data,updGlobal}){
+  const [showAddModal,setShowAddModal]=useState(false);
+  const [editHw,setEditHw]=useState(null);
+  const [showLibModal,setShowLibModal]=useState(false);
+  const hw=proj.hardware||[];
+  const library=data.hardwareLibrary||[];
+  const delHw=id=>upd(p=>({...p,hardware:(p.hardware||[]).filter(h=>h.id!==id)}));
+  const saveToLib=item=>{
+    if(!library.find(h=>h.id===item.id))
+      updGlobal(d=>({...d,hardwareLibrary:[...(d.hardwareLibrary||[]),{...item,inLibrary:true}]}));
+    upd(p=>({...p,hardware:(p.hardware||[]).map(h=>h.id===item.id?{...h,inLibrary:true}:h)}));
+  };
+  const importFromLib=item=>{
+    if(hw.find(h=>h.name===item.name)){alert("此五金已在本案件");return;}
+    upd(p=>({...p,hardware:[...(p.hardware||[]),{...item,id:Math.random().toString(36).slice(2,8)}]}));
+    setShowLibModal(false);
+  };
+  return(<>
+    <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:"1.1rem",flexWrap:"wrap",gap:".5rem"}}>
+      <div style={{display:"flex",gap:".4rem"}}>
+        <button className="add-btn" onClick={()=>{setEditHw(null);setShowAddModal(true);}}>＋ 新增五金</button>
+        {library.length>0&&<button className="add-btn" onClick={()=>setShowLibModal(true)}>📚 從五金庫選取</button>}
+      </div>
+      <span style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)"}}>{hw.length} 項五金</span>
+    </div>
+    {hw.length===0?<Empty text="尚無五金，點「新增五金」開始建立"/>:
+    <div className="mat-grid">{hw.map(item=>(
+      <div key={item.id} className="mat-card">
+        <div className="mat-img">
+          {item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}
+        </div>
+        <div className="mat-body">
+          <div className="mat-name">{item.name}</div>
+          {item.category&&<div className="mat-cat">{item.category}</div>}
+          <div className="mat-info">
+            {item.brand&&<div>{item.brand}</div>}
+            {item.spec&&<div>{item.spec}</div>}
+            {item.finish&&<div>表面處理：{item.finish}</div>}
+            {item.supplier&&<div>{item.supplier}</div>}
+            {item.notes&&<div style={{marginTop:".2rem",color:"var(--t2)",fontSize:".76rem",fontFamily:"inherit"}}>{item.notes}</div>}
+          </div>
+          {item.inLibrary&&<span className="lib-badge" style={{marginTop:".35rem",display:"inline-block"}}>已存入五金庫</span>}
+        </div>
+        <div className="mat-actions">
+          <button className="edit-toggle" style={{fontSize:".7rem"}} onClick={()=>{setEditHw(item);setShowAddModal(true);}}>✎ 編輯</button>
+          {!item.inLibrary&&<button className="edit-toggle" style={{fontSize:".7rem",color:"var(--done)"}} onClick={()=>saveToLib(item)}>存入庫</button>}
+          <button className="del-x" onClick={()=>delHw(item.id)}>✕</button>
+        </div>
+      </div>
+    ))}</div>}
+    {showAddModal&&<HardwareModal hw={editHw} close={()=>{setShowAddModal(false);setEditHw(null);}}
+      onSave={form=>{
+        if(editHw) upd(p=>({...p,hardware:(p.hardware||[]).map(h=>h.id===editHw.id?{...h,...form}:h)}));
+        else upd(p=>({...p,hardware:[...(p.hardware||[]),{id:Math.random().toString(36).slice(2,8),...form,inLibrary:false}]}));
+        setShowAddModal(false);setEditHw(null);
+      }}/>}
+    {showLibModal&&<div className="overlay" onClick={e=>e.target===e.currentTarget&&setShowLibModal(false)}>
+      <div className="modal"><h3>五金庫</h3>
+        <div className="mat-grid" style={{maxHeight:"55vh",overflowY:"auto"}}>{library.map(item=>(
+          <div key={item.id} className="mat-card" onClick={()=>importFromLib(item)} style={{cursor:"pointer"}}>
+            <div className="mat-img">{item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}</div>
+            <div className="mat-body"><div className="mat-name">{item.name}</div>{item.category&&<div className="mat-cat">{item.category}</div>}</div>
+          </div>
+        ))}</div>
+        <div className="modal-ft"><button className="btn-ghost" onClick={()=>setShowLibModal(false)}>關閉</button></div>
+      </div>
+    </div>}
+  </>);
+}
+
+function HardwareModal({hw,close,onSave}){
+  const [form,setForm]=useState({name:hw?.name||"",category:hw?.category||"",brand:hw?.brand||"",spec:hw?.spec||"",finish:hw?.finish||"",supplier:hw?.supplier||"",imageUrl:hw?.imageUrl||"",notes:hw?.notes||""});
+  const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
+  const cats=["門把手","鉸鏈","拉手","掛衣鉤","毛巾架","衛浴五金","燈具","開關插座","窗簾軌道","其他"];
+  const finishes=["霧黑","亮黑","古銅","金色","玫瑰金","銀色","霧銀","白色","其他"];
+  return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}>
+    <div className="modal">
+      <h3>{hw?"編輯五金":"新增五金"}</h3>
+      <label>五金圖片</label>
+      <ImageUpload value={form.imageUrl} onChange={v=>setForm(f=>({...f,imageUrl:v}))}/>
+      <label style={{marginTop:".6rem"}}>五金名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：方形門把手"/>
+      <label>分類</label>
+      <select value={form.category} onChange={F("category")}>
+        <option value="">— 選擇分類</option>
+        {cats.map(cat=><option key={cat} value={cat}>{cat}</option>)}
+      </select>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:".6rem"}}>
+        <div><label>品牌</label><input value={form.brand} onChange={F("brand")} placeholder="品牌名稱"/></div>
+        <div><label>規格/尺寸</label><input value={form.spec} onChange={F("spec")} placeholder="128mm孔距"/></div>
+      </div>
+      <label>表面處理</label>
+      <select value={form.finish} onChange={F("finish")}>
+        <option value="">— 選擇表面處理</option>
+        {finishes.map(f=><option key={f} value={f}>{f}</option>)}
+      </select>
+      <label>廠商/供應商</label><input value={form.supplier} onChange={F("supplier")} placeholder="廠商名稱"/>
+      <label>備註說明</label><textarea value={form.notes} onChange={F("notes")} placeholder="數量、安裝位置、特殊需求..."/>
       <div className="modal-ft">
         <button className="btn-ghost" onClick={close}>取消</button>
         <button className="btn-solid" onClick={()=>{if(form.name.trim())onSave(form);}}>儲存</button>
@@ -1126,6 +1283,77 @@ function ActivityLogTab({proj,upd,openModal}){
   </>);
 }
 
+/* ── AllMaterialsView（材質與五金總表）── */
+function AllMaterialsView({data}){
+  const [typeFilter,setTypeFilter]=useState("all");
+  const [catFilter,setCatFilter]=useState("all");
+  const [search,setSearch]=useState("");
+  const matItems=[],hwItems=[];
+  for(const proj of data.projects.filter(p=>!p.archived)){
+    for(const m of(proj.materials||[]))matItems.push({...m,_type:"mat",projName:proj.name,projColor:proj.color});
+    for(const h of(proj.hardware||[]))hwItems.push({...h,_type:"hw",projName:proj.name,projColor:proj.color});
+  }
+  const all=[...matItems,...hwItems];
+  const cats=["all",...new Set(all.map(x=>x.category).filter(Boolean))];
+  const filtered=all.filter(x=>{
+    if(typeFilter==="mat"&&x._type!=="mat")return false;
+    if(typeFilter==="hw"&&x._type!=="hw")return false;
+    if(catFilter!=="all"&&x.category!==catFilter)return false;
+    if(search&&!x.name.includes(search)&&!(x.notes||"").includes(search)&&!(x.supplier||"").includes(search))return false;
+    return true;
+  });
+  return(<>
+    <div className="proj-hdr">
+      <div className="proj-title">材質與五金總表</div>
+      <div className="proj-meta-row">
+        <span className="proj-meta">材質 {matItems.length} 項 · 五金 {hwItems.length} 項</span>
+      </div>
+    </div>
+    <div style={{display:"flex",gap:".5rem",flexWrap:"wrap",marginBottom:"1rem",alignItems:"center"}}>
+      {[["all","全部"],["mat","材質"],["hw","五金"]].map(([v,l])=>(
+        <button key={v} className={`filt-btn${typeFilter===v?" on":""}`} onClick={()=>setTypeFilter(v)}>{l}</button>
+      ))}
+      <div style={{flex:1,minWidth:120}}>
+        <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="搜尋名稱/廠商/備註..." style={{width:"100%",fontSize:16}}/>
+      </div>
+    </div>
+    {cats.length>1&&<div style={{display:"flex",gap:".4rem",flexWrap:"wrap",marginBottom:"1rem"}}>
+      {cats.map(cat=>(
+        <button key={cat} className={`filt-btn${catFilter===cat?" on":""}`} onClick={()=>setCatFilter(cat)}>
+          {cat==="all"?"所有分類":cat}
+        </button>
+      ))}
+    </div>}
+    {filtered.length===0?<Empty text="沒有符合條件的項目"/>:
+    <div className="mat-grid">{filtered.map(item=>(
+      <div key={item.id+item._type} className="mat-card">
+        <div className="mat-img" style={{position:"relative"}}>
+          {item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>{item._type==="hw"?"🔩":"🪵"}</span>}
+          <span style={{position:"absolute",top:6,right:6,fontFamily:"'DM Mono',monospace",fontSize:".55rem",
+            padding:".12rem .4rem",borderRadius:4,background:item._type==="hw"?"#3A3530":"var(--dark)",color:"#F8F4EC",opacity:.85}}>
+            {item._type==="hw"?"五金":"材質"}
+          </span>
+        </div>
+        <div className="mat-body">
+          <div className="mat-name">{item.name}</div>
+          {item.category&&<div className="mat-cat">{item.category}</div>}
+          <div className="mat-info">
+            {item.brand&&<div>{item.brand}</div>}
+            {item.spec&&<div>{item.spec}</div>}
+            {item.finish&&<div>{item.finish}</div>}
+            {item.supplier&&<div>{item.supplier}</div>}
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:4,marginTop:".3rem"}}>
+            <span style={{width:6,height:6,borderRadius:"50%",background:item.projColor,display:"inline-block"}}/>
+            <span style={{fontFamily:"'DM Mono',monospace",fontSize:".58rem",color:"var(--t3)"}}>{item.projName}</span>
+          </div>
+        </div>
+      </div>
+    ))}</div>}
+    <div className="mobile-spacer"/>
+  </>);
+}
+
 /* ── ArchivedView ── */
 function ArchivedView({data,upd,selectProj,setShowArchived}){
   const archived=data.projects.filter(p=>p.archived);
@@ -1362,8 +1590,8 @@ function AllTodosView({data,upd,initialFilter}){
   </>);
 }
 
-function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,setShowAllCal}){
-  const items=[{id:"__dash",l:"今日",icon:"⌂",dash:true},{id:"overview",l:"概覽",icon:"⊞"},{id:"timeline",l:"活動",icon:"≡"},{id:"finance",l:"財務",icon:"◇"},{id:"cal",l:"行事曆",icon:"▦"}];
+function MobileNav({tab,setTab,pendCount}){
+  const items=[{id:"overview",l:"概覽",icon:"⊞"},{id:"timeline",l:"活動",icon:"≡"},{id:"finance",l:"財務",icon:"◇"},{id:"cal",l:"行事曆",icon:"▦"}];
   return(<nav className="mobile-nav">{items.map(it=>(<button key={it.id} className={`mn-btn${tab===it.id?" on":""}`} onClick={()=>setTab(it.id)}>
     <span className="mn-icon">{it.icon}</span>
     {it.badge>0&&<span className="mn-badge">{it.badge}</span>}
@@ -1371,9 +1599,9 @@ function MobileNav({tab,setTab,pendCount,showDash,setShowDash,setShowAllTodos,se
   </button>))}</nav>);
 }
 
-function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,setShowDash,setShowAllTodos,setShowAllCal,setArchiveTarget,data,updGlobal}){
+function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,setShowAllTodos,setShowAllCal,setArchiveTarget,data,updGlobal}){
   const pendCount=0;
-  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"hardware",l:"五金表"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
@@ -1397,10 +1625,11 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,showDash,set
     {tab==="timeline"&&<ActivityLogTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="materials"&&<MaterialsTab proj={proj} upd={upd} data={data} updGlobal={updGlobal}/>}
+    {tab==="hardware"&&<HardwareTab proj={proj} upd={upd} data={data} updGlobal={updGlobal}/>}
     {tab==="cal"&&<CalendarView proj={proj} calYM={calYM} setCalYM={setCalYM}/>}
     {/* 修復1：手機底部間距，避免被 MobileNav 遮住 */}
     <div className="mobile-spacer"/>
-    <MobileNav tab={tab} setTab={setTab} pendCount={pendCount} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal}/>
+    <MobileNav tab={tab} setTab={setTab} pendCount={pendCount}/>
   </>);
 }
 
@@ -1527,24 +1756,26 @@ function App(){
   const [showAllCal,setShowAllCal]=useState(false);
   const [showAllTodos,setShowAllTodos]=useState(false);
   const [allTodosFilter,setAllTodosFilter]=useState("pending");
-  const [showDash,setShowDash]=useState(true);
+  const [showDash,setShowDash]=useState(false); // Dashboard removed
   const [modal,setModal]=useState(null);
   const [syncOk,setSyncOk]=useState(false);
   const [calYM,setCalYM]=useState({y:new Date().getFullYear(),m:new Date().getMonth()});
   const [delTarget,setDelTarget]=useState(null);
   const [archiveTarget,setArchiveTarget]=useState(null);
   const [showArchived,setShowArchived]=useState(false);
+  const [showAllMats,setShowAllMats]=useState(false);
   const [sbOpen,setSbOpen]=useState(false);
   const lastSaveTime=useRef(0);
 
   useEffect(()=>{
     loadData().then(d=>{
       setData(d);
-      // 預設顯示 Dashboard
+      // 直接選第一個未歸檔案件
+      const active=d.projects.filter(p=>!p.archived);
+      if(active.length>0)setPid(active[0].id);
       setLoading(false);
       // 啟動通知檢查
       requestAndCheckNotifications(d);
-      setShowDash(true);
     });
     const poll=setInterval(async()=>{
       if(Date.now()-lastSaveTime.current<5000)return;
@@ -1560,9 +1791,9 @@ function App(){
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
   const handleArchived=useCallback(()=>{setPid(null);setShowDash(true);},[]);
-  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);return curr;});},[ ]);
+  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);return curr;});},[ ]);
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setSbOpen(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>ID Studio</div>);
 
@@ -1582,13 +1813,13 @@ function App(){
         <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
         <span className="hdr-logo">ID Studio</span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showArchived?"歸檔案件":showDash?"今日總覽":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
         {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
-        <button className="hdr-btn" onClick={()=>{if(showDash){setShowDash(false);}else if(showAllCal||showAllTodos){setShowAllCal(false);setShowAllTodos(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showDash||showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
+        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos){setShowAllCal(false);setShowAllTodos(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
       </div>
     </header>
 
@@ -1619,6 +1850,10 @@ function App(){
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
           <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
         </div>
+        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>▤</span>
+          <div className="sb-info"><div className="sb-name">材質與五金</div><div className="sb-sub">All Materials</div></div>
+        </div>
         {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
           <div className="sb-info">
@@ -1638,16 +1873,16 @@ function App(){
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
             <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
+        ):showAllMats?(
+          <AllMaterialsView data={data}/>
         ):showArchived?(
           <ArchivedView data={data} upd={upd} selectProj={selectProj} setShowArchived={setShowArchived}/>
-        ):showDash?(
-          <DashboardView data={data} upd={upd} selectProj={selectProj} setShowAllTodos={setShowAllTodos} setShowDash={setShowDash} setAllTodosFilter={setAllTodosFilter}/>
         ):showAllTodos?(
           <AllTodosView data={data} upd={upd} initialFilter={allTodosFilter}/>
         ):showAllCal?(
           <AllCalendar data={data} calYM={calYM} setCalYM={setCalYM}/>
         ):proj?(
-          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM} showDash={showDash} setShowDash={setShowDash} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal} setArchiveTarget={setArchiveTarget} data={data} updGlobal={upd}/>
+          <ProjectPanel proj={proj} tab={tab} setTab={setTab} upd={updProj} openModal={openModal} calYM={calYM} setCalYM={setCalYM} setShowAllTodos={setShowAllTodos} setShowAllCal={setShowAllCal} setArchiveTarget={setArchiveTarget} data={data} updGlobal={upd}/>
         ):(
           <div style={{textAlign:"center",paddingTop:"5rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".78rem"}}>← 請從左側選擇案件</div>
         )}
