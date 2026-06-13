@@ -3,15 +3,163 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>ID Studio</title>
+<title>YC Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#EDE6D8;color:#2D1F14;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}</style>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#EDE6D8;color:#2D1F14;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}
+
+/* ─── YC Splash Screen v2 ─── */
+#yc-splash{
+  position:fixed;inset:0;background:#EDE6D8;
+  z-index:9999;display:flex;align-items:center;justify-content:center;
+}
+.yc-inner{display:flex;flex-direction:column;align-items:center;}
+#yc-logo-svg{
+  width:290px;max-width:90vw;height:auto;opacity:0;
+  animation:yc-logo-in .55s .15s forwards cubic-bezier(.25,.46,.45,.94);
+}
+@keyframes yc-logo-in{
+  from{opacity:0;transform:scale(.88) translateY(6px);}
+  to{opacity:1;transform:scale(1) translateY(0);}
+}
+/* 角落框 */
+.yc-br{stroke-dasharray:58;stroke-dashoffset:58;}
+.yc-c1{animation:yc-draw .45s .3s forwards ease-out;}
+.yc-c2{animation:yc-draw .45s .38s forwards ease-out;}
+.yc-c3{animation:yc-draw .45s .36s forwards ease-out;}
+.yc-c4{animation:yc-draw .45s .44s forwards ease-out;}
+/* 房屋輪廓 */
+.yc-wl,.yc-wr{stroke-dasharray:100;stroke-dashoffset:100;}
+.yc-wl{animation:yc-draw .48s .5s forwards ease-out;}
+.yc-wr{animation:yc-draw .48s .55s forwards ease-out;}
+#yc-fl{stroke-dasharray:165;stroke-dashoffset:165;animation:yc-draw .55s .62s forwards ease-out;}
+/* Y 屋脊 */
+#yc-al{stroke-dasharray:112;stroke-dashoffset:112;animation:yc-draw .62s .72s forwards cubic-bezier(.25,.46,.45,.94);}
+#yc-ar{stroke-dasharray:112;stroke-dashoffset:112;animation:yc-draw .62s .9s forwards cubic-bezier(.25,.46,.45,.94);}
+#yc-cap{stroke-dasharray:24;stroke-dashoffset:24;animation:yc-draw .22s 1.18s forwards ease;}
+/* Y 中柱 */
+#yc-st{stroke-dasharray:100;stroke-dashoffset:100;animation:yc-draw .5s 1.2s forwards cubic-bezier(.25,.46,.45,.94);}
+/* C 弧 */
+#yc-cc{stroke-dasharray:320;stroke-dashoffset:320;animation:yc-draw 1.15s 1.35s forwards cubic-bezier(.25,.46,.45,.94);}
+/* 通用 draw */
+@keyframes yc-draw{to{stroke-dashoffset:0;}}
+/* 尺 + 標注 + 工具 */
+#yc-ruler{opacity:0;animation:yc-fade .5s 1.95s forwards;}
+#yc-dim{opacity:0;animation:yc-fade .4s 2.05s forwards;}
+.yc-tool{opacity:0;animation:yc-fade .45s 2.12s forwards;}
+@keyframes yc-fade{to{opacity:1;}}
+/* 文字 */
+#yc-wm{
+  font-family:'DM Serif Display',serif;font-size:1.9rem;color:#584738;
+  letter-spacing:.38em;margin-top:1.05rem;
+  opacity:0;transform:translateY(10px);
+  animation:yc-up .72s 2.28s forwards;
+}
+#yc-tg{
+  font-family:'DM Mono',monospace;font-size:.5rem;color:#9A9184;
+  letter-spacing:.55em;text-transform:uppercase;margin-top:.42rem;
+  opacity:0;transform:translateY(8px);
+  animation:yc-up .62s 2.62s forwards;
+}
+@keyframes yc-up{to{opacity:1;transform:translateY(0);}}
+</style>
 </head>
-<body><div id="root"></div>
+<body><div id="yc-splash">
+  <div class="yc-inner">
+    <svg id="yc-logo-svg" viewBox="0 0 280 225" xmlns="http://www.w3.org/2000/svg">
+      <!-- 角落框架 -->
+      <g stroke="#584738" stroke-width="1.6" fill="none">
+        <path d="M10,36 L10,10 L36,10" class="yc-br yc-c1"/>
+        <path d="M244,10 L270,10 L270,36" class="yc-br yc-c2"/>
+        <path d="M10,189 L10,215 L36,215" class="yc-br yc-c3"/>
+        <path d="M244,215 L270,215 L270,189" class="yc-br yc-c4"/>
+      </g>
+      <!-- 薄外框 -->
+      <rect x="10" y="10" width="260" height="205" stroke="#584738" stroke-width="0.35" fill="none" opacity="0.15"/>
+
+      <!-- 房屋左右牆壁（細線，建築感）-->
+      <path class="yc-wl" d="M44,183 L44,90" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <path class="yc-wr" d="M198,183 L198,90" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <!-- 地板 -->
+      <path id="yc-fl" d="M44,183 L198,183" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
+      <!-- 屋簷虛線參考 -->
+      <line x1="28" y1="90" x2="215" y2="90" stroke="#B59E7D" stroke-width="0.5" opacity="0.22" stroke-dasharray="4,3"/>
+
+      <!-- Y：左屋脊 -->
+      <path id="yc-al" d="M44,90 L121,30" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+      <!-- Y：右屋脊 -->
+      <path id="yc-ar" d="M198,90 L121,30" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+      <!-- 屋脊帽 -->
+      <line id="yc-cap" x1="111" y1="30" x2="131" y2="30" stroke="#584738" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
+      <!-- Y：中柱（門框）-->
+      <path id="yc-st" d="M121,90 L121,183" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+
+      <!-- C：右側大弧（外側擴展，弧形設計語彙）-->
+      <path id="yc-cc" d="M198,74 C 264,74 264,183 198,183" stroke="#B59E7D" stroke-width="5.5" fill="none" stroke-linecap="round"/>
+
+      <!-- 捲尺（底部）-->
+      <g id="yc-ruler">
+        <rect x="26" y="198" width="228" height="9" rx="2" fill="#EDE6D8" stroke="#9A9184" stroke-width="0.55" opacity="0.75"/>
+        <rect x="26" y="198" width="12" height="9" rx="1" fill="#CEC1A8" opacity="0.5"/>
+        <!-- 主刻度 -->
+        <g stroke="#584738" stroke-width="0.75" opacity="0.65">
+          <line x1="72" y1="198" x2="72" y2="204"/>
+          <line x1="119" y1="198" x2="119" y2="205"/>
+          <line x1="166" y1="198" x2="166" y2="204"/>
+          <line x1="213" y1="198" x2="213" y2="205"/>
+        </g>
+        <!-- 小刻度 -->
+        <g stroke="#9A9184" stroke-width="0.5" opacity="0.5">
+          <line x1="49" y1="198" x2="49" y2="201"/>
+          <line x1="96" y1="198" x2="96" y2="201"/>
+          <line x1="143" y1="198" x2="143" y2="201"/>
+          <line x1="190" y1="198" x2="190" y2="201"/>
+          <line x1="237" y1="198" x2="237" y2="201"/>
+        </g>
+        <text x="116" y="213" font-family="'DM Mono',monospace" font-size="5.5" fill="#9A9184" text-anchor="middle" opacity="0.65">100cm</text>
+        <text x="210" y="213" font-family="'DM Mono',monospace" font-size="5.5" fill="#9A9184" text-anchor="middle" opacity="0.65">200cm</text>
+      </g>
+
+      <!-- 建築尺寸標注線（房子寬度）-->
+      <g id="yc-dim">
+        <line x1="44" y1="190" x2="198" y2="190" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
+        <line x1="44" y1="188" x2="44" y2="193" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
+        <line x1="198" y1="188" x2="198" y2="193" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
+        <path d="M48,189 L44,190.5 L48,192" stroke="#B59E7D" stroke-width="0.65" fill="none" opacity="0.55"/>
+        <path d="M194,189 L198,190.5 L194,192" stroke="#B59E7D" stroke-width="0.65" fill="none" opacity="0.55"/>
+      </g>
+
+      <!-- 鉛筆工具（右上角）-->
+      <g class="yc-tool" transform="translate(248,22) rotate(-42)">
+        <rect x="-3" y="-17" width="6" height="24" rx="1" fill="#F8F4EC" stroke="#B59E7D" stroke-width="0.85"/>
+        <path d="M-3,7 L0,15 L3,7Z" fill="#CEC1A8" stroke="#B59E7D" stroke-width="0.7"/>
+        <rect x="-3" y="-19" width="6" height="4" rx="0.5" fill="#B59E7D" opacity="0.55"/>
+        <line x1="0" y1="-15" x2="0" y2="5" stroke="#B59E7D" stroke-width="0.4" opacity="0.35"/>
+      </g>
+
+      <!-- 直角尺（左上角）-->
+      <g class="yc-tool" transform="translate(20,17)">
+        <path d="M0,24 L0,0 L24,0" stroke="#9A9184" stroke-width="1.1" fill="none" opacity="0.5" stroke-linecap="round"/>
+        <g stroke="#9A9184" stroke-width="0.55" opacity="0.4">
+          <line x1="5" y1="0" x2="5" y2="4"/>
+          <line x1="10" y1="0" x2="10" y2="5"/>
+          <line x1="15" y1="0" x2="15" y2="4"/>
+          <line x1="20" y1="0" x2="20" y2="4"/>
+          <line x1="0" y1="5" x2="4" y2="5"/>
+          <line x1="0" y1="10" x2="5" y2="10"/>
+          <line x1="0" y1="15" x2="4" y2="15"/>
+          <line x1="0" y1="20" x2="4" y2="20"/>
+        </g>
+      </g>
+    </svg>
+    <div id="yc-wm">YC STUDIO</div>
+    <div id="yc-tg">INTERIOR DESIGN</div>
+  </div>
+</div>
+<div id="root" style="opacity:0"></div>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -1795,7 +1943,7 @@ function App(){
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
   const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);},[]);
 
-  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>ID Studio</div>);
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#EDE6D8",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>YC Studio</div>);
 
   const dateParts=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,".");
 
@@ -1811,7 +1959,7 @@ function App(){
     <header className="hdr">
       <div className="hdr-l">
         <button className="menu-btn" onClick={()=>setSbOpen(v=>!v)}>☰</button>
-        <span className="hdr-logo">ID Studio</span>
+        <span className="hdr-logo">YC Studio</span>
         <div className="hdr-div"/>
         <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
@@ -1819,18 +1967,13 @@ function App(){
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
         {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
-        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos){setShowAllCal(false);setShowAllTodos(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
+        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos||showAllMats){setShowAllCal(false);setShowAllTodos(false);setShowAllMats(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
       </div>
     </header>
 
     <div className="workspace">
       <aside className={`sidebar${sbOpen?" open":""}`}>
         <button className="sb-close-btn" onClick={()=>setSbOpen(false)}>✕ 關閉</button>
-        <div className={`sb-item${showDash?" on":""}`} onClick={()=>{setShowDash(true);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
-          <span style={{fontSize:".95rem",color:"var(--t3)"}}>⌂</span>
-          <div className="sb-info"><div className="sb-name">今日總覽</div><div className="sb-sub">Dashboard</div></div>
-          {(()=>{const n=data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done&&t.due&&t.due<todayISO()).length+(p.pendings||[]).filter(x=>x.status==="urgent").length,0);return n>0?<span className="sb-urgent-dot"/>:null;})()}
-        </div>
         <hr className="sb-sep"/>
         <div className="sb-sec">Cases</div>
         {data.projects.filter(p=>!p.archived).map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
@@ -1839,22 +1982,22 @@ function App(){
             <div className="sb-info"><div className="sb-name">{p.name}</div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-bar-track"><div className="sb-bar-fill" style={{width:pct+"%"}}/></div></div>
           </div>);})}
         <hr className="sb-sep"/>
-        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setAllTodosFilter("pending");setSbOpen(false);}}>
+        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setShowAllMats(false);setAllTodosFilter("pending");setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
           <div className="sb-info">
             <div className="sb-name">所有待辦</div>
             <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
           </div>
         </div>
-        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setSbOpen(false);}}>
+        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
           <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
         </div>
-        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
+        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>▤</span>
           <div className="sb-info"><div className="sb-name">材質與五金</div><div className="sb-sub">All Materials</div></div>
         </div>
-        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
+        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setSbOpen(false);}}>
           <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
           <div className="sb-info">
             <div className="sb-name">歸檔案件</div>
@@ -2013,6 +2156,33 @@ async function requestAndCheckNotifications(data, force=false) {
 }
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+<script>
+(function(){
+  function exitSplash(){
+    var sp=document.getElementById('yc-splash');
+    var rt=document.getElementById('root');
+    if(!sp)return;
+    var inn=sp.querySelector('.yc-inner');
+    inn.style.transition='transform .52s ease-in,opacity .46s ease-in';
+    inn.style.transform='scale(.93) translateY(-4px)';
+    inn.style.opacity='0';
+    setTimeout(function(){
+      sp.style.transition='transform .7s cubic-bezier(.76,0,.24,1)';
+      sp.style.transform='translateY(-100%)';
+      rt.style.transition='opacity .48s ease';
+      rt.style.opacity='1';
+      setTimeout(function(){sp.remove();},730);
+    },500);
+  }
+  setTimeout(exitSplash,3200);
+  setTimeout(function(){
+    var s=document.getElementById('yc-splash');
+    if(s)s.remove();
+    var r=document.getElementById('root');
+    if(r)r.style.opacity='1';
+  },6500);
+})();
 </script>
 </body>
 </html>
