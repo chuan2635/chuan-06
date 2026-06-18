@@ -159,7 +159,7 @@
     <div id="yc-tg">INTERIOR DESIGN</div>
   </div>
 </div>
-<div id="root" style="opacity:0"></div>
+<div id="root"></div>
 <script type="text/babel">
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -1023,7 +1023,7 @@ function ImageUpload({value,onChange}){
   const inputRef=useRef(null);
   const [loading,setLoading]=useState(false);
   async function handleFile(e){
-    const file=e.target.files?.[0];
+    const file=(e.target.files&&e.target.files[0]);
     if(!file)return;
     setLoading(true);
     try{const b64=await compressImage(file);onChange(b64);}
@@ -1031,7 +1031,7 @@ function ImageUpload({value,onChange}){
   }
   return(<div>
     <input ref={inputRef} type="file" accept="image/*" style={{display:"none"}} onChange={handleFile}/>
-    <div onClick={()=>inputRef.current?.click()}
+    <div onClick={()=>inputRef.current&&inputRef.current.click()}
       style={{border:"1.5px dashed var(--b2)",borderRadius:"var(--rxs)",cursor:"pointer",
         overflow:"hidden",minHeight:110,display:"flex",alignItems:"center",justifyContent:"center",
         background:"var(--sf2)",transition:"border-color .15s"}}
@@ -2160,28 +2160,26 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 <script>
 (function(){
   function exitSplash(){
-    var sp=document.getElementById('yc-splash');
-    var rt=document.getElementById('root');
-    if(!sp)return;
-    var inn=sp.querySelector('.yc-inner');
-    inn.style.transition='transform .52s ease-in,opacity .46s ease-in';
-    inn.style.transform='scale(.93) translateY(-4px)';
-    inn.style.opacity='0';
-    setTimeout(function(){
-      sp.style.transition='transform .7s cubic-bezier(.76,0,.24,1)';
-      sp.style.transform='translateY(-100%)';
-      rt.style.transition='opacity .48s ease';
-      rt.style.opacity='1';
-      setTimeout(function(){sp.remove();},730);
-    },500);
+    var sp = document.getElementById('yc-splash');
+    if (!sp) return;
+    // Phase 1: 內容縮小淡出
+    var inn = sp.querySelector('.yc-inner');
+    if (inn) {
+      inn.style.cssText += ';transition:transform .5s ease-in,opacity .45s ease-in;transform:scale(.93) translateY(-4px);opacity:0';
+    }
+    // Phase 2: splash 向上滑走
+    setTimeout(function() {
+      sp.style.cssText += ';transition:transform .7s cubic-bezier(.76,0,.24,1);transform:translateY(-100%)';
+      setTimeout(function() { if(sp.parentNode) sp.remove(); }, 720);
+    }, 480);
   }
-  setTimeout(exitSplash,3200);
+  // 動畫約 3 秒後退場
+  setTimeout(exitSplash, 3000);
+  // 安全保險：4 秒內一定移除，不管任何錯誤
   setTimeout(function(){
-    var s=document.getElementById('yc-splash');
-    if(s)s.remove();
-    var r=document.getElementById('root');
-    if(r)r.style.opacity='1';
-  },6500);
+    var s = document.getElementById('yc-splash');
+    if (s && s.parentNode) s.parentNode.removeChild(s);
+  }, 4200);
 })();
 </script>
 </body>
