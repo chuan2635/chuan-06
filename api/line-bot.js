@@ -135,36 +135,41 @@ async function parseMessage(userText, projects, apiKey) {
       max_tokens: 1000,
       messages: [{
         role: 'user',
-        content: `你是室內設計工作室 YC Studio 的助理。
-今天：${today}
+        content: `你是室內設計工作室 YC Studio 的助理，負責從訊息中提取溝通記錄和待辦事項。
+今天：${today}（星期${['日','一','二','三','四','五','六'][new Date().getDay()]}）
 
-現有案件（進行模糊比對，忽略標點符號差異）：
+現有案件（模糊比對，忽略標點）：
 ${projList}
 
 比對規則：
-- "桃園觀音老妹家" = "桃園觀音-老妹家" ✓
-- "石門湯旅" = "桃園龍潭-石門湯旅B23-9F" ✓
-- "小王子" = "桃園小檜溪-小王子" ✓
-- 忽略連字號、括號等標點差異
+- "桃園觀音老妹家" ≈ "桃園觀音-老妹家" ✓
+- "石門湯旅" ≈ "桃園龍潭-石門湯旅B23-9F" ✓
+- "小王子" ≈ "桃園小檜溪-小王子" ✓
 
 用戶訊息：「${userText}」
 
-回覆純 JSON：
+重要規則：
+1. 只要訊息提到任何對話內容（業主說、廠商說、討論...），就必須產生 type:"comm" 的 action
+2. 只要訊息提到需要做的事（要報價、要確認、要訂購...），就必須產生 type:"todo" 的 action
+3. 日期計算：今天是 ${today}，「下週三」= 計算實際日期，「明天」= 明天日期
+4. actions 絕對不能是空陣列，至少要有一個 comm 記錄
+
+回覆純 JSON（不含其他說明）：
 {
-  "projectName": "案件完整名稱（必須完全符合列表中的名稱）或 null",
+  "projectName": "案件完整名稱（完全符合列表）或null",
   "confidence": 0到1,
   "actions": [
     {
       "type": "comm",
-      "who": "對話對象（業主/廠商等）",
-      "note": "溝通內容摘要",
+      "who": "對話對象",
+      "note": "溝通內容摘要（要具體）",
       "date": "YYYY-MM-DD",
       "ch": "Line或電話或會議或現場或Email"
     },
     {
       "type": "todo",
-      "text": "待辦事項",
-      "due": "YYYY-MM-DD或空字串",
+      "text": "待辦事項（要具體）",
+      "due": "YYYY-MM-DD（沒提到留空）",
       "prio": "high或mid或low"
     }
   ]
@@ -271,6 +276,13 @@ async function handleEvent(event, TOKEN, API_KEY, ALLOWED_ID) {
         const pi = action.prio === 'high' ? '🔴' : action.prio === 'mid' ? '🟡' : '⚪';
         flexItems.push({ icon: pi, text: `${action.text}${action.due ? `（${fmtDate(action.due)}）` : ''}` });
       }
+    }
+
+    // Fallback：如果 actions 為空，把整段訊息記錄為溝通記錄
+    if ((parsed.actions || []).length === 0 || flexItems.length === 0) {
+      project.comms = project.comms || [];
+      project.comms.push({ id: uid(), who: '業主', note: text, ch: 'Line', date: today });
+      flexItems.push({ icon: '📝', text: `業主：${text.slice(0, 60)}${text.length > 60 ? '…' : ''}` });
     }
 
     if (flexItems.length === 0) {
