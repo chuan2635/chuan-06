@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#EDE6D8;color:#2D1F14;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}
 
 /* ─── YC Splash Screen v2 ─── */
@@ -160,7 +160,7 @@
   </div>
 </div>
 <div id="root"></div>
-<script type="text/babel">
+<script type="text/babel" data-presets="react,env">
 const { useState, useEffect, useCallback, useRef } = React;
 
 const SURL="https://hrxyylqngkubruivwsdm.supabase.co";
@@ -1933,8 +1933,8 @@ function App(){
   },[]);
 
   const upd=useCallback(fn=>{setData(prev=>{const next=fn(prev);lastSaveTime.current=Date.now();saveData(next).then(()=>{setSyncOk(true);setTimeout(()=>setSyncOk(false),2500);});return next;});},[]);
-  const updP=useCallback((pid,fn)=>{upd(d=>({...d,projects:d.projects.map(p=>p.id===pid?fn(p):p)}));},[upd]);
-  const proj=data?.projects.find(p=>p.id===pid)||null;
+  const updP=useCallback((pid,fn)=>{upd(d=>({...d,projects:(d&&d.projects||[]).map(p=>p.id===pid?fn(p):p)}));},[upd]);
+  const proj=(data&&data.projects)?data.projects.find(p=>p.id===pid)||null:null;
   const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
