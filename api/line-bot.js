@@ -53,14 +53,12 @@ function findBestProject(input, projects) {
 // ── 從訊息中抽取可能的案件名稱提及 ──────────────────────
 function extractMentions(text) {
   const mentions = [];
-  // 「跟XXX的業主」「跟XXX業主」「跟XXX討論」
-  const p1 = text.match(/跟(.{2,12})(?:的業主|業主|的廠商|廠商|那邊|討論|開會)/);
+  // 非貪婪：「跟[石門湯旅]的業主」正確抓出案件名稱
+  const p1 = text.match(/跟(.{2,8}?)(?:的業主|業主|的廠商|廠商|那邊|討論|開會)/);
   if (p1) mentions.push(p1[1].trim());
-  // 「XXX的業主說」「XXX案場」「XXX那個」
-  const p2 = text.match(/^(.{2,12})(?:的業主|案場|那個|案子)/);
+  const p2 = text.match(/^(.{2,8}?)(?:的業主|案場|那個|案子)/);
   if (p2) mentions.push(p2[1].trim());
-  // 「石門湯旅」「小王子」等獨立詞（案件列表中的特徵詞）
-  const p3 = text.match(/(?:在|到|去|跟|和)([^\s，,的之]{2,8})(?:那邊|現場|業主|廠商|開|討論)/);
+  const p3 = text.match(/(?:在|到|去|跟|和)(.{2,6}?)(?:那邊|現場|業主|廠商|開|討論)/);
   if (p3) mentions.push(p3[1].trim());
   return [...new Set(mentions)].filter(m => m.length >= 2);
 }
@@ -264,13 +262,19 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
         if (project) break;
       }
     }
-    // 3. 降低門檻的全文比對（最後手段）
+    // 3. 4字元子字串比對（最後手段）
+    // 例：「石門湯旅」(4字) 會在「桃園龍潭-石門湯旅B23-9F」中找到
     if (!project) {
       const active = data.projects.filter(p => !p.archived);
       const normText = normalize(text);
       project = active.find(p => {
-        const parts = p.name.replace(/[-–]/g, ' ').split(/\s+/);
-        return parts.some(part => part.length >= 2 && normText.includes(normalize(part)));
+        const normName = normalize(p.name);
+        for (let i = 0; i <= normName.length - 4; i++) {
+          const chunk = normName.slice(i, i + 4);
+          // 只比對中文字元 chunk（排除英數混合）
+          if (/[一-鿿]{4}/.test(chunk) && normText.includes(chunk)) return true;
+        }
+        return false;
       }) || null;
     }
 
