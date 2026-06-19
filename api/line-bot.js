@@ -50,7 +50,22 @@ function findBestProject(input, projects) {
   return scored[0] && scored[0].score >= 0.45 ? scored[0].p : null;
 }
 
-// ── LINE API ───────────────────────────────────────────────
+// ── 從訊息中抽取可能的案件名稱提及 ──────────────────────
+function extractMentions(text) {
+  const mentions = [];
+  // 「跟XXX的業主」「跟XXX業主」「跟XXX討論」
+  const p1 = text.match(/跟(.{2,12})(?:的業主|業主|的廠商|廠商|那邊|討論|開會)/);
+  if (p1) mentions.push(p1[1].trim());
+  // 「XXX的業主說」「XXX案場」「XXX那個」
+  const p2 = text.match(/^(.{2,12})(?:的業主|案場|那個|案子)/);
+  if (p2) mentions.push(p2[1].trim());
+  // 「石門湯旅」「小王子」等獨立詞（案件列表中的特徵詞）
+  const p3 = text.match(/(?:在|到|去|跟|和)([^\s，,的之]{2,8})(?:那邊|現場|業主|廠商|開|討論)/);
+  if (p3) mentions.push(p3[1].trim());
+  return [...new Set(mentions)].filter(m => m.length >= 2);
+}
+
+// ── LINE API ───────────────────────────────────────────────────
 async function replyMsg(replyToken, messages, token) {
   await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
@@ -237,9 +252,27 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
     const parsed = await parseMessage(text, data.projects, API_KEY);
 
     let project = null;
+    // 1. Claude 直接返回的案件名稱
     if (parsed.projectName)
-      project = data.projects.find(p => p.name === parsed.projectName) || findBestProject(parsed.projectName, data.projects);
-    if (!project) project = findBestProject(text, data.projects);
+      project = data.projects.find(p => p.name === parsed.projectName)
+             || findBestProject(parsed.projectName, data.projects);
+    // 2. 從訊息抽取關鍵詞比對（處理「跟石門湯旅的業主...」這類說法）
+    if (!project) {
+      const mentions = extractMentions(text);
+      for (const m of mentions) {
+        project = findBestProject(m, data.projects);
+        if (project) break;
+      }
+    }
+    // 3. 降低門檻的全文比對（最後手段）
+    if (!project) {
+      const active = data.projects.filter(p => !p.archived);
+      const normText = normalize(text);
+      project = active.find(p => {
+        const parts = p.name.replace(/[-–]/g, ' ').split(/\s+/);
+        return parts.some(part => part.length >= 2 && normText.includes(normalize(part)));
+      }) || null;
+    }
 
     if (!project) {
       const names = data.projects.filter(p => !p.archived).map(p => '• ' + p.name).join('\n');
