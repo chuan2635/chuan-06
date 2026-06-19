@@ -1440,19 +1440,13 @@ function ActivityLogTab({proj,upd,openModal}){
     {filtered.length===0?<Empty text="尚無記錄"/>:
     filtered.map(item=>{
       const cfg=ACT_TYPES[item.type]||ACT_TYPES.site;
-      return(<div key={item.id} className="act-item">
-        <div className="act-icon" style={{background:cfg.bg,color:cfg.color}}>{cfg.icon}</div>
-        <div className="act-body">
-          {item.type==="comm"&&<div className="act-who">{item.title}</div>}
-          {item.type!=="comm"&&<div className="act-title">{item.title}</div>}
-          <div className="act-date">{fmtD(item.date)}</div>
-          {item.note&&<div className="act-note">{item.note}</div>}
-          {item.ch&&<span className="act-ch">{item.ch}</span>}
-        </div>
-        <span className="act-tag">{cfg.l}</span>
-        <DelX onClick={()=>item._src==="comm"?delComm(item.id):delTl(item.id)}/>
-      </div>);
-    })}
+      return(<ActItem key={item.id} item={item} cfg={cfg}
+        onUpdate={ch=>item._src==="comm"
+          ?upd(p=>({...p,comms:(p.comms||[]).map(x=>x.id===item.id?{...x,...ch}:x)}))
+          :upd(p=>({...p,timelines:p.timelines.map(x=>x.id===item.id?{...x,...ch}:x)}))}
+        onDelete={()=>item._src==="comm"?delComm(item.id):delTl(item.id)}/>);
+    })
+    }
   </>);
 }
 
