@@ -1277,6 +1277,8 @@ function PendingTab({proj,upd,openModal}){
 
 function FinanceTab({proj,upd,openModal}){
   const [sub,setSub]=useState("income");
+  const [editingContract,setEditingContract]=useState(false);
+  const [contractInput,setContractInput]=useState("");
   const togSt=id=>upd(p=>({...p,finances:p.finances.map(f=>f.id===id?{...f,status:f.status==="paid"?"unpaid":"paid"}:f)}));
   const delFin=id=>upd(p=>({...p,finances:p.finances.filter(f=>f.id!==id)}));
   const delEx=id=>upd(p=>({...p,extras:p.extras.filter(e=>e.id!==id)}));
@@ -1304,7 +1306,30 @@ function FinanceTab({proj,upd,openModal}){
     <div className="fin-health">
       <div className="fin-health-title">Financial Health — 財務概況</div>
       <div className="fin-h-grid">
-        <div className="fin-h-stat"><div className="fin-h-l">合約金額</div><div className="fin-h-v" style={{color:"#F8F4EC"}}>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定</span>}</div></div>
+        <div className="fin-h-stat"><div className="fin-h-l">合約金額</div><div className="fin-h-v" style={{color:"#F8F4EC"}}>{editingContract?(
+              <div style={{display:"flex",gap:".4rem",alignItems:"center",marginTop:".2rem"}} onClick={e=>e.stopPropagation()}>
+                <input
+                  type="number"
+                  value={contractInput}
+                  onChange={e=>setContractInput(e.target.value)}
+                  placeholder="輸入合約金額"
+                  style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:6,padding:".3rem .6rem",color:"#F8F4EC",fontSize:"1rem",width:"160px"}}
+                  autoFocus
+                  onKeyDown={e=>{
+                    if(e.key==="Enter"){upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}
+                    if(e.key==="Escape")setEditingContract(false);
+                  }}
+                />
+                <button onClick={()=>{upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}} style={{background:"var(--acc)",color:"#F8F4EC",border:"none",borderRadius:6,padding:".3rem .65rem",cursor:"pointer",fontSize:".8rem"}}>儲存</button>
+                <button onClick={()=>setEditingContract(false)} style={{background:"transparent",color:"rgba(248,244,236,.5)",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,padding:".3rem .55rem",cursor:"pointer",fontSize:".8rem"}}>✕</button>
+              </div>
+            ):(
+              <div style={{cursor:"pointer",display:"flex",alignItems:"center",gap:".5rem"}}
+                onClick={()=>{setContractInput(contractAmt?String(contractAmt):"");setEditingContract(true);}}>
+                <span>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定（點擊設定）</span>}</span>
+                <span style={{fontSize:".65rem",color:"rgba(248,244,236,.3)",opacity:.7}}>✎</span>
+              </div>
+            )}</div></div>
         <div className="fin-h-stat"><div className="fin-h-l">已請款</div><div className="fin-h-v" style={{color:"rgba(248,244,236,.8)"}}>NT${fmtN(totalInvoiced)}</div></div>
         <div className="fin-h-stat"><div className="fin-h-l">已收款</div><div className="fin-h-v" style={{color:"#A8C8A8"}}>NT${fmtN(collected)}</div></div>
         <div className="fin-h-stat"><div className="fin-h-l">待收款</div><div className="fin-h-v" style={{color:"#D4C080"}}>NT${fmtN(outstanding)}</div></div>
