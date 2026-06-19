@@ -1,4 +1,4 @@
-// YC Studio — LINE Bot v3（確認機制）
+// YC Studio — LINE Bot v4
 import crypto from 'crypto';
 export const config = { api: { bodyParser: false } };
 
@@ -6,7 +6,7 @@ const SURL = 'https://hrxyylqngkubruivwsdm.supabase.co';
 const SKEY = 'sb_publishable_-ShQ0-R3viUcSxjy0o-oeA_GnPuB8_O';
 const APP_URL = 'https://chuan-06.vercel.app/';
 
-// ── 工具 ─────────────────────────────────────────────────
+// ── 工具 ──────────────────────────────────────────────────
 async function getRawBody(req) {
   return new Promise((resolve, reject) => {
     let buf = '';
@@ -22,10 +22,10 @@ function uid() { return Math.random().toString(36).slice(2, 10); }
 function fmtDate(d) {
   if (!d) return '';
   const [, m, day] = d.split('-');
-  return `${parseInt(m)}/${parseInt(day)}`;
+  return parseInt(m) + '/' + parseInt(day);
 }
 function normalize(s) {
-  return s.replace(/[-–·・\s　。，、「」『』【】()（）]/g, '').toLowerCase();
+  return s.replace(/[-\u2013\u00b7\uff65\s\u3000\u3002\uff0c\u3001\u300c\u300d\u300e\u300f\u3010\u3011()\uff08\uff09]/g, '').toLowerCase();
 }
 function findBestProject(input, projects) {
   if (!input) return null;
@@ -47,21 +47,21 @@ function findBestProject(input, projects) {
     const overlap = [...ic].filter(c => pc.has(c)).length;
     return { p, score: (overlap * 2) / (ic.size + pc.size) };
   }).sort((a, b) => b.score - a.score);
-  return scored[0]?.score >= 0.45 ? scored[0].p : null;
+  return scored[0] && scored[0].score >= 0.45 ? scored[0].p : null;
 }
 
-// ── LINE API ──────────────────────────────────────────────
+// ── LINE API ───────────────────────────────────────────────
 async function replyMsg(replyToken, messages, token) {
   await fetch('https://api.line.me/v2/bot/message/reply', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token },
     body: JSON.stringify({ replyToken, messages: Array.isArray(messages) ? messages : [messages] })
   });
 }
 function textMsg(text) { return { type: 'text', text }; }
 
-// ── 確認卡片（按鈕為 postback）──────────────────────────
-function previewFlex(pendingId, projectName, actions, originalText) {
+// ── 確認預覽卡片 ──────────────────────────────────────────
+function previewFlex(pendingId, projectName, actions) {
   const items = [];
   for (const a of actions) {
     if (a.type === 'comm') {
@@ -69,50 +69,44 @@ function previewFlex(pendingId, projectName, actions, originalText) {
         type: 'box', layout: 'vertical', margin: 'md', spacing: 'xs',
         contents: [
           { type: 'text', text: '📝 溝通記錄', size: 'xs', color: '#B59E7D', weight: 'bold' },
-          { type: 'text', text: `${a.who || '業主'} · ${a.ch || 'Line'} · ${fmtDate(a.date)}`, size: 'xs', color: '#9A9184' },
-          { type: 'text', text: a.note, size: 'sm', wrap: true, color: '#2D1F14', margin: 'xs' }
+          { type: 'text', text: (a.who || '業主') + ' \u00b7 ' + (a.ch || 'Line') + ' \u00b7 ' + fmtDate(a.date), size: 'xs', color: '#9A9184' },
+          { type: 'text', text: a.note || '', size: 'sm', wrap: true, color: '#2D1F14', margin: 'xs' }
         ]
       });
     }
     if (a.type === 'todo') {
       const pi = a.prio === 'high' ? '🔴' : a.prio === 'mid' ? '🟡' : '⚪';
+      const dueStr = a.due ? '（截止 ' + fmtDate(a.due) + '）' : '';
       items.push({
         type: 'box', layout: 'vertical', margin: 'md', spacing: 'xs',
         contents: [
           { type: 'text', text: '☑️ 待辦事項', size: 'xs', color: '#B59E7D', weight: 'bold' },
-          { type: 'text', text: `${pi} ${a.text}${a.due ? `（截止 ${fmtDate(a.due)}）` : ''}`, size: 'sm', wrap: true, color: '#2D1F14', margin: 'xs' }
+          { type: 'text', text: pi + ' ' + (a.text || '') + dueStr, size: 'sm', wrap: true, color: '#2D1F14', margin: 'xs' }
         ]
       });
     }
   }
-
   return {
     type: 'flex',
-    altText: `📋 請確認：記錄到「${projectName}」`,
+    altText: '📋 請確認：記錄到「' + projectName + '」',
     contents: {
       type: 'bubble', size: 'kilo',
       header: {
         type: 'box', layout: 'vertical', paddingAll: 'md', backgroundColor: '#584738',
         contents: [
           { type: 'text', text: '📋 請確認以下記錄', weight: 'bold', size: 'sm', color: '#F8F4EC' },
-          { type: 'text', text: `📁 ${projectName}`, size: 'xs', color: '#CEC1A8', margin: 'xs' }
+          { type: 'text', text: '📁 ' + projectName, size: 'xs', color: '#CEC1A8', margin: 'xs' }
         ]
       },
       body: {
         type: 'box', layout: 'vertical', paddingAll: 'md', spacing: 'none',
-        contents: items.length > 0 ? items : [{ type: 'text', text: '（原始訊息已記錄）', size: 'sm', color: '#9A9184', wrap: true }]
+        contents: items.length > 0 ? items : [{ type: 'text', text: '（訊息已記錄為溝通記錄）', size: 'sm', color: '#9A9184', wrap: true }]
       },
       footer: {
         type: 'box', layout: 'horizontal', spacing: 'sm', paddingAll: 'sm',
         contents: [
-          {
-            type: 'button', flex: 1, height: 'sm', style: 'secondary',
-            action: { type: 'postback', label: '✕ 取消', data: `action=cancel&id=${pendingId}` }
-          },
-          {
-            type: 'button', flex: 2, height: 'sm', style: 'primary', color: '#584738',
-            action: { type: 'postback', label: '✓ 確認記錄', data: `action=confirm&id=${pendingId}` }
-          }
+          { type: 'button', flex: 1, height: 'sm', style: 'secondary', action: { type: 'postback', label: '✕ 取消', data: 'action=cancel&id=' + pendingId } },
+          { type: 'button', flex: 2, height: 'sm', style: 'primary', color: '#584738', action: { type: 'postback', label: '✓ 確認記錄', data: 'action=confirm&id=' + pendingId } }
         ]
       }
     }
@@ -122,7 +116,7 @@ function previewFlex(pendingId, projectName, actions, originalText) {
 // ── 成功卡片 ──────────────────────────────────────────────
 function successFlex(projectName, flexItems) {
   return {
-    type: 'flex', altText: `✅ 已記錄到 ${projectName}`,
+    type: 'flex', altText: '✅ 已記錄到 ' + projectName,
     contents: {
       type: 'bubble', size: 'kilo',
       header: {
@@ -145,92 +139,61 @@ function successFlex(projectName, flexItems) {
       },
       footer: {
         type: 'box', layout: 'vertical', paddingAll: 'sm',
-        contents: [{
-          type: 'button',
-          action: { type: 'uri', label: '查看 YC Studio →', uri: APP_URL },
-          style: 'primary', color: '#B59E7D', height: 'sm'
-        }]
+        contents: [{ type: 'button', action: { type: 'uri', label: '查看 YC Studio →', uri: APP_URL }, style: 'primary', color: '#B59E7D', height: 'sm' }]
       }
     }
   };
 }
 
-// ── Supabase ──────────────────────────────────────────────
+// ── Supabase ───────────────────────────────────────────────
 async function fetchData() {
-  const r = await fetch(`${SURL}/rest/v1/studio_data?id=eq.main&select=data`, {
-    headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}` }
+  const r = await fetch(SURL + '/rest/v1/studio_data?id=eq.main&select=data', {
+    headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY }
   });
   return (await r.json())?.[0]?.data || null;
 }
 async function saveData(data) {
-  await fetch(`${SURL}/rest/v1/studio_data`, {
+  await fetch(SURL + '/rest/v1/studio_data', {
     method: 'POST',
-    headers: { apikey: SKEY, Authorization: `Bearer ${SKEY}`, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
+    headers: { apikey: SKEY, Authorization: 'Bearer ' + SKEY, 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates' },
     body: JSON.stringify({ id: 'main', data, updated_at: new Date().toISOString() })
   });
 }
 
-// ── Claude 解析 ───────────────────────────────────────────
+// ── Claude 解析 ────────────────────────────────────────────
 async function parseMessage(userText, projects, apiKey) {
   const today = new Date().toISOString().slice(0, 10);
-  const wd = ['日','一','二','三','四','五','六'][new Date().getDay()];
-  // 計算下週各天日期
-  const nextWeekDays = {};
   const dayNames = ['日','一','二','三','四','五','六'];
-  for (let i = 1; i <= 7; i++) {
-    const d = new Date(); d.setDate(d.getDate() + i);
-    nextWeekDays[`下週${dayNames[d.getDay()]}`] = d.toISOString().slice(0,10);
-    nextWeekDays[`下周${dayNames[d.getDay()]}`] = d.toISOString().slice(0,10);
-    if (i <= 2) nextWeekDays[i===1?'明天':'後天'] = d.toISOString().slice(0,10);
-  }
-  const dateHints = Object.entries(nextWeekDays)
-    .map(([k,v]) => `「${k}」= ${v}`).join('，');
+  const wd = dayNames[new Date().getDay()];
 
-  const projList = projects.filter(p => !p.archived).map(p => `- "${p.name}"`).join('\n');
+  // 預先計算未來 7 天日期，給 Claude 參考
+  const dateMap = {};
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date();
+    d.setDate(d.getDate() + i);
+    const key1 = '下週' + dayNames[d.getDay()];
+    const key2 = '下周' + dayNames[d.getDay()];
+    const val = d.toISOString().slice(0, 10);
+    dateMap[key1] = val;
+    dateMap[key2] = val;
+    if (i === 1) dateMap['明天'] = val;
+    if (i === 2) dateMap['後天'] = val;
+  }
+  const dateHints = Object.entries(dateMap).map(([k, v]) => k + '=' + v).join(', ');
+
+  const projList = projects.filter(p => !p.archived).map(p => '- "' + p.name + '"').join('\n');
+
+  const systemPrompt = '你是室內設計工作室助理，從用戶訊息提取結構化資料，只回覆 JSON。';
+  const userPrompt = '今天：' + today + '（週' + wd + '）\n日期對照：' + dateHints + '\n\n案件（模糊比對）：\n' + projList + '\n\n規則：\n1. 有對話/溝通內容 → 產生 comm action（必須）\n2. 有要做的事、報價、確認、期限等 → 產生 todo action\n3. 「下禮拜二/三」=「下週二/三」，使用日期對照換算\n4. 通常同時有 comm 和 todo\n\n範例：\n輸入：「跟石門湯旅業主討論，廚具業主自己處理，下禮拜二前要抓報價單給業主確認」\n輸出：{"projectName":"桃園龍潭-石門湯旅B23-9F","confidence":0.95,"actions":[{"type":"comm","who":"業主","note":"業主表示廚具部分自行處理","date":"' + today + '","ch":"現場"},{"type":"todo","text":"抓報價單給業主確認","due":"' + (dateMap['下週二'] || '') + '","prio":"high"}]}\n\n訊息：「' + userText + '」\n\n只回覆 JSON：';
 
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 1200,
-      messages: [{
-        role: 'user',
-        content: `你是室內設計工作室助理，從訊息提取結構化資料。
-今天：${today}（週${wd}）
-日期對照：${dateHints}
-
-案件列表（模糊比對，忽略標點）：
-${projList}
-
-用戶訊息：「${userText}」
-
-＊重要規則＊
-1. 有提到對話/溝通內容 → 產生 type:"comm"
-2. 有提到需要做的事、期限、報價、確認、訂購、安排等 → 產生 type:"todo"
-3. 「前要報價」「要報價」→ todo text = "報價給業主（具體說明）"
-4. 一段話通常同時包含 comm 和 todo，請兩個都產生
-5. due 日期必須是 YYYY-MM-DD 格式，用上方日期對照換算
-
-範例輸入：「剛跟桃園觀音老妹家業主在Line上聊，她說浴室要換成大理石磚，下週三前要報價」
-範例輸出：
-{
-  "projectName": "桃園觀音-老妹家",
-  "confidence": 0.95,
-  "actions": [
-    {"type":"comm","who":"業主","note":"業主表示浴室要更換大理石磚","date":"${today}","ch":"Line"},
-    {"type":"todo","text":"報價給業主（浴室大理石磚更換）","due":"${nextWeekDays['下週三']||''}","prio":"high"}
-  ]
-}
-
-只回覆 JSON，不含其他說明：`
-      }]
-    })
-  });
-  const d = await resp.json();
-  const raw = (d.content?.[0]?.text || '{}').replace(/\`\`\`json\n?|\`\`\`/g, '').trim();
-  return JSON.parse(raw);
-}`
-      }]
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 1200,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userPrompt }]
     })
   });
   const d = await resp.json();
@@ -238,7 +201,7 @@ ${projList}
   return JSON.parse(raw);
 }
 
-// ── 處理訊息（建立 pending record）──────────────────────
+// ── 處理訊息 ──────────────────────────────────────────────
 async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
   if (event.message?.type !== 'text') return;
   const replyToken = event.replyToken;
@@ -246,67 +209,62 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
   const text = (event.message?.text || '').trim();
   if (ALLOWED_ID && userId !== ALLOWED_ID) return;
 
-  // 指令
   if (text === '說明' || text === '/help') {
-    await replyMsg(replyToken, textMsg('🏠 YC Studio Bot\n\n直接傳訊息，我會先解析讓你確認，按「✓ 確認記錄」才會儲存。\n\n⌨️ 指令：\n狀態 — 今日摘要\n案件 — 案件列表'), TOKEN); return;
+    await replyMsg(replyToken, textMsg('🏠 YC Studio Bot\n\n直接傳訊息，解析後讓你確認再儲存。\n\n⌨️ 指令：\n狀態 — 今日摘要\n案件 — 案件列表\n說明 — 查看說明'), TOKEN);
+    return;
   }
-  if (text === '狀態' || text === '/status') {
+  if (text === '狀態') {
     const data = await fetchData();
     const today = new Date().toISOString().slice(0, 10);
     let ov = 0, td = 0, tot = 0;
     for (const p of (data?.projects || []).filter(x => !x.archived))
       for (const t of (p.todos || [])) { if (t.done) continue; tot++; if (t.due && t.due < today) ov++; else if (t.due === today) td++; }
-    await replyMsg(replyToken, textMsg(`📊 今日狀態\n\n⚠️ 逾期：${ov} 件\n📌 今日截止：${td} 件\n📋 總待辦：${tot} 件`), TOKEN); return;
+    await replyMsg(replyToken, textMsg('📊 今日狀態\n\n⚠️ 逾期：' + ov + ' 件\n📌 今日截止：' + td + ' 件\n📋 總待辦：' + tot + ' 件'), TOKEN);
+    return;
   }
-  if (text === '案件' || text === '/cases') {
+  if (text === '案件') {
     const data = await fetchData();
     const active = (data?.projects || []).filter(p => !p.archived);
-    await replyMsg(replyToken, textMsg(`📁 目前案件（${active.length} 件）\n\n` + active.map(p => `• ${p.name}（${(p.todos||[]).filter(t=>!t.done).length} 待辦）`).join('\n')), TOKEN); return;
+    await replyMsg(replyToken, textMsg('📁 目前案件（' + active.length + ' 件）\n\n' + active.map(p => '• ' + p.name + '（' + (p.todos||[]).filter(t=>!t.done).length + ' 待辦）').join('\n')), TOKEN);
+    return;
   }
 
   if (!API_KEY) { await replyMsg(replyToken, textMsg('⚠️ 未設定 ANTHROPIC_API_KEY'), TOKEN); return; }
 
   try {
     const data = await fetchData();
-    if (!data) throw new Error('無法連線');
+    if (!data) throw new Error('無法連線到資料庫');
     const parsed = await parseMessage(text, data.projects, API_KEY);
 
-    // 找案件（Claude + 模糊比對雙保險）
     let project = null;
     if (parsed.projectName)
       project = data.projects.find(p => p.name === parsed.projectName) || findBestProject(parsed.projectName, data.projects);
     if (!project) project = findBestProject(text, data.projects);
 
     if (!project) {
-      const names = data.projects.filter(p => !p.archived).map(p => `• ${p.name}`).join('\n');
-      await replyMsg(replyToken, textMsg(`❓ 找不到對應案件\n\n請包含更多案件名稱關鍵字。\n\n目前案件：\n${names}`), TOKEN); return;
+      const names = data.projects.filter(p => !p.archived).map(p => '• ' + p.name).join('\n');
+      await replyMsg(replyToken, textMsg('❓ 找不到對應案件\n\n請包含更多案件名稱關鍵字。\n\n目前案件：\n' + names), TOKEN);
+      return;
     }
 
-    // 若 actions 為空，把原始訊息當 comm
     let actions = parsed.actions || [];
     if (actions.length === 0) {
-      actions = [{ type: 'comm', who: '業主', note: text, ch: 'Line', date: new Date().toISOString().slice(0,10) }];
+      actions = [{ type: 'comm', who: '業主', note: text, ch: 'Line', date: new Date().toISOString().slice(0, 10) }];
     }
 
-    // 建立 pending record（存入 Supabase 暫存）
     const pendingId = uid();
-    data.pendingRecords = (data.pendingRecords || []).filter(r => {
-      // 清除超過 30 分鐘的舊 pending
-      return new Date() - new Date(r.createdAt) < 30 * 60 * 1000;
-    });
+    data.pendingRecords = (data.pendingRecords || []).filter(r => new Date() - new Date(r.createdAt) < 30 * 60 * 1000);
     data.pendingRecords.push({ id: pendingId, projectId: project.id, actions, userId, createdAt: new Date().toISOString() });
     await saveData(data);
 
-    // 發送確認卡片
     await replyMsg(replyToken, previewFlex(pendingId, project.name, actions, text), TOKEN);
-
   } catch (err) {
     console.error(err);
-    await replyMsg(replyToken, textMsg(`❌ 錯誤：${err.message}`), TOKEN);
+    await replyMsg(replyToken, textMsg('❌ 錯誤：' + err.message), TOKEN);
   }
 }
 
-// ── 處理 Postback（確認 / 取消）────────────────────────
+// ── 處理 Postback ─────────────────────────────────────────
 async function handlePostback(event, TOKEN) {
   const replyToken = event.replyToken;
   const params = new URLSearchParams(event.postback?.data || '');
@@ -315,39 +273,36 @@ async function handlePostback(event, TOKEN) {
 
   const data = await fetchData();
   if (!data) { await replyMsg(replyToken, textMsg('❌ 無法連線'), TOKEN); return; }
-
   const pending = (data.pendingRecords || []).find(r => r.id === pendingId);
 
   if (action === 'cancel') {
     data.pendingRecords = (data.pendingRecords || []).filter(r => r.id !== pendingId);
     await saveData(data);
-    await replyMsg(replyToken, textMsg('✖️ 已取消，記錄不會儲存。'), TOKEN); return;
+    await replyMsg(replyToken, textMsg('✖️ 已取消，記錄不會儲存。'), TOKEN);
+    return;
   }
 
   if (action === 'confirm') {
     if (!pending) { await replyMsg(replyToken, textMsg('⚠️ 記錄已過期（超過30分鐘），請重新傳訊息。'), TOKEN); return; }
-
     const project = data.projects.find(p => p.id === pending.projectId);
     if (!project) { await replyMsg(replyToken, textMsg('❌ 找不到案件'), TOKEN); return; }
 
     const today = new Date().toISOString().slice(0, 10);
     const flexItems = [];
-
     for (const a of pending.actions) {
       if (a.type === 'comm' && a.note) {
         project.comms = project.comms || [];
         project.comms.push({ id: uid(), who: a.who||'業主', note: a.note, ch: a.ch||'Line', date: a.date||today });
-        flexItems.push({ icon: '📝', text: `${a.who||'業主'}：${a.note}` });
+        flexItems.push({ icon: '📝', text: (a.who||'業主') + '：' + a.note });
       }
       if (a.type === 'todo' && a.text) {
         project.todos = project.todos || [];
         project.todos.push({ id: uid(), text: a.text, done: false, due: a.due||'', prio: a.prio||'mid', note: '' });
         const pi = a.prio==='high'?'🔴':a.prio==='mid'?'🟡':'⚪';
-        flexItems.push({ icon: pi, text: `${a.text}${a.due?`（${fmtDate(a.due)}）`:''}` });
+        flexItems.push({ icon: pi, text: a.text + (a.due ? '（' + fmtDate(a.due) + '）' : '') });
       }
     }
 
-    // 清除 pending
     data.pendingRecords = (data.pendingRecords || []).filter(r => r.id !== pendingId);
     await saveData(data);
     await replyMsg(replyToken, successFlex(project.name, flexItems), TOKEN);
@@ -358,7 +313,7 @@ async function handlePostback(event, TOKEN) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).end();
   const SECRET = process.env.LINE_CHANNEL_SECRET;
-  const TOKEN  = process.env.LINE_CHANNEL_ACCESS_TOKEN;
+  const TOKEN = process.env.LINE_CHANNEL_ACCESS_TOKEN;
   const API_KEY = process.env.ANTHROPIC_API_KEY;
   const ALLOWED_ID = process.env.ALLOWED_LINE_USER_ID;
   if (!SECRET || !TOKEN) return res.status(500).json({ error: 'Missing LINE env vars' });
@@ -371,6 +326,7 @@ export default async function handler(req, res) {
   await Promise.all((body.events || []).map(e => {
     if (e.type === 'message') return handleMessage(e, TOKEN, API_KEY, ALLOWED_ID);
     if (e.type === 'postback') return handlePostback(e, TOKEN);
+    return Promise.resolve();
   }));
 
   return res.status(200).json({ ok: true });
