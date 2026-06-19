@@ -174,35 +174,61 @@ async function saveData(data) {
 async function parseMessage(userText, projects, apiKey) {
   const today = new Date().toISOString().slice(0, 10);
   const wd = ['日','一','二','三','四','五','六'][new Date().getDay()];
+  // 計算下週各天日期
+  const nextWeekDays = {};
+  const dayNames = ['日','一','二','三','四','五','六'];
+  for (let i = 1; i <= 7; i++) {
+    const d = new Date(); d.setDate(d.getDate() + i);
+    nextWeekDays[`下週${dayNames[d.getDay()]}`] = d.toISOString().slice(0,10);
+    nextWeekDays[`下周${dayNames[d.getDay()]}`] = d.toISOString().slice(0,10);
+    if (i <= 2) nextWeekDays[i===1?'明天':'後天'] = d.toISOString().slice(0,10);
+  }
+  const dateHints = Object.entries(nextWeekDays)
+    .map(([k,v]) => `「${k}」= ${v}`).join('，');
+
   const projList = projects.filter(p => !p.archived).map(p => `- "${p.name}"`).join('\n');
+
   const resp = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
     body: JSON.stringify({
-      model: 'claude-haiku-4-5-20251001', max_tokens: 1000,
+      model: 'claude-haiku-4-5-20251001', max_tokens: 1200,
       messages: [{
         role: 'user',
-        content: `你是室內設計工作室助理。今天：${today}（週${wd}）
+        content: `你是室內設計工作室助理，從訊息提取結構化資料。
+今天：${today}（週${wd}）
+日期對照：${dateHints}
 
 案件列表（模糊比對，忽略標點）：
 ${projList}
 
 用戶訊息：「${userText}」
 
-規則：
-1. 有對話內容（業主說/廠商說/討論...）→ 必須產生 comm action
-2. 有要做的事（報價/確認/訂購...）→ 必須產生 todo action  
-3. "下週三" = 從今天算，"明天" = 明天
-4. 至少要有一個 action
+＊重要規則＊
+1. 有提到對話/溝通內容 → 產生 type:"comm"
+2. 有提到需要做的事、期限、報價、確認、訂購、安排等 → 產生 type:"todo"
+3. 「前要報價」「要報價」→ todo text = "報價給業主（具體說明）"
+4. 一段話通常同時包含 comm 和 todo，請兩個都產生
+5. due 日期必須是 YYYY-MM-DD 格式，用上方日期對照換算
 
-只回覆 JSON：
+範例輸入：「剛跟桃園觀音老妹家業主在Line上聊，她說浴室要換成大理石磚，下週三前要報價」
+範例輸出：
 {
-  "projectName": "完整案件名稱或null",
-  "confidence": 0到1,
+  "projectName": "桃園觀音-老妹家",
+  "confidence": 0.95,
   "actions": [
-    {"type":"comm","who":"對話對象","note":"溝通內容","date":"YYYY-MM-DD","ch":"Line或電話或會議或現場"},
-    {"type":"todo","text":"待辦內容","due":"YYYY-MM-DD或空","prio":"high或mid或low"}
+    {"type":"comm","who":"業主","note":"業主表示浴室要更換大理石磚","date":"${today}","ch":"Line"},
+    {"type":"todo","text":"報價給業主（浴室大理石磚更換）","due":"${nextWeekDays['下週三']||''}","prio":"high"}
   ]
+}
+
+只回覆 JSON，不含其他說明：`
+      }]
+    })
+  });
+  const d = await resp.json();
+  const raw = (d.content?.[0]?.text || '{}').replace(/\`\`\`json\n?|\`\`\`/g, '').trim();
+  return JSON.parse(raw);
 }`
       }]
     })
