@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>台股情勢追蹤</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;
+  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;
+  --radius:8px;--mono:'SF Mono','Fira Code',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
+a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
+.app{max-width:1200px;margin:0 auto;padding:20px 16px}
+
+/* Header */
+.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
+.header h1 span{font-size:24px}
+.header-right{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px}
+.refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:var(--radius);cursor:pointer;font-size:13px;transition:background .15s}
+.refresh-btn:hover{background:var(--border)}
+.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
+.dot.loading{background:var(--yellow);animation:pulse 1s infinite}
+.dot.error{background:var(--red)}
+
+/* Market Grid */
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:12px}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:20px}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden}
+.card.up{border-top:2px solid var(--green)}
+.card.down{border-top:2px solid var(--red)}
+.card.neutral{border-top:2px solid var(--border)}
+.card-label{font-size:11px;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between}
+.card-price{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;margin-bottom:4px}
+.card-change{font-size:13px;font-family:var(--mono)}
+.card-change.up{color:var(--green)}
+.card-change.down{color:var(--red)}
+.card-change.flat{color:var(--text2)}
+.card-state{font-size:10px;color:var(--text3);margin-top:4px}
+.card.skeleton .card-price,.card.skeleton .card-change,.card.skeleton .card-label{background:var(--surface2);border-radius:4px;color:transparent;animation:shimmer 1.5s infinite}
+@keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
+
+/* Signal Banner */
+.signal{border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:16px;border:1px solid var(--border)}
+.signal.positive{background:rgba(63,185,80,.08);border-color:rgba(63,185,80,.3)}
+.signal.caution{background:rgba(210,153,34,.08);border-color:rgba(210,153,34,.3)}
+.signal.danger{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.3)}
+.signal.neutral{background:var(--surface)}
+.signal-icon{font-size:28px;line-height:1}
+.signal-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:4px}
+.signal-title{font-size:17px;font-weight:700;margin-bottom:8px}
+.signal.positive .signal-title{color:var(--green)}
+.signal.caution .signal-title{color:var(--yellow)}
+.signal.danger .signal-title{color:var(--red)}
+.signal.neutral .signal-title{color:var(--text2)}
+.signal-points{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
+.signal-points li{font-size:12px;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 8px;border-radius:20px;color:var(--text2)}
+
+/* News */
+.news-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:12px 18px;cursor:pointer;font-size:13px;color:var(--text2);white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;flex-shrink:0}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.news-list{padding:4px 0;min-height:200px}
+.news-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s}
+.news-item:last-child{border-bottom:none}
+.news-item:hover{background:var(--surface2)}
+.news-badge{flex-shrink:0;width:18px;height:18px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.news-badge.pos{background:rgba(63,185,80,.15);color:var(--green)}
+.news-badge.neg{background:rgba(248,81,73,.15);color:var(--red)}
+.news-badge.neu{background:rgba(139,148,158,.15);color:var(--text2)}
+.news-body{flex:1;min-width:0}
+.news-title{font-size:13px;line-height:1.45;color:var(--text);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.news-meta{font-size:11px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap}
+.news-source{color:var(--text2)}
+.news-loading,.news-empty{padding:32px 16px;text-align:center;color:var(--text2)}
+
+/* Footer */
+.footer{margin-top:20px;text-align:center;font-size:11px;color:var(--text3)}
+.footer a{color:var(--text3)}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+@media(max-width:600px){
+  .header h1{font-size:17px}
+  .market-grid{grid-template-columns:repeat(2,1fr)}
+  .tab{padding:10px 12px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <h1><span>📊</span> 台股情勢追蹤</h1>
+    <div class="header-right">
+      <span id="live-dot" class="dot loading"></span>
+      <span id="update-time">載入中...</span>
+      <button id="refresh-btn" class="refresh-btn" onclick="refreshAll()">重新整理</button>
+    </div>
+  </header>
+
+  <p class="section-title">市場指標</p>
+  <div class="market-grid" id="market-grid"></div>
+
+  <div class="signal" id="signal-banner">
+    <div class="signal-icon">⏳</div>
+    <div><div class="signal-label">市場訊號</div><div class="signal-title">計算中...</div></div>
+  </div>
+
+  <div class="news-section">
+    <div class="tabs" id="news-tabs"></div>
+    <div class="news-list" id="news-list"><div class="news-loading">載入新聞中...</div></div>
+  </div>
+
+  <div class="footer">
+    資料來源：Yahoo Finance · Google News RSS &nbsp;|&nbsp; 每 5 分鐘自動更新 &nbsp;|&nbsp;
+    <a href="/">← 返回首頁</a>
+  </div>
+</div>
+
+<script>
+// ── Constants ──────────────────────────────────────────────────────────────
+const BASE = '';
+const REFRESH_MS = 5 * 60 * 1000;
+const CAT_ORDER = ['geopolitical','economic','semiconductor','domestic'];
+
+// ── State ──────────────────────────────────────────────────────────────────
+let marketData = [];
+let newsData = {};
+let activeTab = CAT_ORDER[0];
+let refreshTimer = null;
+
+// ── Utility ────────────────────────────────────────────────────────────────
+function fmt(n, digits = 2) {
+  if (n == null) return '—';
+  return n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+}
+
+function fmtPct(n) {
+  if (n == null) return '—';
+  const sign = n >= 0 ? '+' : '';
+  return `${sign}${n.toFixed(2)}%`;
+}
+
+function timeAgo(dateStr) {
+  if (!dateStr) return '';
+  const d = new Date(dateStr);
+  if (isNaN(d)) return '';
+  const diff = Math.floor((Date.now() - d) / 1000);
+  if (diff < 60) return `${diff} 秒前`;
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前`;
+  return `${Math.floor(diff / 86400)} 天前`;
+}
+
+function sentiment(title) {
+  const t = title.toLowerCase();
+  const pos = ['rise','gain','rally','record high','surge','jump','climbs','boost','deal','cooperation','stable','eases','上漲','上升','創高','突破','回升','反彈','看好','協議'];
+  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','崩盤','危機','攻擊'];
+  const p = pos.filter(k => t.includes(k)).length;
+  const n = neg.filter(k => t.includes(k)).length;
+  return p > n ? 'pos' : n > p ? 'neg' : 'neu';
+}
+
+function sentimentLabel(s) {
+  return s === 'pos' ? '↑' : s === 'neg' ? '↓' : '→';
+}
+
+// ── Signal Calculation ─────────────────────────────────────────────────────
+function calcSignal(data) {
+  const by = Object.fromEntries(data.map(d => [d.symbol, d]));
+  const vix    = by['^VIX']?.price  ?? 20;
+  const sp5    = by['^GSPC']?.pct   ?? 0;
+  const ndq    = by['^IXIC']?.pct   ?? 0;
+  const sox    = by['^SOX']?.pct    ?? 0;
+  const fxPct  = by['USDTWD=X']?.pct ?? 0;
+  const tsmPct = by['TSM']?.pct     ?? 0;
+  const tnx    = by['^TNX']?.price  ?? 4;
+  const avgUS  = (sp5 + ndq) / 2;
+
+  let level, label, icon;
+  if (vix > 30 || avgUS < -2) {
+    level = 'danger'; label = '市場警戒 — 恐慌升溫'; icon = '🔴';
+  } else if (vix > 22 || avgUS < -0.8) {
+    level = 'caution'; label = '謹慎觀望 — 波動偏高'; icon = '🟡';
+  } else if (avgUS > 0.6 && vix < 18) {
+    level = 'positive'; label = '偏多格局 — 外資可能流入'; icon = '🟢';
+  } else {
+    level = 'neutral'; label = '中性整理 — 方向待確認'; icon = '⚪';
+  }
+
+  const pts = [];
+  if (vix > 25) pts.push(`⚡ VIX ${fmt(vix,1)} 高位，恐慌升溫`);
+  else if (vix < 16) pts.push(`✓ VIX ${fmt(vix,1)} 低位，情緒平穩`);
+  else pts.push(`→ VIX ${fmt(vix,1)}，波動中性`);
+
+  if (Math.abs(avgUS) > 0.3) pts.push(`${avgUS > 0 ? '✓' : '✗'} 美股 S&P ${fmtPct(sp5)} / NASDAQ ${fmtPct(ndq)}`);
+
+  if (Math.abs(sox) > 0.5) pts.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
+  if (Math.abs(tsmPct) > 0.5) pts.push(`${tsmPct > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsmPct)}`);
+
+  if (fxPct < -0.3) pts.push(`✓ 台幣升值 ${fmtPct(Math.abs(fxPct))}，外資流入訊號`);
+  else if (fxPct > 0.3) pts.push(`→ 台幣貶值 ${fmtPct(fxPct)}，資金偏保守`);
+
+  if (tnx > 4.8) pts.push(`⚡ 10Y 美債 ${fmt(tnx,2)}%，高利率壓抑估值`);
+  else if (tnx < 3.8) pts.push(`✓ 10Y 美債 ${fmt(tnx,2)}%，資金成本偏低`);
+
+  return { level, label, icon, pts };
+}
+
+// ── Render Market Cards ────────────────────────────────────────────────────
+function renderMarket(data) {
+  const grid = document.getElementById('market-grid');
+  if (!data.length) {
+    grid.innerHTML = '<div style="color:var(--red);padding:16px">市場資料載入失敗，請稍後重試</div>';
+    return;
+  }
+
+  const ORDER = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
+  const bySymbol = Object.fromEntries(data.map(d => [d.symbol, d]));
+
+  grid.innerHTML = ORDER.map(sym => {
+    const d = bySymbol[sym];
+    if (!d) return '';
+    const dir = d.pct > 0.01 ? 'up' : d.pct < -0.01 ? 'down' : 'neutral';
+    const pctClass = d.pct > 0 ? 'up' : d.pct < 0 ? 'down' : 'flat';
+    const stateLabel = d.state === 'PRE' ? '盤前' : d.state === 'POST' ? '盤後' : d.state === 'CLOSED' ? '休市' : '';
+    const digits = sym === 'USDTWD=X' ? 3 : sym === '^TNX' ? 3 : sym === '^VIX' ? 2 : 2;
+    return `
+      <div class="card ${dir}">
+        <div class="card-label">${d.zh} ${stateLabel ? `<span>${stateLabel}</span>` : ''}</div>
+        <div class="card-price">${fmt(d.price, digits)}</div>
+        <div class="card-change ${pctClass}">${fmtPct(d.pct)} &nbsp; ${d.change >= 0 ? '+' : ''}${fmt(d.change, 2)}</div>
+      </div>`;
+  }).join('');
+
+  // Signal
+  const sig = calcSignal(data);
+  const banner = document.getElementById('signal-banner');
+  banner.className = `signal ${sig.level}`;
+  banner.innerHTML = `
+    <div class="signal-icon">${sig.icon}</div>
+    <div>
+      <div class="signal-label">市場訊號</div>
+      <div class="signal-title">${sig.label}</div>
+      <ul class="signal-points">${sig.pts.map(p => `<li>${p}</li>`).join('')}</ul>
+    </div>`;
+}
+
+// ── Render News ────────────────────────────────────────────────────────────
+function renderTabs() {
+  const tabs = document.getElementById('news-tabs');
+  tabs.innerHTML = CAT_ORDER.map(key => {
+    const label = newsData[key]?.label || key;
+    const count = newsData[key]?.items?.length || 0;
+    return `<div class="tab ${key === activeTab ? 'active' : ''}" onclick="switchTab('${key}')">
+      ${label} ${count ? `<span style="opacity:.5;font-size:11px">(${count})</span>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderNewsList() {
+  const list = document.getElementById('news-list');
+  const items = newsData[activeTab]?.items || [];
+  if (!items.length) {
+    list.innerHTML = '<div class="news-empty">目前無新聞資料</div>';
+    return;
+  }
+  list.innerHTML = items.map(item => {
+    const s = sentiment(item.title);
+    const ago = timeAgo(item.pubDate);
+    const src = item.source || item.title.split(' - ').pop() || '';
+    const cleanTitle = item.title.replace(/ - [^-]+$/, '');
+    return `
+      <div class="news-item">
+        <div class="news-badge ${s}">${sentimentLabel(s)}</div>
+        <div class="news-body">
+          <div class="news-title">${item.link
+            ? `<a href="${item.link}" target="_blank" rel="noopener">${cleanTitle}</a>`
+            : cleanTitle}</div>
+          <div class="news-meta">
+            ${src ? `<span class="news-source">${src}</span>` : ''}
+            ${ago ? `<span>${ago}</span>` : ''}
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function switchTab(key) {
+  activeTab = key;
+  renderTabs();
+  renderNewsList();
+}
+
+// ── Fetch ──────────────────────────────────────────────────────────────────
+function setStatus(state) {
+  const dot = document.getElementById('live-dot');
+  dot.className = `dot ${state}`;
+}
+
+function setUpdateTime(ts) {
+  const el = document.getElementById('update-time');
+  const d = new Date(ts);
+  el.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} 更新`;
+}
+
+async function fetchMarket() {
+  try {
+    const r = await fetch(`${BASE}/api/market-data`);
+    const json = await r.json();
+    if (json.ok && json.data) {
+      marketData = json.data;
+      renderMarket(marketData);
+      setUpdateTime(json.ts);
+    }
+  } catch (e) {
+    console.error('Market fetch error:', e);
+    document.getElementById('market-grid').innerHTML = '<div style="color:var(--red);padding:16px">無法取得市場資料</div>';
+  }
+}
+
+async function fetchNews() {
+  const list = document.getElementById('news-list');
+  list.innerHTML = '<div class="news-loading">載入新聞中...</div>';
+  try {
+    const r = await fetch(`${BASE}/api/news`);
+    const json = await r.json();
+    if (json.ok && json.data) {
+      newsData = json.data;
+      renderTabs();
+      renderNewsList();
+    }
+  } catch (e) {
+    console.error('News fetch error:', e);
+    list.innerHTML = '<div class="news-empty">無法取得新聞資料</div>';
+  }
+}
+
+// ── Skeleton Loading ───────────────────────────────────────────────────────
+function renderSkeleton() {
+  const grid = document.getElementById('market-grid');
+  grid.innerHTML = Array(10).fill(0).map(() => `
+    <div class="card skeleton neutral">
+      <div class="card-label">　　　　　</div>
+      <div class="card-price">　　　　</div>
+      <div class="card-change">　　　　</div>
+    </div>`).join('');
+
+  const tabs = document.getElementById('news-tabs');
+  tabs.innerHTML = CAT_ORDER.map((key, i) => `<div class="tab ${i===0?'active':''}">${['兩岸政治','總體經濟','半導體','台灣國內'][i]}</div>`).join('');
+}
+
+// ── Refresh ────────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '更新中...';
+  setStatus('loading');
+
+  await Promise.all([fetchMarket(), fetchNews()]);
+
+  setStatus('');
+  btn.disabled = false;
+  btn.textContent = '重新整理';
+
+  if (refreshTimer) clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshAll, REFRESH_MS);
+}
+
+// ── Init ───────────────────────────────────────────────────────────────────
+renderSkeleton();
+refreshAll();
+</script>
+</body>
+</html>
