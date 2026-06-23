@@ -4,393 +4,539 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>台股情勢追蹤</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#0d1117;--surface:#161b22;--surface2:#21262d;--border:#30363d;
-  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
-  --green:#3fb950;--red:#f85149;--yellow:#d29922;--blue:#58a6ff;--purple:#bc8cff;
-  --radius:8px;--mono:'SF Mono','Fira Code',monospace;
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:        #070b14;
+  --glass:     rgba(255,255,255,0.04);
+  --glass-md:  rgba(255,255,255,0.06);
+  --border:    rgba(255,255,255,0.07);
+  --border-md: rgba(255,255,255,0.13);
+  --text:      #e8edf8;
+  --muted:     rgba(232,237,248,0.45);
+  --dim:       rgba(232,237,248,0.22);
+  --green:     #4ade80;
+  --green-glow:rgba(74,222,128,0.18);
+  --red:       #f87171;
+  --red-glow:  rgba(248,113,113,0.18);
+  --amber:     #fbbf24;
+  --blue:      #60a5fa;
+  --mono:     'DM Mono', 'SF Mono', monospace;
 }
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;line-height:1.5;min-height:100vh}
-a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}
-.app{max-width:1200px;margin:0 auto;padding:20px 16px}
 
-/* Header */
-.header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
-.header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px}
-.header h1 span{font-size:24px}
-.header-right{display:flex;align-items:center;gap:12px;color:var(--text2);font-size:13px}
-.refresh-btn{background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:var(--radius);cursor:pointer;font-size:13px;transition:background .15s}
-.refresh-btn:hover{background:var(--border)}
-.refresh-btn:disabled{opacity:.5;cursor:not-allowed}
-.dot{width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block}
-.dot.loading{background:var(--yellow);animation:pulse 1s infinite}
-.dot.error{background:var(--red)}
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', -apple-system, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
 
-/* Market Grid */
-.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text2);margin-bottom:12px}
-.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:20px}
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;position:relative;overflow:hidden}
-.card.up{border-top:2px solid var(--green)}
-.card.down{border-top:2px solid var(--red)}
-.card.neutral{border-top:2px solid var(--border)}
-.card-label{font-size:11px;color:var(--text2);margin-bottom:6px;display:flex;justify-content:space-between}
-.card-price{font-size:20px;font-weight:700;font-family:var(--mono);letter-spacing:-.02em;margin-bottom:4px}
-.card-change{font-size:13px;font-family:var(--mono)}
-.card-change.up{color:var(--green)}
-.card-change.down{color:var(--red)}
-.card-change.flat{color:var(--text2)}
-.card-state{font-size:10px;color:var(--text3);margin-top:4px}
-.card.skeleton .card-price,.card.skeleton .card-change,.card.skeleton .card-label{background:var(--surface2);border-radius:4px;color:transparent;animation:shimmer 1.5s infinite}
-@keyframes shimmer{0%,100%{opacity:.5}50%{opacity:1}}
+/* ── Background ── */
+.bg-layer {
+  position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
+}
+.bg-orb {
+  position: absolute; border-radius: 50%; filter: blur(120px); opacity: .6;
+}
+.orb-1 { width:700px; height:700px; background:rgba(29,78,216,.12); top:-200px; left:-200px; }
+.orb-2 { width:500px; height:500px; background:rgba(109,40,217,.08); bottom:-100px; right:-150px; }
+.orb-3 { width:350px; height:350px; background:rgba(5,150,105,.06); top:45%; left:55%; transform:translate(-50%,-50%); }
+.bg-grid {
+  position: absolute; inset: 0;
+  background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
 
-/* Signal Banner */
-.signal{border-radius:var(--radius);padding:16px 20px;margin-bottom:20px;display:flex;align-items:flex-start;gap:16px;border:1px solid var(--border)}
-.signal.positive{background:rgba(63,185,80,.08);border-color:rgba(63,185,80,.3)}
-.signal.caution{background:rgba(210,153,34,.08);border-color:rgba(210,153,34,.3)}
-.signal.danger{background:rgba(248,81,73,.08);border-color:rgba(248,81,73,.3)}
-.signal.neutral{background:var(--surface)}
-.signal-icon{font-size:28px;line-height:1}
-.signal-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;opacity:.7;margin-bottom:4px}
-.signal-title{font-size:17px;font-weight:700;margin-bottom:8px}
-.signal.positive .signal-title{color:var(--green)}
-.signal.caution .signal-title{color:var(--yellow)}
-.signal.danger .signal-title{color:var(--red)}
-.signal.neutral .signal-title{color:var(--text2)}
-.signal-points{list-style:none;display:flex;flex-wrap:wrap;gap:6px}
-.signal-points li{font-size:12px;background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 8px;border-radius:20px;color:var(--text2)}
+/* ── Layout ── */
+.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 20px 56px; }
 
-/* News */
-.news-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
-.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;scrollbar-width:none}
-.tabs::-webkit-scrollbar{display:none}
-.tab{padding:12px 18px;cursor:pointer;font-size:13px;color:var(--text2);white-space:nowrap;border-bottom:2px solid transparent;transition:color .15s,border-color .15s;flex-shrink:0}
-.tab:hover{color:var(--text)}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
-.news-list{padding:4px 0;min-height:200px}
-.news-item{display:flex;align-items:flex-start;gap:10px;padding:12px 16px;border-bottom:1px solid var(--border);transition:background .1s}
-.news-item:last-child{border-bottom:none}
-.news-item:hover{background:var(--surface2)}
-.news-badge{flex-shrink:0;width:18px;height:18px;border-radius:50%;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
-.news-badge.pos{background:rgba(63,185,80,.15);color:var(--green)}
-.news-badge.neg{background:rgba(248,81,73,.15);color:var(--red)}
-.news-badge.neu{background:rgba(139,148,158,.15);color:var(--text2)}
-.news-body{flex:1;min-width:0}
-.news-title{font-size:13px;line-height:1.45;color:var(--text);margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.news-meta{font-size:11px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap}
-.news-source{color:var(--text2)}
-.news-loading,.news-empty{padding:32px 16px;text-align:center;color:var(--text2)}
+/* ── Header ── */
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 36px; flex-wrap: wrap; gap: 14px;
+}
+.logo { display: flex; align-items: center; gap: 11px; }
+.logo-mark {
+  width: 38px; height: 38px; border-radius: 11px;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  display: flex; align-items: center; justify-content: center; font-size: 19px;
+  box-shadow: 0 0 20px rgba(139,92,246,.35);
+  flex-shrink: 0;
+}
+.logo-text {
+  font-size: 17px; font-weight: 700; letter-spacing: -.03em;
+  background: linear-gradient(135deg, #e8edf8 30%, #94a3b8 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.logo-sub { font-size: 11px; color: var(--dim); font-weight: 400; letter-spacing: .02em; margin-top: 1px; }
+.header-right { display: flex; align-items: center; gap: 14px; }
+.status-chip {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; color: var(--muted);
+}
+.sdot {
+  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
+  box-shadow: 0 0 6px rgba(34,197,94,.6);
+}
+.sdot.loading { background: var(--amber); box-shadow: 0 0 6px rgba(251,191,36,.6); animation: sdot-pulse 1.1s ease-in-out infinite; }
+.sdot.error   { background: var(--red);   box-shadow: 0 0 6px rgba(248,113,113,.6); }
+@keyframes sdot-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+.btn {
+  padding: 8px 18px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 500;
+  background: var(--glass-md); border: 1px solid var(--border-md); color: rgba(232,237,248,.8);
+  cursor: pointer; transition: background .2s, border-color .2s, color .2s;
+}
+.btn:hover  { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: var(--text); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* Footer */
-.footer{margin-top:20px;text-align:center;font-size:11px;color:var(--text3)}
-.footer a{color:var(--text3)}
+/* ── Signal Banner ── */
+.signal {
+  border-radius: 20px; padding: 22px 26px; margin-bottom: 28px;
+  display: flex; align-items: flex-start; gap: 18px;
+  border: 1px solid; position: relative; overflow: hidden;
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+}
+.signal::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(ellipse at 0% 0%, rgba(255,255,255,.07), transparent 55%);
+}
+.signal.positive { background: linear-gradient(135deg,rgba(74,222,128,.1),rgba(74,222,128,.03)); border-color: rgba(74,222,128,.25); }
+.signal.caution  { background: linear-gradient(135deg,rgba(251,191,36,.1),rgba(251,191,36,.03)); border-color: rgba(251,191,36,.25); }
+.signal.danger   { background: linear-gradient(135deg,rgba(248,113,113,.1),rgba(248,113,113,.03)); border-color: rgba(248,113,113,.25); }
+.signal.neutral  { background: var(--glass); border-color: var(--border); }
+.sig-icon { font-size: 44px; line-height: 1; flex-shrink: 0; }
+.sig-eye  { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
+.sig-title { font-size: 20px; font-weight: 700; letter-spacing: -.025em; margin-bottom: 11px; }
+.signal.positive .sig-title { color: var(--green); }
+.signal.caution  .sig-title { color: var(--amber); }
+.signal.danger   .sig-title { color: var(--red); }
+.signal.neutral  .sig-title { color: var(--muted); }
+.sig-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.sig-pill {
+  font-size: 12px; padding: 4px 11px; border-radius: 100px;
+  background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: var(--muted);
+}
 
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+/* ── Section label ── */
+.sec-label {
+  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 13px;
+}
 
-@media(max-width:600px){
-  .header h1{font-size:17px}
-  .market-grid{grid-template-columns:repeat(2,1fr)}
-  .tab{padding:10px 12px;font-size:12px}
+/* ── Market Grid ── */
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 11px; margin-bottom: 28px; }
+.card {
+  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 16px; padding: 18px 16px;
+  position: relative; overflow: hidden; cursor: default;
+  transition: border-color .3s, box-shadow .3s, transform .2s;
+}
+.card:hover { transform: translateY(-2px); }
+.card.up   { border-color: rgba(74,222,128,.22); box-shadow: 0 0 28px var(--green-glow), inset 0 1px 0 rgba(74,222,128,.1); }
+.card.down { border-color: rgba(248,113,113,.22); box-shadow: 0 0 28px var(--red-glow), inset 0 1px 0 rgba(248,113,113,.1); }
+.card-tag { font-size: 11px; font-weight: 500; color: var(--dim); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+.card-badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,.07); border-radius: 100px; color: var(--dim); }
+.card-price { font-family: var(--mono); font-size: 21px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; margin-bottom: 7px; color: var(--text); }
+.card-delta { font-family: var(--mono); font-size: 12px; display: flex; gap: 7px; }
+.card-delta.up   { color: var(--green); }
+.card-delta.down { color: var(--red); }
+.card-delta.flat { color: var(--dim); }
+/* skeleton */
+.card.skeleton { pointer-events: none; }
+.skel { border-radius: 5px; background: linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
+.skel-tag  { height: 11px; width: 65%; margin-bottom: 14px; }
+.skel-price{ height: 22px; width: 80%; margin-bottom: 9px; }
+.skel-delta{ height: 12px; width: 55%; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+/* ── News ── */
+.news-wrap { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
+.tabs { display: flex; border-bottom: 1px solid var(--border); position: relative; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab-bar { position: absolute; bottom: 0; height: 2px; background: linear-gradient(90deg,#3b82f6,#8b5cf6); border-radius: 2px 2px 0 0; transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1); pointer-events: none; }
+.tab { padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; transition: color .2s; flex-shrink: 0; user-select: none; }
+.tab:hover { color: rgba(232,237,248,.72); }
+.tab.active { color: var(--text); }
+.tab-n { display: inline-block; font-size: 10px; padding: 1px 5px; background: rgba(255,255,255,.08); border-radius: 100px; margin-left: 5px; vertical-align: middle; color: var(--dim); }
+.news-list { min-height: 220px; }
+.news-item { display: flex; align-items: flex-start; gap: 13px; padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; }
+.news-item:last-child { border-bottom: none; }
+.news-item:hover { background: rgba(255,255,255,.03); }
+.ndot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; transition: box-shadow .3s; }
+.ndot.pos { background: var(--green); box-shadow: 0 0 7px rgba(74,222,128,.7); }
+.ndot.neg { background: var(--red); box-shadow: 0 0 7px rgba(248,113,113,.7); }
+.ndot.neu { background: rgba(232,237,248,.2); }
+.news-body { flex: 1; min-width: 0; }
+.news-title { font-size: 13.5px; line-height: 1.5; color: rgba(232,237,248,.82); margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-title a { color: inherit; text-decoration: none; transition: color .15s; }
+.news-title a:hover { color: #93c5fd; }
+.news-meta { font-size: 11px; color: var(--dim); display: flex; gap: 8px; flex-wrap: wrap; }
+.news-source { color: rgba(232,237,248,.38); }
+.news-state { padding: 36px; text-align: center; color: var(--dim); }
+
+/* ── Footer ── */
+.footer { margin-top: 24px; text-align: center; font-size: 11px; color: var(--dim); }
+.footer a { color: rgba(232,237,248,.3); text-decoration: none; }
+.footer a:hover { color: var(--muted); }
+
+/* ── Responsive ── */
+@media(max-width:600px) {
+  .app { padding: 20px 14px 48px; }
+  .market-grid { grid-template-columns: repeat(2,1fr); }
+  .logo-sub { display: none; }
+  .sig-icon { font-size: 32px; }
+  .sig-title { font-size: 17px; }
+  .tab { padding: 12px 14px; font-size: 12px; }
 }
 </style>
 </head>
 <body>
+
+<div class="bg-layer">
+  <div class="bg-grid"></div>
+  <div class="bg-orb orb-1"></div>
+  <div class="bg-orb orb-2"></div>
+  <div class="bg-orb orb-3"></div>
+</div>
+
 <div class="app">
+
   <header class="header">
-    <h1><span>📊</span> 台股情勢追蹤</h1>
+    <div class="logo">
+      <div class="logo-mark">📊</div>
+      <div>
+        <div class="logo-text">台股情勢追蹤</div>
+        <div class="logo-sub">TAIWAN MARKET INTELLIGENCE</div>
+      </div>
+    </div>
     <div class="header-right">
-      <span id="live-dot" class="dot loading"></span>
-      <span id="update-time">載入中...</span>
-      <button id="refresh-btn" class="refresh-btn" onclick="refreshAll()">重新整理</button>
+      <div class="status-chip">
+        <div id="sdot" class="sdot loading"></div>
+        <span id="update-time">載入中…</span>
+      </div>
+      <button class="btn" id="refresh-btn" onclick="refreshAll()">重新整理</button>
     </div>
   </header>
 
-  <p class="section-title">市場指標</p>
-  <div class="market-grid" id="market-grid"></div>
-
-  <div class="signal" id="signal-banner">
-    <div class="signal-icon">⏳</div>
-    <div><div class="signal-label">市場訊號</div><div class="signal-title">計算中...</div></div>
+  <div class="signal neutral" id="signal">
+    <div class="sig-icon">⏳</div>
+    <div>
+      <div class="sig-eye">市場訊號</div>
+      <div class="sig-title">計算中…</div>
+    </div>
   </div>
 
-  <div class="news-section">
-    <div class="tabs" id="news-tabs"></div>
-    <div class="news-list" id="news-list"><div class="news-loading">載入新聞中...</div></div>
+  <p class="sec-label">市場指標</p>
+  <div class="market-grid" id="market-grid"></div>
+
+  <p class="sec-label" style="margin-top:4px">國際・台灣情勢</p>
+  <div class="news-wrap">
+    <div class="tabs" id="tabs"><div class="tab-bar" id="tab-bar"></div></div>
+    <div class="news-list" id="news-list"><div class="news-state">載入新聞中…</div></div>
   </div>
 
   <div class="footer">
-    資料來源：Yahoo Finance · Google News RSS &nbsp;|&nbsp; 每 5 分鐘自動更新 &nbsp;|&nbsp;
-    <a href="/">← 返回首頁</a>
+    資料來源：Yahoo Finance · Google News RSS &nbsp;·&nbsp; 每 5 分鐘自動更新
+    &nbsp;&nbsp;<a href="/">← 返回首頁</a>
   </div>
 </div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────
-const BASE = '';
-const REFRESH_MS = 5 * 60 * 1000;
+// ── Constants & State ──────────────────────────────────────────────────────
 const CAT_ORDER = ['geopolitical','economic','semiconductor','domestic'];
+let marketData = [], newsData = {}, activeTab = CAT_ORDER[0], refreshTimer = null;
 
-// ── State ──────────────────────────────────────────────────────────────────
-let marketData = [];
-let newsData = {};
-let activeTab = CAT_ORDER[0];
-let refreshTimer = null;
-
-// ── Utility ────────────────────────────────────────────────────────────────
-function fmt(n, digits = 2) {
+// ── Format helpers ─────────────────────────────────────────────────────────
+function fmt(n, d = 2) {
   if (n == null) return '—';
-  return n.toLocaleString('en-US', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
 }
-
-function fmtPct(n) {
+function fmtPrice(sym, n) {
   if (n == null) return '—';
-  const sign = n >= 0 ? '+' : '';
-  return `${sign}${n.toFixed(2)}%`;
+  if (sym === '^TNX')     return n.toFixed(3) + '%';
+  if (sym === 'USDTWD=X') return n.toFixed(3);
+  if (n >= 10000) return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  return n.toFixed(2);
 }
-
-function timeAgo(dateStr) {
-  if (!dateStr) return '';
-  const d = new Date(dateStr);
-  if (isNaN(d)) return '';
-  const diff = Math.floor((Date.now() - d) / 1000);
-  if (diff < 60) return `${diff} 秒前`;
-  if (diff < 3600) return `${Math.floor(diff / 60)} 分鐘前`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)} 小時前`;
-  return `${Math.floor(diff / 86400)} 天前`;
+function fmtPct(n)  { if (n == null) return '—'; return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+function fmtChg(n)  { if (n == null) return '—'; return (n >= 0 ? '+' : '') + fmt(n, 2); }
+function timeAgo(s) {
+  if (!s) return '';
+  const d = new Date(s); if (isNaN(d)) return '';
+  const sec = Math.floor((Date.now() - d) / 1000);
+  if (sec < 60)  return sec + ' 秒前';
+  if (sec < 3600) return Math.floor(sec / 60) + ' 分鐘前';
+  if (sec < 86400) return Math.floor(sec / 3600) + ' 小時前';
+  return Math.floor(sec / 86400) + ' 天前';
 }
-
-function sentiment(title) {
-  const t = title.toLowerCase();
-  const pos = ['rise','gain','rally','record high','surge','jump','climbs','boost','deal','cooperation','stable','eases','上漲','上升','創高','突破','回升','反彈','看好','協議'];
-  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','崩盤','危機','攻擊'];
-  const p = pos.filter(k => t.includes(k)).length;
-  const n = neg.filter(k => t.includes(k)).length;
+function sentiment(t) {
+  const lo = t.toLowerCase();
+  const pos = ['rise','gain','rally','record','surge','jump','boosts','deal','cooperation','stable','上漲','上升','創高','突破','回升','反彈','看好','協議'];
+  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','危機','攻擊'];
+  const p = pos.filter(k => lo.includes(k)).length;
+  const n = neg.filter(k => lo.includes(k)).length;
   return p > n ? 'pos' : n > p ? 'neg' : 'neu';
-}
-
-function sentimentLabel(s) {
-  return s === 'pos' ? '↑' : s === 'neg' ? '↓' : '→';
 }
 
 // ── Signal Calculation ─────────────────────────────────────────────────────
 function calcSignal(data) {
   const by = Object.fromEntries(data.map(d => [d.symbol, d]));
-  const vix    = by['^VIX']?.price  ?? 20;
-  const sp5    = by['^GSPC']?.pct   ?? 0;
-  const ndq    = by['^IXIC']?.pct   ?? 0;
-  const sox    = by['^SOX']?.pct    ?? 0;
-  const fxPct  = by['USDTWD=X']?.pct ?? 0;
-  const tsmPct = by['TSM']?.pct     ?? 0;
-  const tnx    = by['^TNX']?.price  ?? 4;
-  const avgUS  = (sp5 + ndq) / 2;
+  const vix   = by['^VIX']?.price ?? 20;
+  const sp5   = by['^GSPC']?.pct  ?? 0;
+  const ndq   = by['^IXIC']?.pct  ?? 0;
+  const sox   = by['^SOX']?.pct   ?? 0;
+  const tsm   = by['TSM']?.pct    ?? 0;
+  const fx    = by['USDTWD=X']?.pct ?? 0;
+  const tnx   = by['^TNX']?.price ?? 4;
+  const avgUS = (sp5 + ndq) / 2;
 
-  let level, label, icon;
-  if (vix > 30 || avgUS < -2) {
-    level = 'danger'; label = '市場警戒 — 恐慌升溫'; icon = '🔴';
-  } else if (vix > 22 || avgUS < -0.8) {
-    level = 'caution'; label = '謹慎觀望 — 波動偏高'; icon = '🟡';
-  } else if (avgUS > 0.6 && vix < 18) {
-    level = 'positive'; label = '偏多格局 — 外資可能流入'; icon = '🟢';
-  } else {
-    level = 'neutral'; label = '中性整理 — 方向待確認'; icon = '⚪';
-  }
+  let level, title, icon;
+  if (vix > 30 || avgUS < -2)       { level='danger';   title='市場警戒 — 恐慌升溫'; icon='🔴'; }
+  else if (vix > 22 || avgUS < -.8) { level='caution';  title='謹慎觀望 — 波動偏高'; icon='🟡'; }
+  else if (avgUS > .6 && vix < 18)  { level='positive'; title='偏多格局 — 外資可能流入'; icon='🟢'; }
+  else                               { level='neutral';  title='中性整理 — 方向待確認'; icon='⚪'; }
 
-  const pts = [];
-  if (vix > 25) pts.push(`⚡ VIX ${fmt(vix,1)} 高位，恐慌升溫`);
-  else if (vix < 16) pts.push(`✓ VIX ${fmt(vix,1)} 低位，情緒平穩`);
-  else pts.push(`→ VIX ${fmt(vix,1)}，波動中性`);
+  const pills = [];
+  if (vix > 25)        pills.push(`⚡ VIX ${vix.toFixed(1)} 高位，恐慌升溫`);
+  else if (vix < 16)   pills.push(`✓ VIX ${vix.toFixed(1)} 低位，情緒平穩`);
+  else                 pills.push(`→ VIX ${vix.toFixed(1)} 中性`);
 
-  if (Math.abs(avgUS) > 0.3) pts.push(`${avgUS > 0 ? '✓' : '✗'} 美股 S&P ${fmtPct(sp5)} / NASDAQ ${fmtPct(ndq)}`);
+  if (Math.abs(avgUS) > .25)
+    pills.push(`${avgUS > 0 ? '✓' : '✗'} 美股 S&P ${fmtPct(sp5)} / NASDAQ ${fmtPct(ndq)}`);
+  if (Math.abs(sox) > .5)
+    pills.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
+  if (Math.abs(tsm) > .5)
+    pills.push(`${tsm > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsm)}`);
+  if (fx < -.3)        pills.push(`✓ 台幣升值，外資流入訊號`);
+  else if (fx > .3)    pills.push(`→ 台幣貶值，資金偏保守`);
+  if (tnx > 4.8)       pills.push(`⚡ 10Y 美債 ${tnx.toFixed(2)}%，估值壓力`);
 
-  if (Math.abs(sox) > 0.5) pts.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
-  if (Math.abs(tsmPct) > 0.5) pts.push(`${tsmPct > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsmPct)}`);
-
-  if (fxPct < -0.3) pts.push(`✓ 台幣升值 ${fmtPct(Math.abs(fxPct))}，外資流入訊號`);
-  else if (fxPct > 0.3) pts.push(`→ 台幣貶值 ${fmtPct(fxPct)}，資金偏保守`);
-
-  if (tnx > 4.8) pts.push(`⚡ 10Y 美債 ${fmt(tnx,2)}%，高利率壓抑估值`);
-  else if (tnx < 3.8) pts.push(`✓ 10Y 美債 ${fmt(tnx,2)}%，資金成本偏低`);
-
-  return { level, label, icon, pts };
+  return { level, title, icon, pills };
 }
 
-// ── Render Market Cards ────────────────────────────────────────────────────
+// ── GSAP helpers ───────────────────────────────────────────────────────────
+function countUp(el, endVal, decimals) {
+  const obj = { v: endVal * 0.96 };
+  gsap.to(obj, {
+    v: endVal, duration: 0.9, ease: 'power3.out',
+    onUpdate() {
+      el.textContent = obj.v.toLocaleString('en-US', {
+        minimumFractionDigits: decimals, maximumFractionDigits: decimals
+      });
+    }
+  });
+}
+
+// ── Render Market ──────────────────────────────────────────────────────────
+const SYMBOL_ORDER  = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
+const SYMBOL_DECS   = { '^TNX':3, 'USDTWD=X':3, '^VIX':2 };
+const SYMBOL_STATES = { 'PRE':'盤前', 'POST':'盤後', 'CLOSED':'休市' };
+
 function renderMarket(data) {
   const grid = document.getElementById('market-grid');
   if (!data.length) {
-    grid.innerHTML = '<div style="color:var(--red);padding:16px">市場資料載入失敗，請稍後重試</div>';
+    grid.innerHTML = `<div style="color:var(--red);padding:18px;grid-column:1/-1">⚠ 市場資料載入失敗，請稍後重試</div>`;
     return;
   }
+  const byS = Object.fromEntries(data.map(d => [d.symbol, d]));
 
-  const ORDER = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
-  const bySymbol = Object.fromEntries(data.map(d => [d.symbol, d]));
-
-  grid.innerHTML = ORDER.map(sym => {
-    const d = bySymbol[sym];
-    if (!d) return '';
-    const dir = d.pct > 0.01 ? 'up' : d.pct < -0.01 ? 'down' : 'neutral';
-    const pctClass = d.pct > 0 ? 'up' : d.pct < 0 ? 'down' : 'flat';
-    const stateLabel = d.state === 'PRE' ? '盤前' : d.state === 'POST' ? '盤後' : d.state === 'CLOSED' ? '休市' : '';
-    const digits = sym === 'USDTWD=X' ? 3 : sym === '^TNX' ? 3 : sym === '^VIX' ? 2 : 2;
-    return `
-      <div class="card ${dir}">
-        <div class="card-label">${d.zh} ${stateLabel ? `<span>${stateLabel}</span>` : ''}</div>
-        <div class="card-price">${fmt(d.price, digits)}</div>
-        <div class="card-change ${pctClass}">${fmtPct(d.pct)} &nbsp; ${d.change >= 0 ? '+' : ''}${fmt(d.change, 2)}</div>
-      </div>`;
+  grid.innerHTML = SYMBOL_ORDER.map(sym => {
+    const d = byS[sym]; if (!d) return '';
+    const dir = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : '';
+    const dec = SYMBOL_DECS[sym] ?? 2;
+    const badge = SYMBOL_STATES[d.state] || '';
+    return `<div class="card ${dir}" data-sym="${sym}" data-val="${d.price}" data-dec="${dec}">
+      <div class="card-tag">${d.zh}${badge ? `<span class="card-badge">${badge}</span>` : ''}</div>
+      <div class="card-price" data-price></div>
+      <div class="card-delta ${dir || 'flat'}">
+        <span>${fmtChg(d.change)}</span>
+        <span>${fmtPct(d.pct)}</span>
+      </div>
+    </div>`;
   }).join('');
+
+  // Count-up animation on each card price
+  grid.querySelectorAll('.card[data-val]').forEach(card => {
+    const el  = card.querySelector('[data-price]');
+    const val = parseFloat(card.dataset.val);
+    const dec = parseInt(card.dataset.dec);
+    if (!isNaN(val)) countUp(el, val, dec);
+    else el.textContent = '—';
+  });
+
+  gsap.from('.card', { y: 28, opacity: 0, duration: .55, stagger: .045, ease: 'power3.out', clearProps: 'all' });
 
   // Signal
   const sig = calcSignal(data);
-  const banner = document.getElementById('signal-banner');
-  banner.className = `signal ${sig.level}`;
-  banner.innerHTML = `
-    <div class="signal-icon">${sig.icon}</div>
+  const el = document.getElementById('signal');
+  el.className = `signal ${sig.level}`;
+  el.innerHTML = `
+    <div class="sig-icon">${sig.icon}</div>
     <div>
-      <div class="signal-label">市場訊號</div>
-      <div class="signal-title">${sig.label}</div>
-      <ul class="signal-points">${sig.pts.map(p => `<li>${p}</li>`).join('')}</ul>
+      <div class="sig-eye">市場訊號</div>
+      <div class="sig-title">${sig.title}</div>
+      <div class="sig-pills">${sig.pills.map(p => `<span class="sig-pill">${p}</span>`).join('')}</div>
     </div>`;
+  gsap.from('#signal', { y: -14, opacity: 0, duration: .45, ease: 'power2.out' });
+}
+
+// ── Render Tabs ────────────────────────────────────────────────────────────
+function renderTabs() {
+  const wrap = document.getElementById('tabs');
+  const bar  = document.getElementById('tab-bar');
+
+  // Rebuild tabs (keep indicator element)
+  const tabEls = CAT_ORDER.map(key => {
+    const label = newsData[key]?.label || key;
+    const count = newsData[key]?.items?.length || 0;
+    return `<div class="tab ${key===activeTab?'active':''}" data-tab="${key}" onclick="switchTab('${key}')">
+      ${label}${count ? `<span class="tab-n">${count}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  // Replace only tab divs, keep bar
+  wrap.innerHTML = tabEls;
+  wrap.appendChild(bar);
+  updateTabBar();
+}
+
+function updateTabBar() {
+  const active = document.querySelector('.tab.active');
+  const bar = document.getElementById('tab-bar');
+  if (!active || !bar) return;
+  bar.style.left  = active.offsetLeft + 'px';
+  bar.style.width = active.offsetWidth + 'px';
 }
 
 // ── Render News ────────────────────────────────────────────────────────────
-function renderTabs() {
-  const tabs = document.getElementById('news-tabs');
-  tabs.innerHTML = CAT_ORDER.map(key => {
-    const label = newsData[key]?.label || key;
-    const count = newsData[key]?.items?.length || 0;
-    return `<div class="tab ${key === activeTab ? 'active' : ''}" onclick="switchTab('${key}')">
-      ${label} ${count ? `<span style="opacity:.5;font-size:11px">(${count})</span>` : ''}
+function renderNews() {
+  const list  = document.getElementById('news-list');
+  const items = newsData[activeTab]?.items || [];
+  if (!items.length) { list.innerHTML = '<div class="news-state">目前無新聞資料</div>'; return; }
+
+  list.innerHTML = items.map(it => {
+    const s = sentiment(it.title);
+    const cleanTitle = it.title.replace(/ - [^-]+$/, '');
+    const src = it.source || '';
+    const ago = timeAgo(it.pubDate);
+    return `<div class="news-item">
+      <div class="ndot ${s}"></div>
+      <div class="news-body">
+        <div class="news-title">${it.link
+          ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer">${cleanTitle}</a>`
+          : cleanTitle}</div>
+        <div class="news-meta">
+          ${src ? `<span class="news-source">${src}</span>` : ''}
+          ${ago ? `<span>${ago}</span>` : ''}
+        </div>
+      </div>
     </div>`;
   }).join('');
-}
 
-function renderNewsList() {
-  const list = document.getElementById('news-list');
-  const items = newsData[activeTab]?.items || [];
-  if (!items.length) {
-    list.innerHTML = '<div class="news-empty">目前無新聞資料</div>';
-    return;
-  }
-  list.innerHTML = items.map(item => {
-    const s = sentiment(item.title);
-    const ago = timeAgo(item.pubDate);
-    const src = item.source || item.title.split(' - ').pop() || '';
-    const cleanTitle = item.title.replace(/ - [^-]+$/, '');
-    return `
-      <div class="news-item">
-        <div class="news-badge ${s}">${sentimentLabel(s)}</div>
-        <div class="news-body">
-          <div class="news-title">${item.link
-            ? `<a href="${item.link}" target="_blank" rel="noopener">${cleanTitle}</a>`
-            : cleanTitle}</div>
-          <div class="news-meta">
-            ${src ? `<span class="news-source">${src}</span>` : ''}
-            ${ago ? `<span>${ago}</span>` : ''}
-          </div>
-        </div>
-      </div>`;
-  }).join('');
+  gsap.from('.news-item', { x: -14, opacity: 0, duration: .38, stagger: .035, ease: 'power2.out', clearProps: 'all' });
 }
 
 function switchTab(key) {
   activeTab = key;
   renderTabs();
-  renderNewsList();
+  // Fade out → update → fade in
+  gsap.to('#news-list', {
+    opacity: 0, duration: .12,
+    onComplete() {
+      renderNews();
+      gsap.to('#news-list', { opacity: 1, duration: .2 });
+    }
+  });
+}
+
+// ── Skeleton ───────────────────────────────────────────────────────────────
+function renderSkeleton() {
+  document.getElementById('market-grid').innerHTML = Array(10).fill(0).map(() =>
+    `<div class="card skeleton">
+      <div class="skel skel-tag"></div>
+      <div class="skel skel-price"></div>
+      <div class="skel skel-delta"></div>
+    </div>`
+  ).join('');
+
+  const tabs = document.getElementById('tabs');
+  const bar  = document.getElementById('tab-bar');
+  tabs.innerHTML = ['兩岸政治','總體經濟','半導體','台灣國內'].map((l, i) =>
+    `<div class="tab ${i===0?'active':''}">${l}</div>`
+  ).join('');
+  tabs.appendChild(bar);
+}
+
+// ── Status ─────────────────────────────────────────────────────────────────
+function setStatus(s) { document.getElementById('sdot').className = `sdot ${s}`; }
+function setTime(ts) {
+  const d = new Date(ts);
+  document.getElementById('update-time').textContent =
+    `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} 更新`;
 }
 
 // ── Fetch ──────────────────────────────────────────────────────────────────
-function setStatus(state) {
-  const dot = document.getElementById('live-dot');
-  dot.className = `dot ${state}`;
-}
-
-function setUpdateTime(ts) {
-  const el = document.getElementById('update-time');
-  const d = new Date(ts);
-  el.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')} 更新`;
-}
-
 async function fetchMarket() {
   try {
-    const r = await fetch(`${BASE}/api/market-data`);
-    const json = await r.json();
-    if (json.ok && json.data && json.data.length > 0) {
-      marketData = json.data;
-      renderMarket(marketData);
-      setUpdateTime(json.ts);
-      return true;
-    } else {
-      throw new Error(json.error || '資料回傳為空');
-    }
+    const r = await fetch('/api/market-data');
+    const j = await r.json();
+    if (j.ok && j.data?.length) { marketData = j.data; renderMarket(j.data); setTime(j.ts); return true; }
+    throw new Error(j.error || '資料為空');
   } catch (e) {
-    console.error('Market fetch error:', e);
+    console.error('[market]', e);
     document.getElementById('market-grid').innerHTML =
-      `<div style="color:var(--red);padding:16px;grid-column:1/-1">
-        ⚠ 市場資料載入失敗，請點「重新整理」<br>
-        <small style="color:var(--text3);font-size:11px">${e.message}</small>
-      </div>`;
-    document.getElementById('signal-banner').className = 'signal neutral';
-    document.getElementById('signal-banner').innerHTML =
-      `<div class="signal-icon">⚠</div>
-       <div><div class="signal-label">市場訊號</div>
-       <div class="signal-title" style="color:var(--text2)">無法取得市場資料</div></div>`;
+      `<div style="color:var(--red);padding:18px;grid-column:1/-1">⚠ 市場資料載入失敗，請稍後重試<br><small style="color:var(--dim)">${e.message}</small></div>`;
+    document.getElementById('signal').className = 'signal neutral';
+    document.getElementById('signal').innerHTML =
+      `<div class="sig-icon">⚠</div><div><div class="sig-eye">市場訊號</div><div class="sig-title" style="color:var(--muted)">無法取得市場資料</div></div>`;
     return false;
   }
 }
 
 async function fetchNews() {
-  const list = document.getElementById('news-list');
-  list.innerHTML = '<div class="news-loading">載入新聞中...</div>';
   try {
-    const r = await fetch(`${BASE}/api/news`);
-    const json = await r.json();
-    if (json.ok && json.data) {
-      newsData = json.data;
-      renderTabs();
-      renderNewsList();
-    }
+    const r = await fetch('/api/news');
+    const j = await r.json();
+    if (j.ok && j.data) { newsData = j.data; renderTabs(); renderNews(); }
+    else document.getElementById('news-list').innerHTML = '<div class="news-state">無法取得新聞資料</div>';
   } catch (e) {
-    console.error('News fetch error:', e);
-    list.innerHTML = '<div class="news-empty">無法取得新聞資料</div>';
+    console.error('[news]', e);
+    document.getElementById('news-list').innerHTML = '<div class="news-state">無法取得新聞資料</div>';
   }
-}
-
-// ── Skeleton Loading ───────────────────────────────────────────────────────
-function renderSkeleton() {
-  const grid = document.getElementById('market-grid');
-  grid.innerHTML = Array(10).fill(0).map(() => `
-    <div class="card skeleton neutral">
-      <div class="card-label">　　　　　</div>
-      <div class="card-price">　　　　</div>
-      <div class="card-change">　　　　</div>
-    </div>`).join('');
-
-  const tabs = document.getElementById('news-tabs');
-  tabs.innerHTML = CAT_ORDER.map((key, i) => `<div class="tab ${i===0?'active':''}">${['兩岸政治','總體經濟','半導體','台灣國內'][i]}</div>`).join('');
 }
 
 // ── Refresh ────────────────────────────────────────────────────────────────
 async function refreshAll() {
   const btn = document.getElementById('refresh-btn');
-  btn.disabled = true;
-  btn.textContent = '更新中...';
+  btn.disabled = true; btn.textContent = '更新中…';
   setStatus('loading');
 
-  const [marketOk] = await Promise.all([fetchMarket(), fetchNews()]);
+  const [ok] = await Promise.all([fetchMarket(), fetchNews()]);
 
-  setStatus(marketOk ? '' : 'error');
-  btn.disabled = false;
-  btn.textContent = '重新整理';
+  setStatus(ok ? '' : 'error');
+  btn.disabled = false; btn.textContent = '重新整理';
 
-  if (refreshTimer) clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refreshAll, REFRESH_MS);
+  clearTimeout(refreshTimer);
+  refreshTimer = setTimeout(refreshAll, 5 * 60 * 1000);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 renderSkeleton();
+gsap.from('.header',  { y: -18, opacity: 0, duration: .5, ease: 'power2.out' });
+gsap.from('#signal',  { y: -10, opacity: 0, duration: .4, delay: .1, ease: 'power2.out' });
 refreshAll();
+
+window.addEventListener('resize', updateTabBar);
 </script>
 </body>
 </html>
