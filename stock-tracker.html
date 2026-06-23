@@ -228,7 +228,7 @@ body {
       <span class="ai-label">Gemini AI 深度分析</span>
       <span class="ai-badge neu" id="ai-badge">—</span>
     </div>
-    <div class="ai-loading" id="ai-body">等待市場資料…</div>
+    <div class="ai-loading" id="ai-body">點擊下方按鈕，讓 Gemini 分析今日市場</div>
     <div class="ai-btn-wrap">
       <button class="btn-ai" id="ai-btn" onclick="runAnalysis()" disabled>
         <span>🤖</span><span>重新分析</span>
@@ -468,10 +468,6 @@ async function refreshAll() {
   clearTimeout(timer);
   timer=setTimeout(refreshAll, 5*60*1000);
 
-  // Auto-run analysis once market data is loaded (first load only)
-  if(ok && !document.getElementById('ai-card').classList.contains('loaded')) {
-    runAnalysis();
-  }
 }
 
 refreshAll();
