@@ -316,14 +316,27 @@ async function fetchMarket() {
   try {
     const r = await fetch(`${BASE}/api/market-data`);
     const json = await r.json();
-    if (json.ok && json.data) {
+    if (json.ok && json.data && json.data.length > 0) {
       marketData = json.data;
       renderMarket(marketData);
       setUpdateTime(json.ts);
+      return true;
+    } else {
+      throw new Error(json.error || '資料回傳為空');
     }
   } catch (e) {
     console.error('Market fetch error:', e);
-    document.getElementById('market-grid').innerHTML = '<div style="color:var(--red);padding:16px">無法取得市場資料</div>';
+    document.getElementById('market-grid').innerHTML =
+      `<div style="color:var(--red);padding:16px;grid-column:1/-1">
+        ⚠ 市場資料載入失敗，請點「重新整理」<br>
+        <small style="color:var(--text3);font-size:11px">${e.message}</small>
+      </div>`;
+    document.getElementById('signal-banner').className = 'signal neutral';
+    document.getElementById('signal-banner').innerHTML =
+      `<div class="signal-icon">⚠</div>
+       <div><div class="signal-label">市場訊號</div>
+       <div class="signal-title" style="color:var(--text2)">無法取得市場資料</div></div>`;
+    return false;
   }
 }
 
@@ -365,9 +378,9 @@ async function refreshAll() {
   btn.textContent = '更新中...';
   setStatus('loading');
 
-  await Promise.all([fetchMarket(), fetchNews()]);
+  const [marketOk] = await Promise.all([fetchMarket(), fetchNews()]);
 
-  setStatus('');
+  setStatus(marketOk ? '' : 'error');
   btn.disabled = false;
   btn.textContent = '重新整理';
 
