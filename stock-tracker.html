@@ -11,21 +11,35 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:        #070b14;
-  --glass:     rgba(255,255,255,0.04);
-  --glass-md:  rgba(255,255,255,0.06);
-  --border:    rgba(255,255,255,0.07);
-  --border-md: rgba(255,255,255,0.13);
-  --text:      #e8edf8;
-  --muted:     rgba(232,237,248,0.45);
-  --dim:       rgba(232,237,248,0.22);
+  --bg:        #060a12;
+  --surface:   #0d1422;
+  --glass:     rgba(255,255,255,0.035);
+  --glass-md:  rgba(255,255,255,0.055);
+  --border:    rgba(255,255,255,0.065);
+  --border-md: rgba(255,255,255,0.12);
+  --text:      #dde6f8;
+  --muted:     rgba(221,230,248,0.48);
+  --dim:       rgba(221,230,248,0.22);
+  --cyan:      #22d3ee;
+  --cyan-glow: rgba(34,211,238,0.2);
   --green:     #4ade80;
   --green-glow:rgba(74,222,128,0.18);
   --red:       #f87171;
   --red-glow:  rgba(248,113,113,0.18);
   --amber:     #fbbf24;
+  --purple:    #a78bfa;
+  --orange:    #fb923c;
   --blue:      #60a5fa;
   --mono:     'DM Mono', 'SF Mono', monospace;
+
+  /* Category accent colors */
+  --cat-tw:        #fbbf24;
+  --cat-us:        #60a5fa;
+  --cat-semi:      #a78bfa;
+  --cat-risk:      #f87171;
+  --cat-rates:     #22d3ee;
+  --cat-fx:        #4ade80;
+  --cat-commodity: #fb923c;
 }
 
 html { scroll-behavior: smooth; }
@@ -41,162 +55,241 @@ body {
 }
 
 /* ── Background ── */
-.bg-layer {
-  position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0;
-}
-.bg-orb {
-  position: absolute; border-radius: 50%; filter: blur(120px); opacity: .6;
-}
-.orb-1 { width:700px; height:700px; background:rgba(29,78,216,.12); top:-200px; left:-200px; }
-.orb-2 { width:500px; height:500px; background:rgba(109,40,217,.08); bottom:-100px; right:-150px; }
-.orb-3 { width:350px; height:350px; background:rgba(5,150,105,.06); top:45%; left:55%; transform:translate(-50%,-50%); }
+.bg-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
+.bg-orb   { position: absolute; border-radius: 50%; filter: blur(130px); }
+.orb-1 { width:800px; height:800px; background:rgba(34,211,238,.05); top:-300px; left:-200px; }
+.orb-2 { width:600px; height:600px; background:rgba(109,40,217,.06); bottom:-150px; right:-200px; }
+.orb-3 { width:400px; height:400px; background:rgba(5,150,105,.04); top:50%; left:60%; transform:translate(-50%,-50%); }
 .bg-grid {
   position: absolute; inset: 0;
-  background-image: linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
-  background-size: 48px 48px;
+  background-image:
+    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
+  background-size: 52px 52px;
 }
 
 /* ── Layout ── */
-.app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 28px 20px 56px; }
+.app { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 26px 22px 60px; }
 
 /* ── Header ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 36px; flex-wrap: wrap; gap: 14px;
+  margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
 }
-.logo { display: flex; align-items: center; gap: 11px; }
+.logo { display: flex; align-items: center; gap: 12px; }
 .logo-mark {
-  width: 38px; height: 38px; border-radius: 11px;
-  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-  display: flex; align-items: center; justify-content: center; font-size: 19px;
-  box-shadow: 0 0 20px rgba(139,92,246,.35);
+  width: 40px; height: 40px; border-radius: 12px;
+  background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
+  display: flex; align-items: center; justify-content: center; font-size: 20px;
+  box-shadow: 0 0 24px rgba(34,211,238,.35), 0 0 0 1px rgba(34,211,238,.2);
   flex-shrink: 0;
 }
 .logo-text {
-  font-size: 17px; font-weight: 700; letter-spacing: -.03em;
-  background: linear-gradient(135deg, #e8edf8 30%, #94a3b8 100%);
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  font-size: 18px; font-weight: 700; letter-spacing: -.03em;
+  color: var(--text);
 }
-.logo-sub { font-size: 11px; color: var(--dim); font-weight: 400; letter-spacing: .02em; margin-top: 1px; }
+.logo-sub { font-size: 10.5px; color: var(--dim); font-weight: 400; letter-spacing: .08em; margin-top: 1px; text-transform: uppercase; }
 .header-right { display: flex; align-items: center; gap: 14px; }
-.status-chip {
-  display: flex; align-items: center; gap: 7px;
-  font-size: 12px; color: var(--muted);
-}
-.sdot {
-  width: 7px; height: 7px; border-radius: 50%; background: #22c55e;
-  box-shadow: 0 0 6px rgba(34,197,94,.6);
-}
+.status-chip { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
+.sdot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
 .sdot.loading { background: var(--amber); box-shadow: 0 0 6px rgba(251,191,36,.6); animation: sdot-pulse 1.1s ease-in-out infinite; }
 .sdot.error   { background: var(--red);   box-shadow: 0 0 6px rgba(248,113,113,.6); }
-@keyframes sdot-pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+@keyframes sdot-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 .btn {
   padding: 8px 18px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 500;
-  background: var(--glass-md); border: 1px solid var(--border-md); color: rgba(232,237,248,.8);
-  cursor: pointer; transition: background .2s, border-color .2s, color .2s;
+  background: var(--glass-md); border: 1px solid var(--border-md); color: rgba(221,230,248,.8);
+  cursor: pointer; transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
 }
-.btn:hover  { background: rgba(255,255,255,.1); border-color: rgba(255,255,255,.2); color: var(--text); }
+.btn:hover  { background: rgba(34,211,238,.1); border-color: rgba(34,211,238,.35); color: var(--cyan); box-shadow: 0 0 16px rgba(34,211,238,.12); }
 .btn:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ── Signal Banner ── */
 .signal {
-  border-radius: 20px; padding: 22px 26px; margin-bottom: 28px;
+  border-radius: 18px; padding: 20px 24px; margin-bottom: 22px;
   display: flex; align-items: flex-start; gap: 18px;
   border: 1px solid; position: relative; overflow: hidden;
   backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
 }
+.signal::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px;
+}
+.signal.positive::before { background: var(--green); box-shadow: 4px 0 12px var(--green-glow); }
+.signal.caution::before  { background: var(--amber);  box-shadow: 4px 0 12px rgba(251,191,36,.3); }
+.signal.danger::before   { background: var(--red);    box-shadow: 4px 0 12px var(--red-glow); }
+.signal.neutral::before  { background: var(--dim); }
 .signal::after {
   content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse at 0% 0%, rgba(255,255,255,.07), transparent 55%);
+  background: radial-gradient(ellipse at 0% 0%, rgba(255,255,255,.05), transparent 50%);
 }
-.signal.positive { background: linear-gradient(135deg,rgba(74,222,128,.1),rgba(74,222,128,.03)); border-color: rgba(74,222,128,.25); }
-.signal.caution  { background: linear-gradient(135deg,rgba(251,191,36,.1),rgba(251,191,36,.03)); border-color: rgba(251,191,36,.25); }
-.signal.danger   { background: linear-gradient(135deg,rgba(248,113,113,.1),rgba(248,113,113,.03)); border-color: rgba(248,113,113,.25); }
-.signal.neutral  { background: var(--glass); border-color: var(--border); }
-.sig-icon { font-size: 44px; line-height: 1; flex-shrink: 0; }
-.sig-eye  { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); margin-bottom: 5px; }
-.sig-title { font-size: 20px; font-weight: 700; letter-spacing: -.025em; margin-bottom: 11px; }
+.signal.positive { background: rgba(74,222,128,.06);  border-color: rgba(74,222,128,.2); }
+.signal.caution  { background: rgba(251,191,36,.06);  border-color: rgba(251,191,36,.2); }
+.signal.danger   { background: rgba(248,113,113,.06); border-color: rgba(248,113,113,.2); }
+.signal.neutral  { background: var(--glass);           border-color: var(--border); }
+.sig-icon  { font-size: 36px; line-height: 1; flex-shrink: 0; }
+.sig-eye   { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
+.sig-title { font-size: 18px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 10px; }
 .signal.positive .sig-title { color: var(--green); }
 .signal.caution  .sig-title { color: var(--amber); }
 .signal.danger   .sig-title { color: var(--red); }
 .signal.neutral  .sig-title { color: var(--muted); }
-.sig-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.sig-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .sig-pill {
-  font-size: 12px; padding: 4px 11px; border-radius: 100px;
-  background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.1); color: var(--muted);
+  font-size: 11.5px; padding: 3px 10px; border-radius: 100px;
+  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: var(--muted);
 }
+
+/* ── KPI Summary Row ── */
+.kpi-row {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px;
+}
+.kpi-card {
+  background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
+  transition: border-color .25s, background .25s;
+}
+.kpi-card:hover { background: var(--glass-md); border-color: var(--border-md); }
+.kpi-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
+.kpi-val   { font-family: var(--mono); font-size: 22px; font-weight: 400; letter-spacing: -.02em; color: var(--text); line-height: 1.1; }
+.kpi-sub   { font-size: 11px; color: var(--muted); }
+.kpi-dot   { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
 
 /* ── Section label ── */
 .sec-label {
-  font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase;
-  color: var(--dim); margin-bottom: 13px;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
+  color: var(--dim); margin-bottom: 11px; display: flex; align-items: center; gap: 8px;
 }
+.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
 
 /* ── Market Grid ── */
-.market-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 11px; margin-bottom: 28px; }
+.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 26px; }
 .card {
   background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border); border-radius: 16px; padding: 18px 16px;
+  border: 1px solid var(--border); border-radius: 15px; padding: 16px 15px 14px;
   position: relative; overflow: hidden; cursor: default;
-  transition: border-color .3s, box-shadow .3s, transform .2s;
+  transition: border-color .3s, box-shadow .3s, transform .2s, background .2s;
 }
-.card:hover { transform: translateY(-2px); }
-.card.up   { border-color: rgba(74,222,128,.22); box-shadow: 0 0 28px var(--green-glow), inset 0 1px 0 rgba(74,222,128,.1); }
-.card.down { border-color: rgba(248,113,113,.22); box-shadow: 0 0 28px var(--red-glow), inset 0 1px 0 rgba(248,113,113,.1); }
-.card-tag { font-size: 11px; font-weight: 500; color: var(--dim); margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-.card-badge { font-size: 9px; padding: 2px 6px; background: rgba(255,255,255,.07); border-radius: 100px; color: var(--dim); }
-.card-price { font-family: var(--mono); font-size: 21px; font-weight: 400; letter-spacing: -.02em; line-height: 1.1; margin-bottom: 7px; color: var(--text); }
+.card::before {
+  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0;
+  opacity: 0; transition: opacity .3s;
+}
+.card:hover { transform: translateY(-2px); background: var(--glass-md); }
+.card:hover::before { opacity: 1; }
+.card.up   { border-color: rgba(74,222,128,.22);  box-shadow: 0 0 24px rgba(74,222,128,.12); }
+.card.down { border-color: rgba(248,113,113,.22); box-shadow: 0 0 24px rgba(248,113,113,.12); }
+
+/* Category top-border colors */
+.cat-tw        .card::before { background: var(--cat-tw); }
+.cat-us        .card::before { background: var(--cat-us); }
+.cat-semi      .card::before { background: var(--cat-semi); }
+.cat-risk      .card::before { background: var(--cat-risk); }
+.cat-rates     .card::before { background: var(--cat-rates); }
+.cat-fx        .card::before { background: var(--cat-fx); }
+.cat-commodity .card::before { background: var(--cat-commodity); }
+
+.card-cat {
+  width: 3px; height: 28px; border-radius: 3px; position: absolute; top: 14px; right: 13px; opacity: .6;
+}
+.card-tag  { font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 11px; }
+.card-price { font-family: var(--mono); font-size: 24px; font-weight: 400; letter-spacing: -.03em; line-height: 1; margin-bottom: 8px; color: var(--text); }
 .card-delta { font-family: var(--mono); font-size: 12px; display: flex; gap: 7px; }
 .card-delta.up   { color: var(--green); }
 .card-delta.down { color: var(--red); }
 .card-delta.flat { color: var(--dim); }
+
 /* skeleton */
 .card.skeleton { pointer-events: none; }
-.skel { border-radius: 5px; background: linear-gradient(90deg,rgba(255,255,255,.04) 25%,rgba(255,255,255,.08) 50%,rgba(255,255,255,.04) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
-.skel-tag  { height: 11px; width: 65%; margin-bottom: 14px; }
-.skel-price{ height: 22px; width: 80%; margin-bottom: 9px; }
-.skel-delta{ height: 12px; width: 55%; }
+.skel { border-radius: 5px; background: linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.07) 50%,rgba(255,255,255,.03) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
+.skel-tag  { height: 11px; width: 60%; margin-bottom: 13px; }
+.skel-price{ height: 24px; width: 75%; margin-bottom: 10px; }
+.skel-delta{ height: 12px; width: 50%; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* ── News ── */
-.news-wrap { background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border); border-radius: 20px; overflow: hidden; }
-.tabs { display: flex; border-bottom: 1px solid var(--border); position: relative; overflow-x: auto; scrollbar-width: none; }
+.news-wrap {
+  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+}
+.tabs {
+  display: flex; border-bottom: 1px solid var(--border); position: relative;
+  overflow-x: auto; scrollbar-width: none; background: rgba(0,0,0,.15);
+}
 .tabs::-webkit-scrollbar { display: none; }
-.tab-bar { position: absolute; bottom: 0; height: 2px; background: linear-gradient(90deg,#3b82f6,#8b5cf6); border-radius: 2px 2px 0 0; transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1); pointer-events: none; }
-.tab { padding: 14px 18px; font-size: 13px; font-weight: 500; color: var(--muted); cursor: pointer; white-space: nowrap; transition: color .2s; flex-shrink: 0; user-select: none; }
-.tab:hover { color: rgba(232,237,248,.72); }
-.tab.active { color: var(--text); }
-.tab-n { display: inline-block; font-size: 10px; padding: 1px 5px; background: rgba(255,255,255,.08); border-radius: 100px; margin-left: 5px; vertical-align: middle; color: var(--dim); }
+.tab-bar {
+  position: absolute; bottom: 0; height: 2px;
+  background: linear-gradient(90deg, var(--cyan), #0ea5e9);
+  border-radius: 2px 2px 0 0;
+  transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
+  pointer-events: none; box-shadow: 0 -2px 10px rgba(34,211,238,.4);
+}
+.tab {
+  padding: 13px 17px; font-size: 13px; font-weight: 500; color: var(--muted);
+  cursor: pointer; white-space: nowrap; transition: color .2s; flex-shrink: 0; user-select: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab:hover { color: rgba(221,230,248,.7); }
+.tab.active { color: var(--cyan); }
+.tab-sentbadge {
+  display: inline-flex; gap: 3px; align-items: center;
+}
+.tab-sentdot {
+  width: 5px; height: 5px; border-radius: 50%;
+}
+.tab-n {
+  font-size: 10px; padding: 1px 5px; background: rgba(255,255,255,.07);
+  border-radius: 100px; color: var(--dim); vertical-align: middle;
+}
+
 .news-list { min-height: 220px; }
-.news-item { display: flex; align-items: flex-start; gap: 13px; padding: 13px 20px; border-bottom: 1px solid rgba(255,255,255,.04); transition: background .15s; }
+.news-item {
+  display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px;
+  border-bottom: 1px solid rgba(255,255,255,.035); transition: background .15s;
+}
 .news-item:last-child { border-bottom: none; }
-.news-item:hover { background: rgba(255,255,255,.03); }
-.ndot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; margin-top: 6px; transition: box-shadow .3s; }
-.ndot.pos { background: var(--green); box-shadow: 0 0 7px rgba(74,222,128,.7); }
-.ndot.neg { background: var(--red); box-shadow: 0 0 7px rgba(248,113,113,.7); }
-.ndot.neu { background: rgba(232,237,248,.2); }
+.news-item:hover { background: rgba(255,255,255,.025); }
+.ndot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
+.ndot.pos { background: var(--green); box-shadow: 0 0 7px rgba(74,222,128,.6); }
+.ndot.neg { background: var(--red);   box-shadow: 0 0 7px rgba(248,113,113,.6); }
+.ndot.neu { background: rgba(221,230,248,.2); }
 .news-body { flex: 1; min-width: 0; }
-.news-title { font-size: 13.5px; line-height: 1.5; color: rgba(232,237,248,.82); margin-bottom: 5px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.news-title {
+  font-size: 13.5px; line-height: 1.5; color: rgba(221,230,248,.82); margin-bottom: 4px;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .news-title a { color: inherit; text-decoration: none; transition: color .15s; }
-.news-title a:hover { color: #93c5fd; }
+.news-title a:hover { color: var(--cyan); }
 .news-meta { font-size: 11px; color: var(--dim); display: flex; gap: 8px; flex-wrap: wrap; }
-.news-source { color: rgba(232,237,248,.38); }
+.news-source { color: rgba(221,230,248,.35); }
 .news-state { padding: 36px; text-align: center; color: var(--dim); }
 
+/* ── Sentiment Bar ── */
+.sent-bar {
+  padding: 10px 20px 12px; border-bottom: 1px solid rgba(255,255,255,.035);
+  display: flex; align-items: center; gap: 10px;
+}
+.sent-track {
+  flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,.07);
+  overflow: hidden; display: flex;
+}
+.sent-pos { background: var(--green); height: 100%; }
+.sent-neg { background: var(--red);   height: 100%; }
+.sent-neu { background: rgba(255,255,255,.15); height: 100%; }
+.sent-label { font-size: 10px; color: var(--dim); white-space: nowrap; }
+
 /* ── Footer ── */
-.footer { margin-top: 24px; text-align: center; font-size: 11px; color: var(--dim); }
-.footer a { color: rgba(232,237,248,.3); text-decoration: none; }
+.footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--dim); }
+.footer a { color: rgba(221,230,248,.28); text-decoration: none; }
 .footer a:hover { color: var(--muted); }
 
 /* ── Responsive ── */
-@media(max-width:600px) {
-  .app { padding: 20px 14px 48px; }
+@media(max-width:700px) {
+  .app { padding: 18px 14px 48px; }
+  .kpi-row { grid-template-columns: repeat(2,1fr); }
   .market-grid { grid-template-columns: repeat(2,1fr); }
   .logo-sub { display: none; }
-  .sig-icon { font-size: 32px; }
-  .sig-title { font-size: 17px; }
-  .tab { padding: 12px 14px; font-size: 12px; }
+  .sig-icon { font-size: 28px; }
+  .sig-title { font-size: 16px; }
+  .tab { padding: 11px 13px; font-size: 12px; }
+  .card-price { font-size: 20px; }
 }
 </style>
 </head>
@@ -213,10 +306,10 @@ body {
 
   <header class="header">
     <div class="logo">
-      <div class="logo-mark">📊</div>
+      <div class="logo-mark">📈</div>
       <div>
         <div class="logo-text">台股情勢追蹤</div>
-        <div class="logo-sub">TAIWAN MARKET INTELLIGENCE</div>
+        <div class="logo-sub">Taiwan Market Intelligence</div>
       </div>
     </div>
     <div class="header-right">
@@ -228,6 +321,7 @@ body {
     </div>
   </header>
 
+  <!-- Signal Banner -->
   <div class="signal neutral" id="signal">
     <div class="sig-icon">⏳</div>
     <div>
@@ -236,53 +330,64 @@ body {
     </div>
   </div>
 
+  <!-- KPI Summary Row -->
+  <div class="kpi-row" id="kpi-row">
+    <div class="kpi-card"><div class="kpi-label">台股加權</div><div class="kpi-val" id="kpi-twii">—</div><div class="kpi-sub" id="kpi-twii-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">S&P 500</div><div class="kpi-val" id="kpi-spx">—</div><div class="kpi-sub" id="kpi-spx-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">VIX 恐慌</div><div class="kpi-val" id="kpi-vix">—</div><div class="kpi-sub" id="kpi-vix-sub">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">美元／台幣</div><div class="kpi-val" id="kpi-fx">—</div><div class="kpi-sub" id="kpi-fx-sub">即時匯率</div></div>
+  </div>
+
   <p class="sec-label">市場指標</p>
   <div class="market-grid" id="market-grid"></div>
 
   <p class="sec-label" style="margin-top:4px">國際・台灣情勢</p>
   <div class="news-wrap">
     <div class="tabs" id="tabs"><div class="tab-bar" id="tab-bar"></div></div>
+    <div id="sent-bar-wrap"></div>
     <div class="news-list" id="news-list"><div class="news-state">載入新聞中…</div></div>
   </div>
 
   <div class="footer">
-    資料來源：Yahoo Finance · Google News RSS &nbsp;·&nbsp; 每 5 分鐘自動更新
+    資料來源：Stooq · ExchangeRate-API · Google News RSS &nbsp;·&nbsp; 每 5 分鐘自動更新
     &nbsp;&nbsp;<a href="/">← 返回首頁</a>
   </div>
 </div>
 
 <script>
-// ── Constants & State ──────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────
 const CAT_ORDER = ['geopolitical','economic','semiconductor','domestic'];
 let marketData = [], newsData = {}, activeTab = CAT_ORDER[0], refreshTimer = null;
 
-// ── Format helpers ─────────────────────────────────────────────────────────
-function fmt(n, d = 2) {
-  if (n == null) return '—';
-  return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
-}
+const CAT_COLOR = {
+  tw: 'var(--cat-tw)', us: 'var(--cat-us)', semi: 'var(--cat-semi)',
+  risk: 'var(--cat-risk)', rates: 'var(--cat-rates)', fx: 'var(--cat-fx)',
+  commodity: 'var(--cat-commodity)',
+};
+
+// ── Formatters ─────────────────────────────────────────────────────────────
+function fmt(n, d = 2)   { if (n == null) return '—'; return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+function fmtPct(n)       { if (n == null) return '—'; return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
+function fmtChg(n)       { if (n == null) return '—'; return (n >= 0 ? '+' : '') + fmt(n, 2); }
 function fmtPrice(sym, n) {
   if (n == null) return '—';
-  if (sym === '^TNX')     return n.toFixed(3) + '%';
+  if (sym === '^TNX') return n.toFixed(3) + '%';
   if (sym === 'USDTWD=X') return n.toFixed(3);
   if (n >= 10000) return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
   return n.toFixed(2);
 }
-function fmtPct(n)  { if (n == null) return '—'; return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
-function fmtChg(n)  { if (n == null) return '—'; return (n >= 0 ? '+' : '') + fmt(n, 2); }
 function timeAgo(s) {
-  if (!s) return '';
-  const d = new Date(s); if (isNaN(d)) return '';
+  if (!s) return ''; const d = new Date(s); if (isNaN(d)) return '';
   const sec = Math.floor((Date.now() - d) / 1000);
-  if (sec < 60)  return sec + ' 秒前';
+  if (sec < 60) return sec + ' 秒前';
   if (sec < 3600) return Math.floor(sec / 60) + ' 分鐘前';
   if (sec < 86400) return Math.floor(sec / 3600) + ' 小時前';
   return Math.floor(sec / 86400) + ' 天前';
 }
 function sentiment(t) {
   const lo = t.toLowerCase();
-  const pos = ['rise','gain','rally','record','surge','jump','boosts','deal','cooperation','stable','上漲','上升','創高','突破','回升','反彈','看好','協議'];
-  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','危機','攻擊'];
+  const pos = ['rise','gain','rally','record','surge','jump','boosts','deal','cooperation','stable','上漲','上升','創高','突破','回升','反彈','看好','協議','增加','成長'];
+  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','危機','攻擊','縮減'];
   const p = pos.filter(k => lo.includes(k)).length;
   const n = neg.filter(k => lo.includes(k)).length;
   return p > n ? 'pos' : n > p ? 'neg' : 'neu';
@@ -290,57 +395,85 @@ function sentiment(t) {
 
 // ── Signal Calculation ─────────────────────────────────────────────────────
 function calcSignal(data) {
-  const by = Object.fromEntries(data.map(d => [d.symbol, d]));
-  const vix   = by['^VIX']?.price ?? 20;
-  const sp5   = by['^GSPC']?.pct  ?? 0;
-  const ndq   = by['^IXIC']?.pct  ?? 0;
-  const sox   = by['^SOX']?.pct   ?? 0;
-  const tsm   = by['TSM']?.pct    ?? 0;
-  const fx    = by['USDTWD=X']?.pct ?? 0;
-  const tnx   = by['^TNX']?.price ?? 4;
+  const by   = Object.fromEntries(data.map(d => [d.symbol, d]));
+  const vix  = by['^VIX']?.price ?? 20;
+  const sp5  = by['^GSPC']?.pct  ?? 0;
+  const ndq  = by['^IXIC']?.pct  ?? 0;
+  const sox  = by['^SOX']?.pct   ?? 0;
+  const tsm  = by['TSM']?.pct    ?? 0;
+  const fx   = by['USDTWD=X']?.pct ?? 0;
+  const tnx  = by['^TNX']?.price ?? 4;
   const avgUS = (sp5 + ndq) / 2;
 
   let level, title, icon;
-  if (vix > 30 || avgUS < -2)       { level='danger';   title='市場警戒 — 恐慌升溫'; icon='🔴'; }
-  else if (vix > 22 || avgUS < -.8) { level='caution';  title='謹慎觀望 — 波動偏高'; icon='🟡'; }
-  else if (avgUS > .6 && vix < 18)  { level='positive'; title='偏多格局 — 外資可能流入'; icon='🟢'; }
-  else                               { level='neutral';  title='中性整理 — 方向待確認'; icon='⚪'; }
+  if      (vix > 30 || avgUS < -2)       { level='danger';   title='市場警戒 — 恐慌升溫'; icon='🔴'; }
+  else if (vix > 22 || avgUS < -.8)      { level='caution';  title='謹慎觀望 — 波動偏高'; icon='🟡'; }
+  else if (avgUS > .6 && vix < 18)       { level='positive'; title='偏多格局 — 外資可能流入'; icon='🟢'; }
+  else                                    { level='neutral';  title='中性整理 — 方向待確認'; icon='⚪'; }
 
   const pills = [];
-  if (vix > 25)        pills.push(`⚡ VIX ${vix.toFixed(1)} 高位，恐慌升溫`);
-  else if (vix < 16)   pills.push(`✓ VIX ${vix.toFixed(1)} 低位，情緒平穩`);
-  else                 pills.push(`→ VIX ${vix.toFixed(1)} 中性`);
+  if (vix > 25)      pills.push(`⚡ VIX ${vix.toFixed(1)} 高位，恐慌升溫`);
+  else if (vix < 16) pills.push(`✓ VIX ${vix.toFixed(1)} 低位，情緒平穩`);
+  else               pills.push(`→ VIX ${vix.toFixed(1)} 中性`);
 
   if (Math.abs(avgUS) > .25)
     pills.push(`${avgUS > 0 ? '✓' : '✗'} 美股 S&P ${fmtPct(sp5)} / NASDAQ ${fmtPct(ndq)}`);
-  if (Math.abs(sox) > .5)
-    pills.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
-  if (Math.abs(tsm) > .5)
-    pills.push(`${tsm > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsm)}`);
-  if (fx < -.3)        pills.push(`✓ 台幣升值，外資流入訊號`);
-  else if (fx > .3)    pills.push(`→ 台幣貶值，資金偏保守`);
-  if (tnx > 4.8)       pills.push(`⚡ 10Y 美債 ${tnx.toFixed(2)}%，估值壓力`);
+  if (Math.abs(sox) > .5)  pills.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
+  if (Math.abs(tsm) > .5)  pills.push(`${tsm > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsm)}`);
+  if (fx < -.3)             pills.push('✓ 台幣升值，外資流入訊號');
+  else if (fx > .3)         pills.push('→ 台幣貶值，資金偏保守');
+  if (tnx > 4.8)            pills.push(`⚡ 10Y 美債 ${tnx.toFixed(2)}%，估值壓力`);
 
   return { level, title, icon, pills };
 }
 
-// ── GSAP helpers ───────────────────────────────────────────────────────────
+// ── GSAP count-up ──────────────────────────────────────────────────────────
 function countUp(el, endVal, decimals) {
   const obj = { v: endVal * 0.96 };
   gsap.to(obj, {
     v: endVal, duration: 0.9, ease: 'power3.out',
     onUpdate() {
-      el.textContent = obj.v.toLocaleString('en-US', {
-        minimumFractionDigits: decimals, maximumFractionDigits: decimals
-      });
+      el.textContent = obj.v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
     }
   });
 }
 
-// ── Render Market ──────────────────────────────────────────────────────────
-const SYMBOL_ORDER  = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
-const SYMBOL_DECS   = { '^TNX':3, 'USDTWD=X':3, '^VIX':2 };
-const SYMBOL_STATES = { 'PRE':'盤前', 'POST':'盤後', 'CLOSED':'休市' };
+// ── KPI Row ────────────────────────────────────────────────────────────────
+function renderKPI(data) {
+  const by = Object.fromEntries(data.map(d => [d.symbol, d]));
+
+  function kpiUpdate(elId, subId, sym, extraFmt) {
+    const d = by[sym];
+    if (!d) return;
+    const el  = document.getElementById(elId);
+    const sub = document.getElementById(subId);
+    const dir = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : 'flat';
+    const col = dir === 'up' ? 'var(--green)' : dir === 'down' ? 'var(--red)' : 'var(--dim)';
+    const val = parseFloat(d.price);
+    const dec = sym === '^TNX' ? 3 : sym === 'USDTWD=X' ? 3 : 2;
+    countUp(el, val, dec);
+    if (extraFmt) { el.textContent = extraFmt(val); }
+    sub.style.color = col;
+    sub.textContent = `${fmtChg(d.change)}  ${fmtPct(d.pct)}`;
+  }
+
+  kpiUpdate('kpi-twii', 'kpi-twii-sub', '^TWII');
+  kpiUpdate('kpi-spx',  'kpi-spx-sub',  '^GSPC');
+  kpiUpdate('kpi-vix',  'kpi-vix-sub',  '^VIX');
+  const fx = by['USDTWD=X'];
+  if (fx) {
+    const el  = document.getElementById('kpi-fx');
+    const sub = document.getElementById('kpi-fx-sub');
+    const val = parseFloat(fx.price);
+    countUp(el, val, 3);
+    sub.textContent = '美元兌台幣';
+    sub.style.color = 'var(--dim)';
+  }
+}
+
+// ── Render Market Grid ─────────────────────────────────────────────────────
+const SYMBOL_ORDER = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
+const SYMBOL_DECS  = { '^TNX':3, 'USDTWD=X':3 };
 
 function renderMarket(data) {
   const grid = document.getElementById('market-grid');
@@ -352,11 +485,12 @@ function renderMarket(data) {
 
   grid.innerHTML = SYMBOL_ORDER.map(sym => {
     const d = byS[sym]; if (!d) return '';
-    const dir = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : '';
-    const dec = SYMBOL_DECS[sym] ?? 2;
-    const badge = SYMBOL_STATES[d.state] || '';
-    return `<div class="card ${dir}" data-sym="${sym}" data-val="${d.price}" data-dec="${dec}">
-      <div class="card-tag">${d.zh}${badge ? `<span class="card-badge">${badge}</span>` : ''}</div>
+    const dir   = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : '';
+    const dec   = SYMBOL_DECS[sym] ?? 2;
+    const color = CAT_COLOR[d.cat] || 'var(--cyan)';
+    return `<div class="card ${dir}" data-sym="${sym}" data-val="${d.price}" data-dec="${dec}" data-cat="${d.cat}">
+      <div class="card-cat" style="background:${color}"></div>
+      <div class="card-tag">${d.zh}</div>
       <div class="card-price" data-price></div>
       <div class="card-delta ${dir || 'flat'}">
         <span>${fmtChg(d.change)}</span>
@@ -365,7 +499,6 @@ function renderMarket(data) {
     </div>`;
   }).join('');
 
-  // Count-up animation on each card price
   grid.querySelectorAll('.card[data-val]').forEach(card => {
     const el  = card.querySelector('[data-price]');
     const val = parseFloat(card.dataset.val);
@@ -374,11 +507,11 @@ function renderMarket(data) {
     else el.textContent = '—';
   });
 
-  gsap.from('.card', { y: 28, opacity: 0, duration: .55, stagger: .045, ease: 'power3.out', clearProps: 'all' });
+  gsap.from('.card', { y: 24, opacity: 0, duration: .5, stagger: .04, ease: 'power3.out', clearProps: 'all' });
 
   // Signal
   const sig = calcSignal(data);
-  const el = document.getElementById('signal');
+  const el  = document.getElementById('signal');
   el.className = `signal ${sig.level}`;
   el.innerHTML = `
     <div class="sig-icon">${sig.icon}</div>
@@ -387,7 +520,31 @@ function renderMarket(data) {
       <div class="sig-title">${sig.title}</div>
       <div class="sig-pills">${sig.pills.map(p => `<span class="sig-pill">${p}</span>`).join('')}</div>
     </div>`;
-  gsap.from('#signal', { y: -14, opacity: 0, duration: .45, ease: 'power2.out' });
+  gsap.from('#signal', { y: -12, opacity: 0, duration: .4, ease: 'power2.out' });
+
+  // KPI row
+  renderKPI(data);
+}
+
+// ── News Sentiment Bar ─────────────────────────────────────────────────────
+function renderSentBar() {
+  const items = newsData[activeTab]?.items || [];
+  const wrap  = document.getElementById('sent-bar-wrap');
+  if (!items.length) { wrap.innerHTML = ''; return; }
+  let pos = 0, neg = 0, neu = 0;
+  items.forEach(it => { const s = sentiment(it.title); if (s==='pos') pos++; else if (s==='neg') neg++; else neu++; });
+  const total = pos + neg + neu || 1;
+  const pPct  = (pos / total * 100).toFixed(0);
+  const nPct  = (neg / total * 100).toFixed(0);
+  const uPct  = (neu / total * 100).toFixed(0);
+  wrap.innerHTML = `<div class="sent-bar">
+    <span class="sent-label">情緒 正${pos} 負${neg} 中${neu}</span>
+    <div class="sent-track">
+      <div class="sent-pos" style="width:${pPct}%"></div>
+      <div class="sent-neu" style="width:${uPct}%"></div>
+      <div class="sent-neg" style="width:${nPct}%"></div>
+    </div>
+  </div>`;
 }
 
 // ── Render Tabs ────────────────────────────────────────────────────────────
@@ -395,16 +552,23 @@ function renderTabs() {
   const wrap = document.getElementById('tabs');
   const bar  = document.getElementById('tab-bar');
 
-  // Rebuild tabs (keep indicator element)
   const tabEls = CAT_ORDER.map(key => {
     const label = newsData[key]?.label || key;
     const count = newsData[key]?.items?.length || 0;
+    const items = newsData[key]?.items || [];
+    let pos = 0, neg = 0;
+    items.forEach(it => { const s = sentiment(it.title); if (s==='pos') pos++; else if (s==='neg') neg++; });
+    const dots = items.length
+      ? `<span class="tab-sentbadge">
+          ${pos  ? `<span class="tab-sentdot" style="background:var(--green)"></span>` : ''}
+          ${neg  ? `<span class="tab-sentdot" style="background:var(--red)"></span>` : ''}
+         </span>`
+      : '';
     return `<div class="tab ${key===activeTab?'active':''}" data-tab="${key}" onclick="switchTab('${key}')">
-      ${label}${count ? `<span class="tab-n">${count}</span>` : ''}
+      ${label}${dots}${count ? `<span class="tab-n">${count}</span>` : ''}
     </div>`;
   }).join('');
 
-  // Replace only tab divs, keep bar
   wrap.innerHTML = tabEls;
   wrap.appendChild(bar);
   updateTabBar();
@@ -443,18 +607,18 @@ function renderNews() {
     </div>`;
   }).join('');
 
-  gsap.from('.news-item', { x: -14, opacity: 0, duration: .38, stagger: .035, ease: 'power2.out', clearProps: 'all' });
+  renderSentBar();
+  gsap.from('.news-item', { x: -12, opacity: 0, duration: .35, stagger: .03, ease: 'power2.out', clearProps: 'all' });
 }
 
 function switchTab(key) {
   activeTab = key;
   renderTabs();
-  // Fade out → update → fade in
   gsap.to('#news-list', {
-    opacity: 0, duration: .12,
+    opacity: 0, duration: .1,
     onComplete() {
       renderNews();
-      gsap.to('#news-list', { opacity: 1, duration: .2 });
+      gsap.to('#news-list', { opacity: 1, duration: .18 });
     }
   });
 }
@@ -525,15 +689,15 @@ async function refreshAll() {
 
   setStatus(ok ? '' : 'error');
   btn.disabled = false; btn.textContent = '重新整理';
-
   clearTimeout(refreshTimer);
   refreshTimer = setTimeout(refreshAll, 5 * 60 * 1000);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 renderSkeleton();
-gsap.from('.header',  { y: -18, opacity: 0, duration: .5, ease: 'power2.out' });
-gsap.from('#signal',  { y: -10, opacity: 0, duration: .4, delay: .1, ease: 'power2.out' });
+gsap.from('.header',   { y: -18, opacity: 0, duration: .5, ease: 'power2.out' });
+gsap.from('#signal',   { y: -10, opacity: 0, duration: .4, delay: .08, ease: 'power2.out' });
+gsap.from('.kpi-row',  { y: 14,  opacity: 0, duration: .45, delay: .15, ease: 'power2.out' });
 refreshAll();
 
 window.addEventListener('resize', updateTabBar);
