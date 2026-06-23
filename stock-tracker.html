@@ -151,6 +151,34 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
 .inst-net.up{color:var(--up)}.inst-net.down{color:var(--down)}
 .inst-loading{text-align:center;color:var(--dim);padding:40px;font-size:13px}
 
+/* ── Portfolio ── */
+.port-summary{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:20px}
+.port-kpi{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:15px 16px}
+.port-kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:7px}
+.port-kpi-val{font-family:var(--mono);font-size:22px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.port-kpi-sub{font-size:11px;color:var(--dim);margin-top:4px}
+.port-add-inner{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.port-layout{display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:start}
+.port-table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;overflow:auto}
+table.port-tbl{width:100%;border-collapse:collapse;min-width:600px}
+table.port-tbl th{font-size:10px;color:var(--dim);font-weight:600;padding:9px 13px;text-align:left;border-bottom:1px solid var(--border);background:rgba(0,0,0,.1);white-space:nowrap}
+table.port-tbl td{font-size:12.5px;padding:9px 13px;border-bottom:1px solid rgba(255,255,255,.03);cursor:pointer;vertical-align:middle}
+table.port-tbl tr:last-child td{border-bottom:none}
+table.port-tbl tr:hover td{background:rgba(255,255,255,.025)}
+.port-sym{font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+.port-name-cell{font-size:13px;font-weight:500}
+.port-sector-tag{font-size:10px;padding:1px 5px;border-radius:4px;background:rgba(255,255,255,.06);color:var(--dim);margin-left:5px;vertical-align:middle}
+.port-mono{font-family:var(--mono);font-size:12.5px}
+.port-pl{font-family:var(--mono);font-size:12.5px}
+.port-pl.up{color:var(--up)}.port-pl.down{color:var(--down)}.port-pl.flat{color:var(--dim)}
+.port-chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px;display:flex;flex-direction:column;align-items:center;position:sticky;top:66px}
+.port-chart-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin-bottom:12px;align-self:flex-start}
+.sector-legend{margin-top:12px;width:100%;display:flex;flex-direction:column;gap:5px}
+.sl-item{display:flex;align-items:center;gap:7px;font-size:11.5px}
+.sl-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sl-name{flex:1;color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.sl-pct{font-family:var(--mono);font-size:11px;color:var(--dim)}
+
 /* ── News ── */
 .news-tabs{display:flex;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border);position:relative;background:rgba(0,0,0,.15)}
 .news-tabs::-webkit-scrollbar{display:none}
@@ -201,6 +229,9 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
   .inst-summary{grid-template-columns:1fr 1fr}
   .inst-tables{grid-template-columns:1fr}
   .ai-cols{grid-template-columns:1fr}
+  .port-layout{grid-template-columns:1fr}
+  .port-add-inner>*{width:100%}
+  .port-chart-wrap{position:static}
   #tv-container{height:340px}
   .modal{max-height:95dvh;border-radius:16px 16px 0 0;align-self:flex-end;margin:0 -20px -20px;width:calc(100% + 40px)}
 }
@@ -226,6 +257,7 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
       <button class="nav-item" data-page="watchlist"><span class="nav-icon">⭐</span>自選股</button>
       <button class="nav-item" data-page="institutional"><span class="nav-icon">🏛</span>法人動向</button>
       <button class="nav-item" data-page="news"><span class="nav-icon">📰</span>情勢新聞</button>
+      <button class="nav-item" data-page="portfolio"><span class="nav-icon">💼</span>投資組合</button>
     </nav>
     <div class="sb-footer">
       <div class="sb-status">
@@ -317,6 +349,63 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
       </div>
     </section>
 
+    <!-- Portfolio Page -->
+    <section id="page-portfolio" class="page">
+      <div class="page-header">
+        <div class="breadcrumb">投資組合</div>
+        <div class="page-title">我的投資組合</div>
+        <div style="font-size:12px;color:var(--dim);margin-top:6px">追蹤持有股票的即時損益與產業配置</div>
+      </div>
+
+      <!-- KPI Summary -->
+      <div class="port-summary">
+        <div class="port-kpi"><div class="port-kpi-lbl">總市值</div><div class="port-kpi-val" id="pk-total">—</div><div class="port-kpi-sub">TWD</div></div>
+        <div class="port-kpi"><div class="port-kpi-lbl">總成本</div><div class="port-kpi-val" id="pk-cost">—</div><div class="port-kpi-sub">TWD</div></div>
+        <div class="port-kpi"><div class="port-kpi-lbl">未實現損益</div><div class="port-kpi-val" id="pk-upl">—</div><div class="port-kpi-sub" id="pk-uplpct">—</div></div>
+        <div class="port-kpi"><div class="port-kpi-lbl">持股檔數</div><div class="port-kpi-val" id="pk-count">—</div><div class="port-kpi-sub">檔</div></div>
+      </div>
+
+      <!-- Add Holding -->
+      <p class="sec">新增持股</p>
+      <div class="port-add-inner">
+        <input class="wl-input" id="port-code" placeholder="股票代號（2330 / AAPL）" style="flex:1.4" oninput="portAutoSector()">
+        <input class="wl-input" id="port-shares" placeholder="持有股數" type="number" min="1" style="flex:0.6">
+        <input class="wl-input" id="port-cost" placeholder="平均成本（每股）" type="number" min="0" step="0.01" style="flex:0.6">
+        <select class="wl-input" id="port-sector" style="flex:0.6;cursor:pointer">
+          <option value="半導體">半導體</option>
+          <option value="電子製造">電子製造</option>
+          <option value="ETF">ETF</option>
+          <option value="金融">金融</option>
+          <option value="電信">電信</option>
+          <option value="科技">科技</option>
+          <option value="消費">消費</option>
+          <option value="其他" selected>其他</option>
+        </select>
+        <button class="btn btn-gold" onclick="addHolding()" style="flex-shrink:0">+ 新增／更新</button>
+      </div>
+
+      <!-- Table + Chart -->
+      <p class="sec">持股明細</p>
+      <div class="port-layout">
+        <div class="port-table-wrap">
+          <table class="port-tbl">
+            <thead><tr>
+              <th>代號</th><th>名稱</th><th>股數</th>
+              <th>均成本</th><th>現價</th><th>市值</th>
+              <th>損益</th><th>損益%</th><th></th>
+            </tr></thead>
+            <tbody id="port-tbody"></tbody>
+          </table>
+          <div id="port-empty" class="wl-empty">尚未新增任何持股</div>
+        </div>
+        <div class="port-chart-wrap">
+          <div class="port-chart-title">產業配置</div>
+          <canvas id="sector-chart" width="188" height="188"></canvas>
+          <div id="sector-legend" class="sector-legend"></div>
+        </div>
+      </div>
+    </section>
+
   </div><!-- /main-wrap -->
 </div><!-- /app -->
 
@@ -327,6 +416,7 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
     <button class="mobile-nav-item" data-page="watchlist"><span class="mobile-nav-icon">⭐</span>自選股</button>
     <button class="mobile-nav-item" data-page="institutional"><span class="mobile-nav-icon">🏛</span>法人</button>
     <button class="mobile-nav-item" data-page="news"><span class="mobile-nav-icon">📰</span>新聞</button>
+    <button class="mobile-nav-item" data-page="portfolio"><span class="mobile-nav-icon">💼</span>組合</button>
   </div>
 </nav>
 
@@ -341,6 +431,7 @@ table.inst-tbl tr:hover td{background:rgba(255,255,255,.025)}
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://s3.tradingview.com/tv.js" async></script>
 <script>
 // ── Constants ──────────────────────────────────────────────────────────────
@@ -361,6 +452,7 @@ function navigate(page) {
   });
   if (page==='institutional' && !instLoaded) loadInstitutional();
   if (page==='news') setTimeout(updateNewsTabBar, 50);
+  if (page==='portfolio') { renderPortfolio(portPriceCache); fetchPortfolioData(); }
 }
 document.querySelectorAll('[data-page]').forEach(el => el.addEventListener('click', () => navigate(el.dataset.page)));
 
@@ -556,6 +648,134 @@ async function loadInstitutional(){
   }catch(e){tblEl.innerHTML=`<div style="color:var(--up);padding:24px;grid-column:1/-1">⚠ ${e.message}</div>`}
 }
 
+// ── Portfolio ──────────────────────────────────────────────────────────────
+const SECTOR_COLORS={'半導體':'#9d7cf8','電子製造':'#4096ff','ETF':'#faad14','金融':'#52c41a','電信':'#38bdf8','科技':'#fb923c','消費':'#f5222d','其他':'rgba(255,255,255,.25)'};
+const AUTO_SECTOR_MAP={'2330':'半導體','2454':'半導體','3711':'半導體','2379':'半導體','3034':'半導體','6770':'半導體','2303':'半導體','3008':'半導體',
+  '2317':'電子製造','2382':'電子製造','2308':'電子製造','2357':'電子製造','4938':'電子製造',
+  '0050':'ETF','0056':'ETF','00878':'ETF','00929':'ETF','006208':'ETF','00900':'ETF','00919':'ETF',
+  '2881':'金融','2882':'金融','2884':'金融','2886':'金融','2891':'金融','2892':'金融','2885':'金融',
+  '2412':'電信','3045':'電信','4904':'電信',
+  'AAPL':'科技','MSFT':'科技','GOOGL':'科技','META':'科技','AMZN':'消費',
+  'NVDA':'半導體','TSM':'半導體','AMD':'半導體','INTC':'半導體','QCOM':'半導體',
+};
+let portfolioChart=null, portPriceCache=[];
+
+function loadPortfolio(){return JSON.parse(localStorage.getItem('portfolio_v1')||'[]')}
+function savePortfolio(p){localStorage.setItem('portfolio_v1',JSON.stringify(p))}
+
+function portAutoSector(){
+  const code=document.getElementById('port-code').value.trim().toUpperCase();
+  const sector=AUTO_SECTOR_MAP[code];
+  if(sector){const sel=document.getElementById('port-sector');sel.value=sector}
+}
+
+function addHolding(){
+  const code=document.getElementById('port-code').value.trim().toUpperCase();
+  const shares=parseFloat(document.getElementById('port-shares').value);
+  const cost=parseFloat(document.getElementById('port-cost').value);
+  const sector=document.getElementById('port-sector').value;
+  if(!code||!(shares>0)||!(cost>0))return;
+  const isUS=!/^\d+$/.test(code)&&!code.startsWith('^');
+  const stooq=isUS?code.toLowerCase()+'.us':code+'.tw';
+  const tv=isUS?code:'TWSE:'+code;
+  const port=loadPortfolio();
+  const idx=port.findIndex(p=>p.code===code);
+  const item={code,name:code,stooq,tv,shares,avgCost:cost,sector,currency:isUS?'USD':'TWD'};
+  if(idx>=0)port[idx]={...port[idx],...item};else port.push(item);
+  savePortfolio(port);
+  ['port-code','port-shares','port-cost'].forEach(id=>document.getElementById(id).value='');
+  renderPortfolio(portPriceCache);
+  fetchPortfolioData();
+}
+
+function removeHolding(code){
+  savePortfolio(loadPortfolio().filter(p=>p.code!==code));
+  renderPortfolio(portPriceCache);
+}
+
+function renderPortfolio(prices){
+  portPriceCache=prices||[];
+  const port=loadPortfolio();
+  const tbody=document.getElementById('port-tbody');
+  const empty=document.getElementById('port-empty');
+  if(!port.length){tbody.innerHTML='';empty.style.display='block';renderPortfolioKPIs({});renderSectorChart([]);return}
+  empty.style.display='none';
+  const by={};(prices||[]).forEach(p=>{if(p.symbol)by[p.symbol.toUpperCase()]=p});
+  let totalValue=0,totalCost=0,hasAnyPrice=false;
+  const usdRate=marketData.find(d=>d.symbol==='USDTWD=X')?.price||1;
+  const rows=port.map(h=>{
+    const key=h.stooq.toUpperCase();
+    const p=by[key];
+    const price=p?.price;
+    const costBasis=h.shares*h.avgCost;
+    const value=price!=null?h.shares*price:null;
+    const pl=value!=null?value-costBasis:null;
+    const plPct=pl!=null&&costBasis>0?(pl/costBasis)*100:null;
+    const dClass=pl!=null?(pl>0?'up':pl<0?'down':'flat'):'flat';
+    const inTWD=h.currency==='USD'?usdRate:1;
+    if(value!=null){totalValue+=value*inTWD;hasAnyPrice=true}
+    totalCost+=costBasis*inTWD;
+    return{...h,price,costBasis,value,pl,plPct,dClass,inTWD};
+  });
+  tbody.innerHTML=rows.map(r=>`<tr onclick="openChart('${r.tv}','${r.name}')">
+    <td><div class="port-sym">${r.code}</div></td>
+    <td><div class="port-name-cell">${r.name}<span class="port-sector-tag">${r.sector}</span></div></td>
+    <td class="port-mono">${r.shares.toLocaleString()}</td>
+    <td class="port-mono">${fmt(r.avgCost,2)}<small style="color:var(--dim);font-size:10px;margin-left:3px">${r.currency}</small></td>
+    <td class="port-mono">${r.price!=null?fmt(r.price,2):'—'}</td>
+    <td class="port-mono">${r.value!=null?r.value.toLocaleString('en-US',{maximumFractionDigits:0}):'—'}</td>
+    <td class="port-pl ${r.dClass}">${r.pl!=null?(r.pl>=0?'+':'')+fmt(r.pl,0):'—'}</td>
+    <td class="port-pl ${r.dClass}">${r.plPct!=null?fmtPct(r.plPct):'—'}</td>
+    <td><button class="wl-del" onclick="event.stopPropagation();removeHolding('${r.code}')">×</button></td>
+  </tr>`).join('');
+  const totalPL=totalValue-totalCost;
+  const totalPLPct=totalCost>0?(totalPL/totalCost)*100:null;
+  renderPortfolioKPIs({totalValue:hasAnyPrice?totalValue:null,totalCost,totalPL:hasAnyPrice?totalPL:null,totalPLPct,count:port.length});
+  renderSectorChart(rows,usdRate);
+}
+
+function renderPortfolioKPIs({totalValue=null,totalCost=0,totalPL=null,totalPLPct=null,count=0}={}){
+  document.getElementById('pk-total').textContent=totalValue!=null?totalValue.toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+  document.getElementById('pk-cost').textContent=totalCost>0?totalCost.toLocaleString('en-US',{maximumFractionDigits:0}):'—';
+  const uplEl=document.getElementById('pk-upl');
+  if(totalPL!=null){uplEl.textContent=(totalPL>=0?'+':'')+totalPL.toLocaleString('en-US',{maximumFractionDigits:0});uplEl.style.color=totalPL>0?'var(--up)':totalPL<0?'var(--down)':''}
+  else{uplEl.textContent='—';uplEl.style.color=''}
+  document.getElementById('pk-uplpct').textContent=totalPLPct!=null?fmtPct(totalPLPct):'—';
+  document.getElementById('pk-count').textContent=count||'—';
+}
+
+function renderSectorChart(rows,usdRate=1){
+  const canvas=document.getElementById('sector-chart'),legend=document.getElementById('sector-legend');
+  if(!rows.length){canvas.style.display='none';legend.innerHTML='<div style="color:var(--dim);font-size:12px;text-align:center;padding:20px">尚無持股資料</div>';return}
+  canvas.style.display='block';
+  const map={};
+  rows.forEach(r=>{
+    const s=r.sector||'其他';
+    const v=(r.value!=null?r.value:(r.costBasis||0))*(r.inTWD||1);
+    map[s]=(map[s]||0)+v;
+  });
+  const labels=Object.keys(map),values=labels.map(l=>map[l]);
+  const total=values.reduce((a,b)=>a+b,0);
+  const colors=labels.map(l=>SECTOR_COLORS[l]||'rgba(255,255,255,.2)');
+  if(portfolioChart){portfolioChart.destroy();portfolioChart=null}
+  portfolioChart=new Chart(canvas.getContext('2d'),{
+    type:'doughnut',
+    data:{labels,datasets:[{data:values,backgroundColor:colors,borderWidth:0,hoverOffset:6}]},
+    options:{responsive:false,cutout:'70%',plugins:{legend:{display:false},tooltip:{callbacks:{label:(ctx)=>` ${ctx.label}: ${((ctx.parsed/total)*100).toFixed(1)}%`}}},animation:{duration:500}}
+  });
+  legend.innerHTML=labels.map((l,i)=>`<div class="sl-item"><div class="sl-dot" style="background:${colors[i]}"></div><span class="sl-name">${l}</span><span class="sl-pct">${((values[i]/total)*100).toFixed(1)}%</span></div>`).join('');
+}
+
+async function fetchPortfolioData(){
+  const port=loadPortfolio();if(!port.length)return;
+  try{
+    const syms=port.map(s=>s.stooq).join(',');
+    const r=await fetch('/api/watchlist-data?symbols='+encodeURIComponent(syms));
+    const j=await r.json();
+    if(j.ok)renderPortfolio(j.data);
+  }catch(e){console.error('[portfolio]',e)}
+}
+
 // ── News ───────────────────────────────────────────────────────────────────
 function renderNewsTabs(){
   const wrap=document.getElementById('news-tabs'),bar=document.getElementById('news-tab-bar');
@@ -649,13 +869,14 @@ async function fetchNews(){
 // ── Refresh ────────────────────────────────────────────────────────────────
 async function refreshAll(){
   document.getElementById('sdot').className='sdot loading';
-  await Promise.all([fetchMarket(),fetchNews(),fetchWatchlistData()]);
+  await Promise.all([fetchMarket(),fetchNews(),fetchWatchlistData(),fetchPortfolioData()]);
   clearTimeout(refreshTimer);
   refreshTimer=setTimeout(refreshAll,5*60*1000);
 }
 
 // ── Init ───────────────────────────────────────────────────────────────────
 renderWatchlist();
+renderPortfolio([]);
 refreshAll();
 window.addEventListener('resize',updateNewsTabBar);
 </script>
