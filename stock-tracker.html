@@ -5,702 +5,480 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>台股情勢追蹤</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
 :root {
-  --bg:        #060a12;
-  --surface:   #0d1422;
-  --glass:     rgba(255,255,255,0.035);
-  --glass-md:  rgba(255,255,255,0.055);
-  --border:    rgba(255,255,255,0.065);
-  --border-md: rgba(255,255,255,0.12);
-  --text:      #dde6f8;
-  --muted:     rgba(221,230,248,0.48);
-  --dim:       rgba(221,230,248,0.22);
-  --cyan:      #22d3ee;
-  --cyan-glow: rgba(34,211,238,0.2);
-  --green:     #4ade80;
-  --green-glow:rgba(74,222,128,0.18);
-  --red:       #f87171;
-  --red-glow:  rgba(248,113,113,0.18);
-  --amber:     #fbbf24;
-  --purple:    #a78bfa;
-  --orange:    #fb923c;
-  --blue:      #60a5fa;
-  --mono:     'DM Mono', 'SF Mono', monospace;
-
-  /* Category accent colors */
-  --cat-tw:        #fbbf24;
-  --cat-us:        #60a5fa;
-  --cat-semi:      #a78bfa;
-  --cat-risk:      #f87171;
-  --cat-rates:     #22d3ee;
-  --cat-fx:        #4ade80;
-  --cat-commodity: #fb923c;
+  --bg:      #0a0a0f;
+  --surface: #111118;
+  --raised:  #18181f;
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text:    #f0f2f8;
+  --muted:   rgba(240,242,248,0.45);
+  --dim:     rgba(240,242,248,0.2);
+  --green:   #3ddc84;
+  --red:     #ff6b6b;
+  --amber:   #ffc14d;
+  --blue:    #5b9cf6;
+  --purple:  #9d7cf8;
+  --cyan:    #38bdf8;
+  --mono:   'DM Mono', monospace;
 }
-
 html { scroll-behavior: smooth; }
 body {
-  background: var(--bg);
-  color: var(--text);
+  background: var(--bg); color: var(--text);
   font-family: 'Inter', -apple-system, sans-serif;
-  font-size: 14px;
-  line-height: 1.6;
-  min-height: 100vh;
+  font-size: 14px; line-height: 1.6;
+  min-height: 100dvh; -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
-  -webkit-font-smoothing: antialiased;
-}
-
-/* ── Background ── */
-.bg-layer { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 0; }
-.bg-orb   { position: absolute; border-radius: 50%; filter: blur(130px); }
-.orb-1 { width:800px; height:800px; background:rgba(34,211,238,.05); top:-300px; left:-200px; }
-.orb-2 { width:600px; height:600px; background:rgba(109,40,217,.06); bottom:-150px; right:-200px; }
-.orb-3 { width:400px; height:400px; background:rgba(5,150,105,.04); top:50%; left:60%; transform:translate(-50%,-50%); }
-.bg-grid {
-  position: absolute; inset: 0;
-  background-image:
-    linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-  background-size: 52px 52px;
 }
 
 /* ── Layout ── */
-.app { position: relative; z-index: 1; max-width: 1140px; margin: 0 auto; padding: 26px 22px 60px; }
+.page { max-width: 680px; margin: 0 auto; padding: 20px 16px 60px; }
 
 /* ── Header ── */
 .header {
   display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+  margin-bottom: 20px;
 }
-.logo { display: flex; align-items: center; gap: 12px; }
-.logo-mark {
-  width: 40px; height: 40px; border-radius: 12px;
-  background: linear-gradient(135deg, #0891b2 0%, #22d3ee 100%);
-  display: flex; align-items: center; justify-content: center; font-size: 20px;
-  box-shadow: 0 0 24px rgba(34,211,238,.35), 0 0 0 1px rgba(34,211,238,.2);
-  flex-shrink: 0;
+.brand { display: flex; align-items: center; gap: 10px; }
+.brand-icon {
+  width: 34px; height: 34px; border-radius: 9px; background: var(--raised);
+  border: 1px solid var(--border2); display: flex; align-items: center;
+  justify-content: center; font-size: 17px;
 }
-.logo-text {
-  font-size: 18px; font-weight: 700; letter-spacing: -.03em;
-  color: var(--text);
+.brand-name { font-size: 15px; font-weight: 600; letter-spacing: -.02em; }
+.brand-sub  { font-size: 10.5px; color: var(--dim); letter-spacing: .05em; text-transform: uppercase; }
+.header-right { display: flex; align-items: center; gap: 10px; }
+.status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+.sdot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.sdot.loading { background: var(--amber); animation: pulse 1.2s ease-in-out infinite; }
+.sdot.error   { background: var(--red); }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.25} }
+.btn-sm {
+  padding: 6px 13px; border-radius: 8px; font-family: inherit; font-size: 12px; font-weight: 500;
+  background: var(--raised); border: 1px solid var(--border2); color: var(--muted);
+  cursor: pointer; transition: border-color .15s, color .15s;
 }
-.logo-sub { font-size: 10.5px; color: var(--dim); font-weight: 400; letter-spacing: .08em; margin-top: 1px; text-transform: uppercase; }
-.header-right { display: flex; align-items: center; gap: 14px; }
-.status-chip { display: flex; align-items: center; gap: 7px; font-size: 12px; color: var(--muted); }
-.sdot { width: 7px; height: 7px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px var(--cyan-glow); }
-.sdot.loading { background: var(--amber); box-shadow: 0 0 6px rgba(251,191,36,.6); animation: sdot-pulse 1.1s ease-in-out infinite; }
-.sdot.error   { background: var(--red);   box-shadow: 0 0 6px rgba(248,113,113,.6); }
-@keyframes sdot-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-.btn {
-  padding: 8px 18px; border-radius: 9px; font-family: inherit; font-size: 13px; font-weight: 500;
-  background: var(--glass-md); border: 1px solid var(--border-md); color: rgba(221,230,248,.8);
-  cursor: pointer; transition: background .2s, border-color .2s, color .2s, box-shadow .2s;
-}
-.btn:hover  { background: rgba(34,211,238,.1); border-color: rgba(34,211,238,.35); color: var(--cyan); box-shadow: 0 0 16px rgba(34,211,238,.12); }
-.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn-sm:hover    { border-color: rgba(255,255,255,.22); color: var(--text); }
+.btn-sm:disabled { opacity: .4; cursor: not-allowed; }
 
-/* ── Signal Banner ── */
-.signal {
-  border-radius: 18px; padding: 20px 24px; margin-bottom: 22px;
-  display: flex; align-items: flex-start; gap: 18px;
-  border: 1px solid; position: relative; overflow: hidden;
-  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+/* ── AI Card ── */
+.ai-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  margin-bottom: 14px; overflow: hidden; transition: border-color .2s;
 }
-.signal::before {
-  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; border-radius: 3px 0 0 3px;
+.ai-card.loaded { border-color: var(--border2); }
+.ai-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 16px 12px; border-bottom: 1px solid var(--border);
 }
-.signal.positive::before { background: var(--green); box-shadow: 4px 0 12px var(--green-glow); }
-.signal.caution::before  { background: var(--amber);  box-shadow: 4px 0 12px rgba(251,191,36,.3); }
-.signal.danger::before   { background: var(--red);    box-shadow: 4px 0 12px var(--red-glow); }
-.signal.neutral::before  { background: var(--dim); }
-.signal::after {
-  content: ''; position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(ellipse at 0% 0%, rgba(255,255,255,.05), transparent 50%);
+.ai-label { font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
+.ai-badge {
+  font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 100px;
+  letter-spacing: .02em;
 }
-.signal.positive { background: rgba(74,222,128,.06);  border-color: rgba(74,222,128,.2); }
-.signal.caution  { background: rgba(251,191,36,.06);  border-color: rgba(251,191,36,.2); }
-.signal.danger   { background: rgba(248,113,113,.06); border-color: rgba(248,113,113,.2); }
-.signal.neutral  { background: var(--glass);           border-color: var(--border); }
-.sig-icon  { font-size: 36px; line-height: 1; flex-shrink: 0; }
-.sig-eye   { font-size: 9px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: var(--dim); margin-bottom: 4px; }
-.sig-title { font-size: 18px; font-weight: 700; letter-spacing: -.02em; margin-bottom: 10px; }
-.signal.positive .sig-title { color: var(--green); }
-.signal.caution  .sig-title { color: var(--amber); }
-.signal.danger   .sig-title { color: var(--red); }
-.signal.neutral  .sig-title { color: var(--muted); }
-.sig-pills { display: flex; flex-wrap: wrap; gap: 6px; }
-.sig-pill {
-  font-size: 11.5px; padding: 3px 10px; border-radius: 100px;
-  background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.09); color: var(--muted);
+.ai-badge.bull { background: rgba(61,220,132,.12); color: var(--green); border: 1px solid rgba(61,220,132,.2); }
+.ai-badge.bear { background: rgba(255,107,107,.12); color: var(--red);   border: 1px solid rgba(255,107,107,.2); }
+.ai-badge.neu  { background: rgba(240,242,248,.06); color: var(--muted); border: 1px solid var(--border); }
+.ai-body { padding: 16px; }
+.ai-summary {
+  font-size: 17px; font-weight: 600; letter-spacing: -.025em; line-height: 1.4;
+  margin-bottom: 16px; color: var(--text);
 }
+.ai-focus {
+  font-size: 12.5px; color: var(--muted); padding: 10px 13px;
+  background: var(--raised); border-radius: 9px; margin-bottom: 14px;
+  border-left: 2px solid var(--amber); line-height: 1.5;
+}
+.ai-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ai-col-label { font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin-bottom: 8px; }
+.ai-col-label.bull { color: var(--green); }
+.ai-col-label.bear { color: var(--red); }
+.ai-reasons { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+.ai-reasons li { font-size: 12px; color: var(--muted); line-height: 1.45; padding-left: 10px; position: relative; }
+.ai-reasons li::before { content: '·'; position: absolute; left: 0; color: var(--dim); }
+.ai-loading { padding: 32px 16px; text-align: center; color: var(--dim); font-size: 13px; }
+.ai-btn-wrap { padding: 0 16px 16px; }
+.btn-ai {
+  width: 100%; padding: 10px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 500;
+  background: var(--raised); border: 1px solid var(--border2); color: var(--muted);
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+}
+.btn-ai:hover    { background: rgba(91,156,246,.1); border-color: rgba(91,156,246,.3); color: var(--blue); }
+.btn-ai:disabled { opacity: .45; cursor: not-allowed; }
 
-/* ── KPI Summary Row ── */
-.kpi-row {
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 22px;
+/* ── Key Metrics ── */
+.key-metrics {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 14px;
 }
-.kpi-card {
-  background: var(--glass); border: 1px solid var(--border); border-radius: 14px;
-  padding: 14px 16px; display: flex; flex-direction: column; gap: 4px;
-  transition: border-color .25s, background .25s;
+.km-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+  padding: 14px 13px;
 }
-.kpi-card:hover { background: var(--glass-md); border-color: var(--border-md); }
-.kpi-label { font-size: 10px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--dim); }
-.kpi-val   { font-family: var(--mono); font-size: 22px; font-weight: 400; letter-spacing: -.02em; color: var(--text); line-height: 1.1; }
-.kpi-sub   { font-size: 11px; color: var(--muted); }
-.kpi-dot   { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+.km-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .09em; color: var(--dim); margin-bottom: 7px; }
+.km-price { font-family: var(--mono); font-size: 20px; font-weight: 500; letter-spacing: -.02em; line-height: 1; margin-bottom: 5px; }
+.km-delta { font-family: var(--mono); font-size: 11px; }
+.km-delta.up   { color: var(--green); }
+.km-delta.down { color: var(--red); }
+.km-delta.flat { color: var(--dim); }
 
-/* ── Section label ── */
-.sec-label {
-  font-size: 9.5px; font-weight: 700; letter-spacing: .13em; text-transform: uppercase;
-  color: var(--dim); margin-bottom: 11px; display: flex; align-items: center; gap: 8px;
+/* ── Market List ── */
+.section-title {
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .11em;
+  color: var(--dim); margin-bottom: 10px; padding: 0 1px;
 }
-.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
-
-/* ── Market Grid ── */
-.market-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 10px; margin-bottom: 26px; }
-.card {
-  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border); border-radius: 15px; padding: 16px 15px 14px;
-  position: relative; overflow: hidden; cursor: default;
-  transition: border-color .3s, box-shadow .3s, transform .2s, background .2s;
+.market-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 20px; }
+.mrow {
+  display: flex; align-items: center; padding: 11px 14px;
+  background: var(--surface); border-radius: 10px; gap: 12px;
+  border: 1px solid transparent; transition: border-color .15s;
 }
-.card::before {
-  content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; border-radius: 2px 2px 0 0;
-  opacity: 0; transition: opacity .3s;
-}
-.card:hover { transform: translateY(-2px); background: var(--glass-md); }
-.card:hover::before { opacity: 1; }
-.card.up   { border-color: rgba(74,222,128,.22);  box-shadow: 0 0 24px rgba(74,222,128,.12); }
-.card.down { border-color: rgba(248,113,113,.22); box-shadow: 0 0 24px rgba(248,113,113,.12); }
-
-/* Category top-border colors */
-.cat-tw        .card::before { background: var(--cat-tw); }
-.cat-us        .card::before { background: var(--cat-us); }
-.cat-semi      .card::before { background: var(--cat-semi); }
-.cat-risk      .card::before { background: var(--cat-risk); }
-.cat-rates     .card::before { background: var(--cat-rates); }
-.cat-fx        .card::before { background: var(--cat-fx); }
-.cat-commodity .card::before { background: var(--cat-commodity); }
-
-.card-cat {
-  width: 3px; height: 28px; border-radius: 3px; position: absolute; top: 14px; right: 13px; opacity: .6;
-}
-.card-tag  { font-size: 11px; font-weight: 500; color: var(--muted); margin-bottom: 11px; }
-.card-price { font-family: var(--mono); font-size: 24px; font-weight: 400; letter-spacing: -.03em; line-height: 1; margin-bottom: 8px; color: var(--text); }
-.card-delta { font-family: var(--mono); font-size: 12px; display: flex; gap: 7px; }
-.card-delta.up   { color: var(--green); }
-.card-delta.down { color: var(--red); }
-.card-delta.flat { color: var(--dim); }
+.mrow:hover { border-color: var(--border); }
+.mrow-cat { width: 3px; height: 22px; border-radius: 3px; flex-shrink: 0; opacity: .7; }
+.mrow-name { flex: 1; font-size: 13px; color: var(--muted); min-width: 0; }
+.mrow-price { font-family: var(--mono); font-size: 14px; font-weight: 500; color: var(--text); margin-right: 10px; }
+.mrow-delta { font-family: var(--mono); font-size: 12px; text-align: right; min-width: 70px; }
+.mrow-delta.up   { color: var(--green); }
+.mrow-delta.down { color: var(--red); }
+.mrow-delta.flat { color: var(--dim); }
 
 /* skeleton */
-.card.skeleton { pointer-events: none; }
-.skel { border-radius: 5px; background: linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.07) 50%,rgba(255,255,255,.03) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
-.skel-tag  { height: 11px; width: 60%; margin-bottom: 13px; }
-.skel-price{ height: 24px; width: 75%; margin-bottom: 10px; }
-.skel-delta{ height: 12px; width: 50%; }
+.skel { border-radius: 5px; background: linear-gradient(90deg,rgba(255,255,255,.03) 25%,rgba(255,255,255,.06) 50%,rgba(255,255,255,.03) 75%); background-size: 200% 100%; animation: shimmer 1.8s infinite; }
 @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
 
 /* ── News ── */
 .news-wrap {
-  background: var(--glass); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid var(--border); border-radius: 18px; overflow: hidden;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
 }
-.tabs {
-  display: flex; border-bottom: 1px solid var(--border); position: relative;
-  overflow-x: auto; scrollbar-width: none; background: rgba(0,0,0,.15);
-}
+.tabs { display: flex; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--border); position: relative; }
 .tabs::-webkit-scrollbar { display: none; }
 .tab-bar {
-  position: absolute; bottom: 0; height: 2px;
-  background: linear-gradient(90deg, var(--cyan), #0ea5e9);
-  border-radius: 2px 2px 0 0;
-  transition: left .3s cubic-bezier(.4,0,.2,1), width .3s cubic-bezier(.4,0,.2,1);
-  pointer-events: none; box-shadow: 0 -2px 10px rgba(34,211,238,.4);
+  position: absolute; bottom: 0; height: 1.5px;
+  background: var(--blue); border-radius: 2px 2px 0 0;
+  transition: left .25s cubic-bezier(.4,0,.2,1), width .25s cubic-bezier(.4,0,.2,1);
+  pointer-events: none;
 }
 .tab {
-  padding: 13px 17px; font-size: 13px; font-weight: 500; color: var(--muted);
-  cursor: pointer; white-space: nowrap; transition: color .2s; flex-shrink: 0; user-select: none;
-  display: flex; align-items: center; gap: 6px;
+  padding: 11px 15px; font-size: 12.5px; font-weight: 500; color: var(--dim);
+  cursor: pointer; white-space: nowrap; flex-shrink: 0; transition: color .15s; user-select: none;
 }
-.tab:hover { color: rgba(221,230,248,.7); }
-.tab.active { color: var(--cyan); }
-.tab-sentbadge {
-  display: inline-flex; gap: 3px; align-items: center;
-}
-.tab-sentdot {
-  width: 5px; height: 5px; border-radius: 50%;
-}
-.tab-n {
-  font-size: 10px; padding: 1px 5px; background: rgba(255,255,255,.07);
-  border-radius: 100px; color: var(--dim); vertical-align: middle;
-}
+.tab:hover  { color: var(--muted); }
+.tab.active { color: var(--text); }
+.tab-n { font-size: 10px; padding: 1px 5px; background: rgba(255,255,255,.07); border-radius: 100px; margin-left: 4px; }
 
-.news-list { min-height: 220px; }
-.news-item {
-  display: flex; align-items: flex-start; gap: 12px; padding: 12px 20px;
-  border-bottom: 1px solid rgba(255,255,255,.035); transition: background .15s;
+.news-list { min-height: 180px; }
+.nitem {
+  display: flex; gap: 12px; padding: 11px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.04); transition: background .12s;
 }
-.news-item:last-child { border-bottom: none; }
-.news-item:hover { background: rgba(255,255,255,.025); }
-.ndot { flex-shrink: 0; width: 6px; height: 6px; border-radius: 50%; margin-top: 7px; }
-.ndot.pos { background: var(--green); box-shadow: 0 0 7px rgba(74,222,128,.6); }
-.ndot.neg { background: var(--red);   box-shadow: 0 0 7px rgba(248,113,113,.6); }
-.ndot.neu { background: rgba(221,230,248,.2); }
-.news-body { flex: 1; min-width: 0; }
-.news-title {
-  font-size: 13.5px; line-height: 1.5; color: rgba(221,230,248,.82); margin-bottom: 4px;
+.nitem:last-child { border-bottom: none; }
+.nitem:hover { background: rgba(255,255,255,.02); }
+.ndot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; margin-top: 8px; }
+.ndot.pos { background: var(--green); }
+.ndot.neg { background: var(--red); }
+.ndot.neu { background: var(--dim); }
+.ntitle {
+  font-size: 13px; line-height: 1.5; color: rgba(240,242,248,.78);
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
-.news-title a { color: inherit; text-decoration: none; transition: color .15s; }
-.news-title a:hover { color: var(--cyan); }
-.news-meta { font-size: 11px; color: var(--dim); display: flex; gap: 8px; flex-wrap: wrap; }
-.news-source { color: rgba(221,230,248,.35); }
-.news-state { padding: 36px; text-align: center; color: var(--dim); }
-
-/* ── Sentiment Bar ── */
-.sent-bar {
-  padding: 10px 20px 12px; border-bottom: 1px solid rgba(255,255,255,.035);
-  display: flex; align-items: center; gap: 10px;
-}
-.sent-track {
-  flex: 1; height: 4px; border-radius: 4px; background: rgba(255,255,255,.07);
-  overflow: hidden; display: flex;
-}
-.sent-pos { background: var(--green); height: 100%; }
-.sent-neg { background: var(--red);   height: 100%; }
-.sent-neu { background: rgba(255,255,255,.15); height: 100%; }
-.sent-label { font-size: 10px; color: var(--dim); white-space: nowrap; }
+.ntitle a { color: inherit; text-decoration: none; }
+.ntitle a:hover { color: var(--blue); }
+.nmeta { font-size: 11px; color: var(--dim); margin-top: 3px; display: flex; gap: 7px; }
+.news-empty { padding: 28px; text-align: center; color: var(--dim); font-size: 13px; }
 
 /* ── Footer ── */
-.footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--dim); }
-.footer a { color: rgba(221,230,248,.28); text-decoration: none; }
+.footer { margin-top: 18px; text-align: center; font-size: 11px; color: var(--dim); }
+.footer a { color: var(--dim); text-decoration: none; }
 .footer a:hover { color: var(--muted); }
 
-/* ── Responsive ── */
-@media(max-width:700px) {
-  .app { padding: 18px 14px 48px; }
-  .kpi-row { grid-template-columns: repeat(2,1fr); }
-  .market-grid { grid-template-columns: repeat(2,1fr); }
-  .logo-sub { display: none; }
-  .sig-icon { font-size: 28px; }
-  .sig-title { font-size: 16px; }
-  .tab { padding: 11px 13px; font-size: 12px; }
-  .card-price { font-size: 20px; }
+@media(max-width:420px) {
+  .key-metrics { grid-template-columns: repeat(3,1fr); }
+  .km-price { font-size: 17px; }
+  .ai-cols { grid-template-columns: 1fr; }
 }
 </style>
 </head>
 <body>
+<div class="page">
 
-<div class="bg-layer">
-  <div class="bg-grid"></div>
-  <div class="bg-orb orb-1"></div>
-  <div class="bg-orb orb-2"></div>
-  <div class="bg-orb orb-3"></div>
-</div>
-
-<div class="app">
-
+  <!-- Header -->
   <header class="header">
-    <div class="logo">
-      <div class="logo-mark">📈</div>
+    <div class="brand">
+      <div class="brand-icon">📈</div>
       <div>
-        <div class="logo-text">台股情勢追蹤</div>
-        <div class="logo-sub">Taiwan Market Intelligence</div>
+        <div class="brand-name">台股情勢</div>
+        <div class="brand-sub">Market Intelligence</div>
       </div>
     </div>
     <div class="header-right">
-      <div class="status-chip">
-        <div id="sdot" class="sdot loading"></div>
-        <span id="update-time">載入中…</span>
+      <div class="status">
+        <div class="sdot loading" id="sdot"></div>
+        <span id="update-time">載入中</span>
       </div>
-      <button class="btn" id="refresh-btn" onclick="refreshAll()">重新整理</button>
+      <button class="btn-sm" id="refresh-btn" onclick="refreshAll()">更新</button>
     </div>
   </header>
 
-  <!-- Signal Banner -->
-  <div class="signal neutral" id="signal">
-    <div class="sig-icon">⏳</div>
-    <div>
-      <div class="sig-eye">市場訊號</div>
-      <div class="sig-title">計算中…</div>
+  <!-- AI Analysis Card -->
+  <div class="ai-card" id="ai-card">
+    <div class="ai-header">
+      <span class="ai-label">Gemini AI 深度分析</span>
+      <span class="ai-badge neu" id="ai-badge">—</span>
+    </div>
+    <div class="ai-loading" id="ai-body">等待市場資料…</div>
+    <div class="ai-btn-wrap">
+      <button class="btn-ai" id="ai-btn" onclick="runAnalysis()" disabled>
+        <span>🤖</span><span>重新分析</span>
+      </button>
     </div>
   </div>
 
-  <!-- KPI Summary Row -->
-  <div class="kpi-row" id="kpi-row">
-    <div class="kpi-card"><div class="kpi-label">台股加權</div><div class="kpi-val" id="kpi-twii">—</div><div class="kpi-sub" id="kpi-twii-sub">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">S&P 500</div><div class="kpi-val" id="kpi-spx">—</div><div class="kpi-sub" id="kpi-spx-sub">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">VIX 恐慌</div><div class="kpi-val" id="kpi-vix">—</div><div class="kpi-sub" id="kpi-vix-sub">—</div></div>
-    <div class="kpi-card"><div class="kpi-label">美元／台幣</div><div class="kpi-val" id="kpi-fx">—</div><div class="kpi-sub" id="kpi-fx-sub">即時匯率</div></div>
+  <!-- 3 Key Metrics -->
+  <div class="key-metrics" id="key-metrics">
+    <div class="km-card"><div class="km-label">台股</div><div class="km-price skel" style="width:75%;height:20px;margin-bottom:6px"></div><div class="skel" style="width:55%;height:12px;border-radius:4px"></div></div>
+    <div class="km-card"><div class="km-label">S&P 500</div><div class="km-price skel" style="width:75%;height:20px;margin-bottom:6px"></div><div class="skel" style="width:55%;height:12px;border-radius:4px"></div></div>
+    <div class="km-card"><div class="km-label">VIX</div><div class="km-price skel" style="width:75%;height:20px;margin-bottom:6px"></div><div class="skel" style="width:55%;height:12px;border-radius:4px"></div></div>
   </div>
 
-  <p class="sec-label">市場指標</p>
-  <div class="market-grid" id="market-grid"></div>
+  <!-- Other Market Indicators -->
+  <p class="section-title">其他指標</p>
+  <div class="market-list" id="market-list">
+    <div class="mrow skel" style="height:44px"></div>
+    <div class="mrow skel" style="height:44px"></div>
+    <div class="mrow skel" style="height:44px"></div>
+    <div class="mrow skel" style="height:44px"></div>
+  </div>
 
-  <p class="sec-label" style="margin-top:4px">國際・台灣情勢</p>
+  <!-- News -->
   <div class="news-wrap">
     <div class="tabs" id="tabs"><div class="tab-bar" id="tab-bar"></div></div>
-    <div id="sent-bar-wrap"></div>
-    <div class="news-list" id="news-list"><div class="news-state">載入新聞中…</div></div>
+    <div class="news-list" id="news-list"><div class="news-empty">載入新聞中…</div></div>
   </div>
 
   <div class="footer">
-    資料來源：Stooq · ExchangeRate-API · Google News RSS &nbsp;·&nbsp; 每 5 分鐘自動更新
-    &nbsp;&nbsp;<a href="/">← 返回首頁</a>
+    資料：Stooq · ExchangeRate-API · Google News · Gemini AI &nbsp;·&nbsp; 每 5 分鐘自動更新<br>
+    <a href="/">← 返回首頁</a>
   </div>
 </div>
 
 <script>
-// ── Constants ──────────────────────────────────────────────────────────────
+// ── State ─────────────────────────────────────────────────────────────────
 const CAT_ORDER = ['geopolitical','economic','semiconductor','domestic'];
-let marketData = [], newsData = {}, activeTab = CAT_ORDER[0], refreshTimer = null;
+let marketData = [], newsData = {}, activeTab = CAT_ORDER[0], timer = null;
 
-const CAT_COLOR = {
-  tw: 'var(--cat-tw)', us: 'var(--cat-us)', semi: 'var(--cat-semi)',
-  risk: 'var(--cat-risk)', rates: 'var(--cat-rates)', fx: 'var(--cat-fx)',
-  commodity: 'var(--cat-commodity)',
-};
+const CAT_COLOR = { tw:'#fbbf24', us:'#5b9cf6', semi:'#9d7cf8', risk:'#ff6b6b', rates:'#38bdf8', fx:'#3ddc84', commodity:'#fb923c' };
+const KEY_SYMS = ['^TWII','^GSPC','^VIX'];
+const OTHER_SYMS = ['^DJI','^IXIC','^SOX','TSM','^TNX','USDTWD=X','GC=F'];
+const DEC = { '^TNX':3, 'USDTWD=X':3 };
 
-// ── Formatters ─────────────────────────────────────────────────────────────
-function fmt(n, d = 2)   { if (n == null) return '—'; return n.toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
-function fmtPct(n)       { if (n == null) return '—'; return (n >= 0 ? '+' : '') + n.toFixed(2) + '%'; }
-function fmtChg(n)       { if (n == null) return '—'; return (n >= 0 ? '+' : '') + fmt(n, 2); }
+// ── Helpers ───────────────────────────────────────────────────────────────
+const fmt = (n, d=2) => n == null ? '—' : n.toLocaleString('en-US',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtPct = n => n == null ? '—' : (n>=0?'+':'')+n.toFixed(2)+'%';
+const fmtChg = n => n == null ? '—' : (n>=0?'+':'')+fmt(n,2);
 function fmtPrice(sym, n) {
   if (n == null) return '—';
-  if (sym === '^TNX') return n.toFixed(3) + '%';
-  if (sym === 'USDTWD=X') return n.toFixed(3);
-  if (n >= 10000) return n.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  if (sym==='^TNX') return n.toFixed(3)+'%';
+  if (sym==='USDTWD=X') return n.toFixed(3);
+  if (n>=10000) return n.toLocaleString('en-US',{maximumFractionDigits:0});
   return n.toFixed(2);
 }
 function timeAgo(s) {
-  if (!s) return ''; const d = new Date(s); if (isNaN(d)) return '';
-  const sec = Math.floor((Date.now() - d) / 1000);
-  if (sec < 60) return sec + ' 秒前';
-  if (sec < 3600) return Math.floor(sec / 60) + ' 分鐘前';
-  if (sec < 86400) return Math.floor(sec / 3600) + ' 小時前';
-  return Math.floor(sec / 86400) + ' 天前';
+  if (!s) return ''; const d=new Date(s); if(isNaN(d)) return '';
+  const sec=Math.floor((Date.now()-d)/1000);
+  if(sec<60) return sec+'秒前'; if(sec<3600) return Math.floor(sec/60)+'分前';
+  if(sec<86400) return Math.floor(sec/3600)+'時前'; return Math.floor(sec/86400)+'天前';
 }
 function sentiment(t) {
-  const lo = t.toLowerCase();
-  const pos = ['rise','gain','rally','record','surge','jump','boosts','deal','cooperation','stable','上漲','上升','創高','突破','回升','反彈','看好','協議','增加','成長'];
-  const neg = ['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','restrict','warns','threat','crisis','war','military','tariff','下跌','緊張','衝突','制裁','禁令','危機','攻擊','縮減'];
-  const p = pos.filter(k => lo.includes(k)).length;
-  const n = neg.filter(k => lo.includes(k)).length;
-  return p > n ? 'pos' : n > p ? 'neg' : 'neu';
+  const lo=t.toLowerCase();
+  const p=['rise','gain','rally','record','surge','jump','deal','stable','上漲','上升','創高','突破','回升','看好'];
+  const n=['fall','drop','decline','plunge','crash','tension','conflict','sanction','ban','threat','crisis','war','tariff','下跌','緊張','衝突','制裁','危機'];
+  const pc=p.filter(k=>lo.includes(k)).length, nc=n.filter(k=>lo.includes(k)).length;
+  return pc>nc?'pos':nc>pc?'neg':'neu';
 }
+function dir(pct) { return pct>.01?'up':pct<-.01?'down':'flat'; }
 
-// ── Signal Calculation ─────────────────────────────────────────────────────
-function calcSignal(data) {
-  const by   = Object.fromEntries(data.map(d => [d.symbol, d]));
-  const vix  = by['^VIX']?.price ?? 20;
-  const sp5  = by['^GSPC']?.pct  ?? 0;
-  const ndq  = by['^IXIC']?.pct  ?? 0;
-  const sox  = by['^SOX']?.pct   ?? 0;
-  const tsm  = by['TSM']?.pct    ?? 0;
-  const fx   = by['USDTWD=X']?.pct ?? 0;
-  const tnx  = by['^TNX']?.price ?? 4;
-  const avgUS = (sp5 + ndq) / 2;
-
-  let level, title, icon;
-  if      (vix > 30 || avgUS < -2)       { level='danger';   title='市場警戒 — 恐慌升溫'; icon='🔴'; }
-  else if (vix > 22 || avgUS < -.8)      { level='caution';  title='謹慎觀望 — 波動偏高'; icon='🟡'; }
-  else if (avgUS > .6 && vix < 18)       { level='positive'; title='偏多格局 — 外資可能流入'; icon='🟢'; }
-  else                                    { level='neutral';  title='中性整理 — 方向待確認'; icon='⚪'; }
-
-  const pills = [];
-  if (vix > 25)      pills.push(`⚡ VIX ${vix.toFixed(1)} 高位，恐慌升溫`);
-  else if (vix < 16) pills.push(`✓ VIX ${vix.toFixed(1)} 低位，情緒平穩`);
-  else               pills.push(`→ VIX ${vix.toFixed(1)} 中性`);
-
-  if (Math.abs(avgUS) > .25)
-    pills.push(`${avgUS > 0 ? '✓' : '✗'} 美股 S&P ${fmtPct(sp5)} / NASDAQ ${fmtPct(ndq)}`);
-  if (Math.abs(sox) > .5)  pills.push(`${sox > 0 ? '✓' : '✗'} 費城半導體 ${fmtPct(sox)}`);
-  if (Math.abs(tsm) > .5)  pills.push(`${tsm > 0 ? '✓' : '✗'} 台積電 ADR ${fmtPct(tsm)}`);
-  if (fx < -.3)             pills.push('✓ 台幣升值，外資流入訊號');
-  else if (fx > .3)         pills.push('→ 台幣貶值，資金偏保守');
-  if (tnx > 4.8)            pills.push(`⚡ 10Y 美債 ${tnx.toFixed(2)}%，估值壓力`);
-
-  return { level, title, icon, pills };
-}
-
-// ── GSAP count-up ──────────────────────────────────────────────────────────
-function countUp(el, endVal, decimals) {
-  const obj = { v: endVal * 0.96 };
-  gsap.to(obj, {
-    v: endVal, duration: 0.9, ease: 'power3.out',
-    onUpdate() {
-      el.textContent = obj.v.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals });
-    }
-  });
-}
-
-// ── KPI Row ────────────────────────────────────────────────────────────────
-function renderKPI(data) {
-  const by = Object.fromEntries(data.map(d => [d.symbol, d]));
-
-  function kpiUpdate(elId, subId, sym, extraFmt) {
-    const d = by[sym];
-    if (!d) return;
-    const el  = document.getElementById(elId);
-    const sub = document.getElementById(subId);
-    const dir = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : 'flat';
-    const col = dir === 'up' ? 'var(--green)' : dir === 'down' ? 'var(--red)' : 'var(--dim)';
-    const val = parseFloat(d.price);
-    const dec = sym === '^TNX' ? 3 : sym === 'USDTWD=X' ? 3 : 2;
-    countUp(el, val, dec);
-    if (extraFmt) { el.textContent = extraFmt(val); }
-    sub.style.color = col;
-    sub.textContent = `${fmtChg(d.change)}  ${fmtPct(d.pct)}`;
+// ── Count-up ──────────────────────────────────────────────────────────────
+function countUp(el, end, dec) {
+  const start = end * 0.97, dur = 700, t0 = performance.now();
+  function tick(now) {
+    const p = Math.min((now-t0)/dur, 1);
+    const ease = 1-Math.pow(1-p, 3);
+    el.textContent = (start+(end-start)*ease).toLocaleString('en-US',{minimumFractionDigits:dec,maximumFractionDigits:dec});
+    if (p<1) requestAnimationFrame(tick);
   }
-
-  kpiUpdate('kpi-twii', 'kpi-twii-sub', '^TWII');
-  kpiUpdate('kpi-spx',  'kpi-spx-sub',  '^GSPC');
-  kpiUpdate('kpi-vix',  'kpi-vix-sub',  '^VIX');
-  const fx = by['USDTWD=X'];
-  if (fx) {
-    const el  = document.getElementById('kpi-fx');
-    const sub = document.getElementById('kpi-fx-sub');
-    const val = parseFloat(fx.price);
-    countUp(el, val, 3);
-    sub.textContent = '美元兌台幣';
-    sub.style.color = 'var(--dim)';
-  }
+  requestAnimationFrame(tick);
 }
 
-// ── Render Market Grid ─────────────────────────────────────────────────────
-const SYMBOL_ORDER = ['^TWII','^DJI','^GSPC','^IXIC','^SOX','^VIX','USDTWD=X','TSM','^TNX','GC=F'];
-const SYMBOL_DECS  = { '^TNX':3, 'USDTWD=X':3 };
-
-function renderMarket(data) {
-  const grid = document.getElementById('market-grid');
-  if (!data.length) {
-    grid.innerHTML = `<div style="color:var(--red);padding:18px;grid-column:1/-1">⚠ 市場資料載入失敗，請稍後重試</div>`;
-    return;
-  }
-  const byS = Object.fromEntries(data.map(d => [d.symbol, d]));
-
-  grid.innerHTML = SYMBOL_ORDER.map(sym => {
-    const d = byS[sym]; if (!d) return '';
-    const dir   = d.pct > .01 ? 'up' : d.pct < -.01 ? 'down' : '';
-    const dec   = SYMBOL_DECS[sym] ?? 2;
-    const color = CAT_COLOR[d.cat] || 'var(--cyan)';
-    return `<div class="card ${dir}" data-sym="${sym}" data-val="${d.price}" data-dec="${dec}" data-cat="${d.cat}">
-      <div class="card-cat" style="background:${color}"></div>
-      <div class="card-tag">${d.zh}</div>
-      <div class="card-price" data-price></div>
-      <div class="card-delta ${dir || 'flat'}">
-        <span>${fmtChg(d.change)}</span>
-        <span>${fmtPct(d.pct)}</span>
-      </div>
+// ── Render Key Metrics ────────────────────────────────────────────────────
+const KM_LABELS = { '^TWII':'台股', '^GSPC':'S&P 500', '^VIX':'VIX 恐慌' };
+function renderKeyMetrics(data) {
+  const by = Object.fromEntries(data.map(d=>[d.symbol,d]));
+  document.getElementById('key-metrics').innerHTML = KEY_SYMS.map(sym=>{
+    const d=by[sym]; if(!d) return '';
+    const dec=DEC[sym]??2, dClass=dir(d.pct);
+    return `<div class="km-card">
+      <div class="km-label">${KM_LABELS[sym]}</div>
+      <div class="km-price" data-val="${d.price}" data-dec="${dec}"></div>
+      <div class="km-delta ${dClass}">${fmtChg(d.change)} ${fmtPct(d.pct)}</div>
     </div>`;
   }).join('');
-
-  grid.querySelectorAll('.card[data-val]').forEach(card => {
-    const el  = card.querySelector('[data-price]');
-    const val = parseFloat(card.dataset.val);
-    const dec = parseInt(card.dataset.dec);
-    if (!isNaN(val)) countUp(el, val, dec);
-    else el.textContent = '—';
+  document.querySelectorAll('.km-price[data-val]').forEach(el=>{
+    countUp(el, parseFloat(el.dataset.val), parseInt(el.dataset.dec));
   });
+}
 
-  gsap.from('.card', { y: 24, opacity: 0, duration: .5, stagger: .04, ease: 'power3.out', clearProps: 'all' });
-
-  // Signal
-  const sig = calcSignal(data);
-  const el  = document.getElementById('signal');
-  el.className = `signal ${sig.level}`;
-  el.innerHTML = `
-    <div class="sig-icon">${sig.icon}</div>
-    <div>
-      <div class="sig-eye">市場訊號</div>
-      <div class="sig-title">${sig.title}</div>
-      <div class="sig-pills">${sig.pills.map(p => `<span class="sig-pill">${p}</span>`).join('')}</div>
+// ── Render Market List ────────────────────────────────────────────────────
+function renderMarketList(data) {
+  const by = Object.fromEntries(data.map(d=>[d.symbol,d]));
+  document.getElementById('market-list').innerHTML = OTHER_SYMS.map(sym=>{
+    const d=by[sym]; if(!d) return '';
+    const dec=DEC[sym]??2, dClass=dir(d.pct);
+    const color=CAT_COLOR[d.cat]||'#888';
+    return `<div class="mrow">
+      <div class="mrow-cat" style="background:${color}"></div>
+      <div class="mrow-name">${d.zh}</div>
+      <div class="mrow-price">${fmtPrice(sym,d.price)}</div>
+      <div class="mrow-delta ${dClass}">${fmtChg(d.change)}<br><small>${fmtPct(d.pct)}</small></div>
     </div>`;
-  gsap.from('#signal', { y: -12, opacity: 0, duration: .4, ease: 'power2.out' });
-
-  // KPI row
-  renderKPI(data);
+  }).join('');
 }
 
-// ── News Sentiment Bar ─────────────────────────────────────────────────────
-function renderSentBar() {
-  const items = newsData[activeTab]?.items || [];
-  const wrap  = document.getElementById('sent-bar-wrap');
-  if (!items.length) { wrap.innerHTML = ''; return; }
-  let pos = 0, neg = 0, neu = 0;
-  items.forEach(it => { const s = sentiment(it.title); if (s==='pos') pos++; else if (s==='neg') neg++; else neu++; });
-  const total = pos + neg + neu || 1;
-  const pPct  = (pos / total * 100).toFixed(0);
-  const nPct  = (neg / total * 100).toFixed(0);
-  const uPct  = (neu / total * 100).toFixed(0);
-  wrap.innerHTML = `<div class="sent-bar">
-    <span class="sent-label">情緒 正${pos} 負${neg} 中${neu}</span>
-    <div class="sent-track">
-      <div class="sent-pos" style="width:${pPct}%"></div>
-      <div class="sent-neu" style="width:${uPct}%"></div>
-      <div class="sent-neg" style="width:${nPct}%"></div>
-    </div>
-  </div>`;
-}
-
-// ── Render Tabs ────────────────────────────────────────────────────────────
+// ── Render Tabs ───────────────────────────────────────────────────────────
 function renderTabs() {
-  const wrap = document.getElementById('tabs');
-  const bar  = document.getElementById('tab-bar');
-
-  const tabEls = CAT_ORDER.map(key => {
-    const label = newsData[key]?.label || key;
-    const count = newsData[key]?.items?.length || 0;
-    const items = newsData[key]?.items || [];
-    let pos = 0, neg = 0;
-    items.forEach(it => { const s = sentiment(it.title); if (s==='pos') pos++; else if (s==='neg') neg++; });
-    const dots = items.length
-      ? `<span class="tab-sentbadge">
-          ${pos  ? `<span class="tab-sentdot" style="background:var(--green)"></span>` : ''}
-          ${neg  ? `<span class="tab-sentdot" style="background:var(--red)"></span>` : ''}
-         </span>`
-      : '';
-    return `<div class="tab ${key===activeTab?'active':''}" data-tab="${key}" onclick="switchTab('${key}')">
-      ${label}${dots}${count ? `<span class="tab-n">${count}</span>` : ''}
-    </div>`;
+  const wrap=document.getElementById('tabs'), bar=document.getElementById('tab-bar');
+  wrap.innerHTML = CAT_ORDER.map(k=>{
+    const cnt=(newsData[k]?.items||[]).length;
+    return `<div class="tab${k===activeTab?' active':''}" onclick="switchTab('${k}')">${newsData[k]?.label||k}${cnt?`<span class="tab-n">${cnt}</span>`:''}</div>`;
   }).join('');
-
-  wrap.innerHTML = tabEls;
   wrap.appendChild(bar);
-  updateTabBar();
+  const active=document.querySelector('.tab.active');
+  if(active) { bar.style.left=active.offsetLeft+'px'; bar.style.width=active.offsetWidth+'px'; }
 }
 
-function updateTabBar() {
-  const active = document.querySelector('.tab.active');
-  const bar = document.getElementById('tab-bar');
-  if (!active || !bar) return;
-  bar.style.left  = active.offsetLeft + 'px';
-  bar.style.width = active.offsetWidth + 'px';
-}
-
-// ── Render News ────────────────────────────────────────────────────────────
+// ── Render News ───────────────────────────────────────────────────────────
 function renderNews() {
-  const list  = document.getElementById('news-list');
-  const items = newsData[activeTab]?.items || [];
-  if (!items.length) { list.innerHTML = '<div class="news-state">目前無新聞資料</div>'; return; }
-
-  list.innerHTML = items.map(it => {
-    const s = sentiment(it.title);
-    const cleanTitle = it.title.replace(/ - [^-]+$/, '');
-    const src = it.source || '';
-    const ago = timeAgo(it.pubDate);
-    return `<div class="news-item">
+  const list=document.getElementById('news-list');
+  const items=(newsData[activeTab]?.items)||[];
+  if(!items.length){list.innerHTML='<div class="news-empty">目前無新聞</div>';return;}
+  list.innerHTML=items.map(it=>{
+    const s=sentiment(it.title), title=it.title.replace(/ - [^-]+$/,'');
+    return `<div class="nitem">
       <div class="ndot ${s}"></div>
-      <div class="news-body">
-        <div class="news-title">${it.link
-          ? `<a href="${it.link}" target="_blank" rel="noopener noreferrer">${cleanTitle}</a>`
-          : cleanTitle}</div>
-        <div class="news-meta">
-          ${src ? `<span class="news-source">${src}</span>` : ''}
-          ${ago ? `<span>${ago}</span>` : ''}
-        </div>
+      <div>
+        <div class="ntitle">${it.link?`<a href="${it.link}" target="_blank" rel="noopener">${title}</a>`:title}</div>
+        <div class="nmeta">${it.source?`<span>${it.source}</span>`:''}<span>${timeAgo(it.pubDate)}</span></div>
       </div>
     </div>`;
   }).join('');
-
-  renderSentBar();
-  gsap.from('.news-item', { x: -12, opacity: 0, duration: .35, stagger: .03, ease: 'power2.out', clearProps: 'all' });
 }
 
 function switchTab(key) {
-  activeTab = key;
-  renderTabs();
-  gsap.to('#news-list', {
-    opacity: 0, duration: .1,
-    onComplete() {
-      renderNews();
-      gsap.to('#news-list', { opacity: 1, duration: .18 });
-    }
-  });
+  activeTab=key; renderTabs();
+  const list=document.getElementById('news-list');
+  list.style.opacity='0';
+  setTimeout(()=>{ renderNews(); list.style.transition='opacity .2s'; list.style.opacity='1'; setTimeout(()=>list.style.transition='',200); },100);
 }
 
-// ── Skeleton ───────────────────────────────────────────────────────────────
-function renderSkeleton() {
-  document.getElementById('market-grid').innerHTML = Array(10).fill(0).map(() =>
-    `<div class="card skeleton">
-      <div class="skel skel-tag"></div>
-      <div class="skel skel-price"></div>
-      <div class="skel skel-delta"></div>
-    </div>`
-  ).join('');
+// ── AI Analysis ───────────────────────────────────────────────────────────
+async function runAnalysis() {
+  const btn=document.getElementById('ai-btn');
+  const body=document.getElementById('ai-body');
+  const badge=document.getElementById('ai-badge');
+  const card=document.getElementById('ai-card');
 
-  const tabs = document.getElementById('tabs');
-  const bar  = document.getElementById('tab-bar');
-  tabs.innerHTML = ['兩岸政治','總體經濟','半導體','台灣國內'].map((l, i) =>
-    `<div class="tab ${i===0?'active':''}">${l}</div>`
-  ).join('');
-  tabs.appendChild(bar);
+  btn.disabled=true; btn.querySelector('span:last-child').textContent='分析中…';
+  body.innerHTML='<div class="ai-loading">🤖 Gemini 分析中，約需 5-10 秒…</div>';
+  badge.className='ai-badge neu'; badge.textContent='—';
+  card.classList.remove('loaded');
+
+  try {
+    const r=await fetch('/api/analyze',{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ market: marketData, news: newsData }),
+    });
+    const j=await r.json();
+    if(!j.ok) throw new Error(j.error);
+    const a=j.data;
+
+    const biasClass = a.bias==='偏多'?'bull':a.bias==='偏空'?'bear':'neu';
+    badge.className=`ai-badge ${biasClass}`; badge.textContent=a.bias||'—';
+
+    body.innerHTML=`
+      <div class="ai-body">
+        <div class="ai-summary">${a.summary||''}</div>
+        ${a.focus?`<div class="ai-focus">📌 ${a.focus}</div>`:''}
+        <div class="ai-cols">
+          <div>
+            <div class="ai-col-label bull">多方理由</div>
+            <ul class="ai-reasons">${(a.bull_reasons||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+          </div>
+          <div>
+            <div class="ai-col-label bear">空方理由</div>
+            <ul class="ai-reasons">${(a.bear_reasons||[]).map(r=>`<li>${r}</li>`).join('')}</ul>
+          </div>
+        </div>
+      </div>`;
+    card.classList.add('loaded');
+  } catch(e) {
+    body.innerHTML=`<div class="ai-loading" style="color:var(--red)">分析失敗：${e.message}</div>`;
+  } finally {
+    btn.disabled=false; btn.querySelector('span:last-child').textContent='重新分析';
+  }
 }
 
-// ── Status ─────────────────────────────────────────────────────────────────
-function setStatus(s) { document.getElementById('sdot').className = `sdot ${s}`; }
-function setTime(ts) {
-  const d = new Date(ts);
-  document.getElementById('update-time').textContent =
-    `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')} 更新`;
-}
-
-// ── Fetch ──────────────────────────────────────────────────────────────────
+// ── Fetch ─────────────────────────────────────────────────────────────────
 async function fetchMarket() {
   try {
-    const r = await fetch('/api/market-data');
-    const j = await r.json();
-    if (j.ok && j.data?.length) { marketData = j.data; renderMarket(j.data); setTime(j.ts); return true; }
-    throw new Error(j.error || '資料為空');
-  } catch (e) {
-    console.error('[market]', e);
-    document.getElementById('market-grid').innerHTML =
-      `<div style="color:var(--red);padding:18px;grid-column:1/-1">⚠ 市場資料載入失敗，請稍後重試<br><small style="color:var(--dim)">${e.message}</small></div>`;
-    document.getElementById('signal').className = 'signal neutral';
-    document.getElementById('signal').innerHTML =
-      `<div class="sig-icon">⚠</div><div><div class="sig-eye">市場訊號</div><div class="sig-title" style="color:var(--muted)">無法取得市場資料</div></div>`;
+    const r=await fetch('/api/market-data'), j=await r.json();
+    if(j.ok&&j.data?.length){
+      marketData=j.data;
+      renderKeyMetrics(j.data);
+      renderMarketList(j.data);
+      document.getElementById('update-time').textContent=new Date(j.ts).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})+'更新';
+      document.getElementById('ai-btn').disabled=false;
+      return true;
+    }
+    throw new Error(j.error||'無資料');
+  } catch(e) {
+    document.getElementById('market-list').innerHTML=`<div style="color:var(--red);padding:14px">⚠ 市場資料失敗：${e.message}</div>`;
     return false;
   }
 }
 
 async function fetchNews() {
   try {
-    const r = await fetch('/api/news');
-    const j = await r.json();
-    if (j.ok && j.data) { newsData = j.data; renderTabs(); renderNews(); }
-    else document.getElementById('news-list').innerHTML = '<div class="news-state">無法取得新聞資料</div>';
-  } catch (e) {
-    console.error('[news]', e);
-    document.getElementById('news-list').innerHTML = '<div class="news-state">無法取得新聞資料</div>';
+    const r=await fetch('/api/news'), j=await r.json();
+    if(j.ok&&j.data){newsData=j.data;renderTabs();renderNews();}
+  } catch(e) { console.error('[news]',e); }
+}
+
+// ── Refresh ───────────────────────────────────────────────────────────────
+async function refreshAll() {
+  const btn=document.getElementById('refresh-btn');
+  btn.disabled=true; btn.textContent='更新中';
+  document.getElementById('sdot').className='sdot loading';
+
+  const [ok]=await Promise.all([fetchMarket(), fetchNews()]);
+
+  document.getElementById('sdot').className=`sdot${ok?'':' error'}`;
+  btn.disabled=false; btn.textContent='更新';
+  clearTimeout(timer);
+  timer=setTimeout(refreshAll, 5*60*1000);
+
+  // Auto-run analysis once market data is loaded (first load only)
+  if(ok && !document.getElementById('ai-card').classList.contains('loaded')) {
+    runAnalysis();
   }
 }
 
-// ── Refresh ────────────────────────────────────────────────────────────────
-async function refreshAll() {
-  const btn = document.getElementById('refresh-btn');
-  btn.disabled = true; btn.textContent = '更新中…';
-  setStatus('loading');
-
-  const [ok] = await Promise.all([fetchMarket(), fetchNews()]);
-
-  setStatus(ok ? '' : 'error');
-  btn.disabled = false; btn.textContent = '重新整理';
-  clearTimeout(refreshTimer);
-  refreshTimer = setTimeout(refreshAll, 5 * 60 * 1000);
-}
-
-// ── Init ───────────────────────────────────────────────────────────────────
-renderSkeleton();
-gsap.from('.header',   { y: -18, opacity: 0, duration: .5, ease: 'power2.out' });
-gsap.from('#signal',   { y: -10, opacity: 0, duration: .4, delay: .08, ease: 'power2.out' });
-gsap.from('.kpi-row',  { y: 14,  opacity: 0, duration: .45, delay: .15, ease: 'power2.out' });
 refreshAll();
-
-window.addEventListener('resize', updateTabBar);
+window.addEventListener('resize', ()=>{
+  const active=document.querySelector('.tab.active'), bar=document.getElementById('tab-bar');
+  if(active&&bar){bar.style.left=active.offsetLeft+'px';bar.style.width=active.offsetWidth+'px';}
+});
 </script>
 </body>
 </html>
