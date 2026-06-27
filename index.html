@@ -9,6 +9,9 @@
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<script src="/app/core/config.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#F2EFE9;color:#1C1A17;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}
 
 /* ─── YC Splash Screen v2 ─── */
@@ -160,6 +163,11 @@
   </div>
 </div>
 <div id="root"></div>
+<script type="text/babel" src="/app/views/Todos.js" data-presets="react,env"></script>
+<script type="text/babel" src="/app/views/Notes.js" data-presets="react,env"></script>
+<script type="text/babel" src="/app/views/AICompany.js" data-presets="react,env"></script>
+<script type="text/babel" src="/app/views/Cards.js" data-presets="react,env"></script>
+<script type="text/babel" src="/app/views/Charts.js" data-presets="react,env"></script>
 <script type="text/babel" data-presets="react,env">
 const { useState, useEffect, useCallback, useRef } = React;
 
@@ -1917,6 +1925,10 @@ function ItemModal({type,close,updP,proj}){
   </div></div>);
 }
 
+function WsLoader(){
+  return <div style={{padding:"3rem",textAlign:"center",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".8rem"}}>載入中…</div>;
+}
+
 function App(){
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -1934,6 +1946,7 @@ function App(){
   const [showArchived,setShowArchived]=useState(false);
   const [showAllMats,setShowAllMats]=useState(false);
   const [sbOpen,setSbOpen]=useState(false);
+  const [wsView,setWsView]=useState(null);
   const lastSaveTime=useRef(0);
 
   useEffect(()=>{
@@ -1962,7 +1975,8 @@ function App(){
   const handleArchived=useCallback(()=>{setPid(null);setShowDash(true);},[]);
   const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);return curr;});},[ ]);
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setWsView(null);setSbOpen(false);},[]);
+  const goWs=useCallback((v)=>{setWsView(v);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F2EFE9",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>YC Studio</div>);
 
@@ -1985,7 +1999,7 @@ function App(){
           <span style={{fontFamily:"'DM Serif Display',serif",fontSize:"1rem",color:"rgba(255,255,255,.88)",letterSpacing:".04em"}}>Studio</span>
         </span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{wsView==="ai"?"AI 公司":wsView==="todos"?"待辦清單":wsView==="notes"?"筆記":wsView==="cards"?"卡片":wsView==="charts"?"圖表":showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
@@ -2029,12 +2043,39 @@ function App(){
           </div>
         </div>}
         <hr className="sb-sep"/>
-        {proj&&!showAllCal&&!proj.archived&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
+        <div className="sb-sec">Workspace</div>
+        <div className={`sb-item${wsView==="ai"?" on":""}`} onClick={()=>goWs("ai")}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>🤖</span>
+          <div className="sb-info"><div className="sb-name">AI 公司</div><div className="sb-sub">AI Agents</div></div>
+        </div>
+        <div className={`sb-item${wsView==="todos"?" on":""}`} onClick={()=>goWs("todos")}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
+          <div className="sb-info"><div className="sb-name">待辦清單</div><div className="sb-sub">Todos</div></div>
+        </div>
+        <div className={`sb-item${wsView==="notes"?" on":""}`} onClick={()=>goWs("notes")}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>📝</span>
+          <div className="sb-info"><div className="sb-name">筆記</div><div className="sb-sub">Notes</div></div>
+        </div>
+        <div className={`sb-item${wsView==="cards"?" on":""}`} onClick={()=>goWs("cards")}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
+          <div className="sb-info"><div className="sb-name">卡片</div><div className="sb-sub">Cards</div></div>
+        </div>
+        <div className={`sb-item${wsView==="charts"?" on":""}`} onClick={()=>goWs("charts")}>
+          <span style={{fontSize:"1rem",color:"var(--t3)"}}>📊</span>
+          <div className="sb-info"><div className="sb-name">圖表</div><div className="sb-sub">Charts</div></div>
+        </div>
+        <hr className="sb-sep"/>
+        {proj&&!showAllCal&&!proj.archived&&!wsView&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
         <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
       </aside>
 
-      <main className="main">
-        {data.projects.length===0?(
+      <main className="main" style={wsView?{padding:0,overflow:"hidden"}:{}}>
+        {wsView==="ai"    ? (window.AICompanyView ? <AICompanyView/> : <WsLoader/>) :
+         wsView==="todos" ? (window.TodosView    ? <TodosView/>    : <WsLoader/>) :
+         wsView==="notes" ? (window.NotesView    ? <NotesView/>    : <WsLoader/>) :
+         wsView==="cards" ? (window.CardsView    ? <CardsView/>    : <WsLoader/>) :
+         wsView==="charts"? (window.ChartsView   ? <ChartsView/>   : <WsLoader/>) :
+        data.projects.length===0?(
           <div style={{textAlign:"center",paddingTop:"6rem"}}>
             <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"2.5rem",fontWeight:400,marginBottom:".6rem",color:"var(--t1)"}}>尚無任何案件</div>
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
