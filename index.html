@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>YC Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Plus+Jakarta+Sans:wght@300;400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked@9/marked.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="/app/core/config.js"></script>
-<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#F2EFE9;color:#1C1A17;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#F2EFE9;color:#1C1A17;font-family:'Inter',sans-serif;font-size:15px;line-height:1.65;min-height:100vh;-webkit-font-smoothing:antialiased;}#root{min-height:100vh;}
 
 /* ─── YC Splash Screen v2 ─── */
 #yc-splash{
@@ -256,66 +257,73 @@ const INIT={materialLibrary:[],
 
 const CSS=`
 :root{
-  --bg:#F2EFE9; --sf:#FFFFFF; --sf2:#F8F6F2; --sf3:#EEE9E2;
-  --nav:#1C1A17; --nav2:#242220;
-  --dark:#1C1A17; --dark2:#2C2A27;
-  --acc:#C9924F; --acc2:#B07E3A;
-  --brass:#C9924F; --brass-lt:#FAF0E1;
-  --t1:#1C1A17; --t2:#6A6560; --t3:#A09890; --t4:#C8C3BC;
-  --b1:rgba(28,26,23,.08); --b2:rgba(28,26,23,.14); --b3:rgba(28,26,23,.22);
-  --sh:0 1px 4px rgba(28,26,23,.07),0 1px 2px rgba(28,26,23,.04);
-  --shm:0 6px 24px rgba(28,26,23,.12);
-  --done:#4D7A5A; --done-bg:#EBF2EC;
-  --red:#8B2525; --red-bg:#FCEAEA;
-  --amber:#8B6020; --amber-bg:#F5EFE0;
-  --sb:260px; --hh:56px; --bnav:70px;
-  --r:10px; --rs:7px; --rxs:5px;
+  --bg:#F0EDE7; --sf:#FFFFFF; --sf2:#F6F3EE; --sf3:#ECE8E1;
+  --nav:#0E0D0B; --nav2:#1A1814;
+  --dark:#0E0D0B; --dark2:#1A1814;
+  --acc:#B8804A; --acc2:#9E6A35;
+  --acc-bg:rgba(184,128,74,.09);
+  --brass:#B8804A; --brass-lt:#FDF4E9;
+  --t1:#1A1814; --t2:#5C5850; --t3:#9C9488; --t4:#C4BEB6;
+  --b1:rgba(20,18,14,.07); --b2:rgba(20,18,14,.12); --b3:rgba(20,18,14,.20);
+  --sh:0 1px 2px rgba(0,0,0,.04),0 2px 6px rgba(0,0,0,.04);
+  --shm:0 4px 16px rgba(0,0,0,.08),0 1px 4px rgba(0,0,0,.04);
+  --shl:0 12px 40px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.06);
+  --done:#3D7050; --done-bg:#E6F2EB;
+  --red:#872020; --red-bg:#FCEAEA;
+  --amber:#876020; --amber-bg:#F5EFE0;
+  --sb:252px; --hh:52px; --bnav:68px;
+  --r:10px; --rs:8px; --rxs:6px;
+  --font-ui:'Inter',sans-serif;
+  --font-serif:'DM Serif Display',serif;
+  --font-mono:'DM Mono',monospace;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{background:var(--bg);color:var(--t1);font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;overflow-x:hidden;}
+html,body{background:var(--bg);color:var(--t1);font-family:var(--font-ui);font-size:15px;line-height:1.65;min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
 button{font-family:inherit;cursor:pointer;border:none;background:none;}
-input,select,textarea{font-family:inherit;}
-::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:3px;}
+input,select,textarea{font-family:inherit;font-size:inherit;}
+::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-thumb{background:var(--b2);border-radius:4px;}::-webkit-scrollbar-track{background:transparent;}
+::selection{background:rgba(184,128,74,.18);}
 
 /* Header */
-.hdr{position:sticky;top:0;z-index:200;height:var(--hh);background:var(--nav);backdrop-filter:none;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;}
-.hdr-l{display:flex;align-items:center;gap:.85rem;min-width:0;}
-.hdr-logo{font-family:'DM Serif Display',serif;font-size:1.2rem;color:#FFFFFF;flex-shrink:0;}
-.hdr-div{width:1px;height:20px;background:rgba(255,255,255,.1);flex-shrink:0;}
-.hdr-proj{font-size:.95rem;font-weight:500;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s;}
-.hdr-proj:hover{color:#FFFFFF;}
-.hdr-r{display:flex;align-items:center;gap:.6rem;flex-shrink:0;}
-.hdr-date{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.25);}
-.sync-pip{width:7px;height:7px;border-radius:50%;background:var(--t4);transition:all .3s;flex-shrink:0;}
-.sync-pip.on{background:var(--done);}
-.menu-btn{display:none;width:38px;height:38px;border-radius:var(--rxs);align-items:center;justify-content:center;font-size:1rem;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.14);transition:all .15s;}
-.menu-btn:hover{border-color:rgba(255,255,255,.3);color:#FFFFFF;}
-.hdr-btn{font-size:.82rem;font-weight:500;padding:.38rem .95rem;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:rgba(255,255,255,.5);background:transparent;transition:all .15s;white-space:nowrap;cursor:pointer;}
-.hdr-btn:hover{border-color:var(--acc);color:#C9924F;background:rgba(201,146,79,.1);}
+.hdr{position:sticky;top:0;z-index:200;height:var(--hh);background:rgba(14,13,11,.92);backdrop-filter:blur(20px) saturate(1.4);-webkit-backdrop-filter:blur(20px) saturate(1.4);border-bottom:1px solid rgba(255,255,255,.05);display:flex;align-items:center;justify-content:space-between;padding:0 1.4rem;}
+.hdr-l{display:flex;align-items:center;gap:.8rem;min-width:0;}
+.hdr-logo{font-family:var(--font-serif);font-size:1.1rem;color:#FFFFFF;flex-shrink:0;letter-spacing:.01em;}
+.hdr-div{width:1px;height:18px;background:rgba(255,255,255,.08);flex-shrink:0;}
+.hdr-proj{font-size:.88rem;font-weight:500;color:rgba(255,255,255,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer;transition:color .15s;letter-spacing:-.01em;}
+.hdr-proj:hover{color:rgba(255,255,255,.9);}
+.hdr-r{display:flex;align-items:center;gap:.5rem;flex-shrink:0;}
+.hdr-date{font-family:var(--font-mono);font-size:.64rem;color:rgba(255,255,255,.18);letter-spacing:.04em;}
+.sync-pip{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15);transition:all .4s;flex-shrink:0;}
+.sync-pip.on{background:#4ade80;box-shadow:0 0 6px rgba(74,222,128,.5);}
+.menu-btn{display:none;width:36px;height:36px;border-radius:var(--rxs);align-items:center;justify-content:center;font-size:.95rem;color:rgba(255,255,255,.45);border:1px solid rgba(255,255,255,.1);transition:all .15s;}
+.menu-btn:hover{border-color:rgba(255,255,255,.25);color:#FFFFFF;}
+.hdr-btn{font-size:.78rem;font-weight:500;padding:.34rem .85rem;border:1px solid rgba(255,255,255,.1);border-radius:20px;color:rgba(255,255,255,.45);background:transparent;transition:all .18s;white-space:nowrap;cursor:pointer;letter-spacing:-.01em;}
+.hdr-btn:hover{border-color:var(--acc);color:var(--acc);background:rgba(184,128,74,.08);}
 
 /* Layout */
 .workspace{display:grid;grid-template-columns:var(--sb) 1fr;min-height:calc(100vh - var(--hh));}
 
 /* Sidebar */
-.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.06);padding:.85rem .7rem;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
-.sb-sec{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:.55rem .65rem .3rem;margin-top:.3rem;}
-.sb-item{display:flex;align-items:center;gap:.6rem;padding:.72rem .8rem;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;transition:all .15s;color:rgba(255,255,255,.45);font-size:.88rem;}
-.sb-item:hover{background:rgba(255,255,255,.05);color:#C8C3BC;}
-.sb-item.on{background:rgba(201,146,79,.12);color:#C9924F;border-left:2px solid #C9924F;margin-left:-2px;}
-.sb-item.on .sb-sub{color:rgba(201,146,79,.6);}
-.sb-item.on .sb-bar-track{background:rgba(248,244,236,.15);}
+.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.04);padding:.75rem .6rem;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
+.sb-sec{font-family:var(--font-mono);font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.16);padding:.6rem .7rem .25rem;margin-top:.4rem;}
+.sb-item{display:flex;align-items:center;gap:.55rem;padding:.62rem .7rem;border-radius:var(--rxs);cursor:pointer;border:1px solid transparent;transition:background .12s,color .12s;color:rgba(255,255,255,.38);font-size:.86rem;}
+.sb-item:hover{background:rgba(255,255,255,.055);color:rgba(255,255,255,.75);}
+.sb-item.on{background:rgba(184,128,74,.14);color:var(--acc);border-left:2px solid var(--acc);padding-left:calc(.7rem - 1px);}
+.sb-item.on .sb-sub{color:rgba(184,128,74,.55);}
+.sb-item.on .sb-name{color:var(--acc);}
+.sb-item.on .sb-bar-track{background:rgba(248,244,236,.12);}
 .sb-item.on .sb-bar-fill{background:var(--acc);}
-.sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
 .sb-info{flex:1;min-width:0;}
-.sb-name{font-size:.86rem;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.75);}
-.sb-sub{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.22);margin-top:.1rem;}
-.sb-bar-track{height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;margin-top:.45rem;}
+.sb-name{font-size:.84rem;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.68);transition:color .12s;}
+.sb-sub{font-family:var(--font-mono);font-size:.58rem;color:rgba(255,255,255,.18);margin-top:.08rem;}
+.sb-bar-track{height:2px;background:rgba(255,255,255,.08);border-radius:1px;overflow:hidden;margin-top:.4rem;}
 .sb-bar-fill{height:100%;background:var(--acc);border-radius:1px;transition:width .5s;}
-.sb-sep{border:none;border-top:1px solid rgba(255,255,255,.07);margin:.55rem .3rem;}
-.sb-add{width:100%;padding:.72rem;background:transparent;border:1.5px dashed rgba(255,255,255,.12);border-radius:var(--rs);font-size:.85rem;color:rgba(255,255,255,.28);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.35rem;}
+.sb-sep{border:none;border-top:1px solid rgba(255,255,255,.06);margin:.5rem .2rem;}
+.sb-add{width:100%;padding:.65rem;background:transparent;border:1px dashed rgba(255,255,255,.1);border-radius:var(--rs);font-size:.8rem;color:rgba(255,255,255,.22);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.35rem;letter-spacing:-.01em;}
 .sb-add:hover{border-color:var(--acc);color:var(--acc);}
-.sb-close-btn{display:none;width:100%;padding:.55rem;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:var(--rxs);font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.4);cursor:pointer;margin-bottom:.5rem;}
-.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149;}
+.sb-close-btn{display:none;width:100%;padding:.5rem;background:transparent;border:1px solid rgba(255,255,255,.1);border-radius:var(--rxs);font-family:var(--font-mono);font-size:.65rem;color:rgba(255,255,255,.35);cursor:pointer;margin-bottom:.5rem;}
+.sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:149;}
 
 /* Main */
 .main{padding:2rem 2.2rem 3rem;}
@@ -2020,23 +2028,23 @@ function App(){
             <div className="sb-info"><div className="sb-name">{p.name}</div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-bar-track"><div className="sb-bar-fill" style={{width:pct+"%"}}/></div></div>
           </div>);})}
         <hr className="sb-sep"/>
-        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setShowAllMats(false);setAllTodosFilter("pending");setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
+        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setShowAllMats(false);setWsView(null);setAllTodosFilter("pending");setSbOpen(false);}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>◻</span>
           <div className="sb-info">
             <div className="sb-name">所有待辦</div>
             <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
           </div>
         </div>
-        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
+        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setWsView(null);setSbOpen(false);}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>○</span>
           <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
         </div>
-        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>▤</span>
+        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setWsView(null);setSbOpen(false);}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>▤</span>
           <div className="sb-info"><div className="sb-name">材質與五金</div><div className="sb-sub">All Materials</div></div>
         </div>
-        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
+        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setWsView(null);setSbOpen(false);}}>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>◫</span>
           <div className="sb-info">
             <div className="sb-name">歸檔案件</div>
             <div className="sb-sub">{data.projects.filter(p=>p.archived).length} 件已歸檔</div>
@@ -2045,24 +2053,24 @@ function App(){
         <hr className="sb-sep"/>
         <div className="sb-sec">Workspace</div>
         <div className={`sb-item${wsView==="ai"?" on":""}`} onClick={()=>goWs("ai")}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>🤖</span>
-          <div className="sb-info"><div className="sb-name">AI 公司</div><div className="sb-sub">AI Agents</div></div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>◈</span>
+          <div className="sb-info"><div className="sb-name">AI 公司</div><div className="sb-sub">Agents & Runs</div></div>
         </div>
         <div className={`sb-item${wsView==="todos"?" on":""}`} onClick={()=>goWs("todos")}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
-          <div className="sb-info"><div className="sb-name">待辦清單</div><div className="sb-sub">Todos</div></div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>◻</span>
+          <div className="sb-info"><div className="sb-name">待辦清單</div><div className="sb-sub">Tasks</div></div>
         </div>
         <div className={`sb-item${wsView==="notes"?" on":""}`} onClick={()=>goWs("notes")}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>📝</span>
-          <div className="sb-info"><div className="sb-name">筆記</div><div className="sb-sub">Notes</div></div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>≡</span>
+          <div className="sb-info"><div className="sb-name">筆記</div><div className="sb-sub">Notes & Notebooks</div></div>
         </div>
         <div className={`sb-item${wsView==="cards"?" on":""}`} onClick={()=>goWs("cards")}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
-          <div className="sb-info"><div className="sb-name">卡片</div><div className="sb-sub">Cards</div></div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>⊞</span>
+          <div className="sb-info"><div className="sb-name">卡片</div><div className="sb-sub">Collections</div></div>
         </div>
         <div className={`sb-item${wsView==="charts"?" on":""}`} onClick={()=>goWs("charts")}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>📊</span>
-          <div className="sb-info"><div className="sb-name">圖表</div><div className="sb-sub">Charts</div></div>
+          <span style={{fontFamily:"var(--font-mono)",fontSize:".78rem",opacity:.7,flexShrink:0}}>∿</span>
+          <div className="sb-info"><div className="sb-name">圖表</div><div className="sb-sub">Markets & Data</div></div>
         </div>
         <hr className="sb-sep"/>
         {proj&&!showAllCal&&!proj.archived&&!wsView&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
