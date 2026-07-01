@@ -1,6 +1,23 @@
 {
+  "name": "floorplan-autocad-converter",
+  "version": "1.0.0",
+  "description": "將手繪丈量圖轉換成 AutoCAD DXF 檔案",
   "type": "module",
+  "main": "api/floorplan.js",
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "start": "node api/floorplan.js",
+    "dev": "node api/floorplan.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "dxf": "^5.3.1",
+    "express": "^5.2.1",
+    "jimp": "^1.6.1",
+    "multer": "^2.2.0",
+    "tesseract.js": "^7.0.0"
   }
 }
