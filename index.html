@@ -11,154 +11,9 @@
 <script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}body{background:#F2EFE9;color:#1C1A17;font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;line-height:1.65;min-height:100vh;}#root{min-height:100vh;}
 
-/* ─── YC Splash Screen v2 ─── */
-#yc-splash{
-  position:fixed;inset:0;background:#F2EFE9;
-  z-index:9999;display:flex;align-items:center;justify-content:center;
-}
-.yc-inner{display:flex;flex-direction:column;align-items:center;}
-#yc-logo-svg{
-  width:290px;max-width:90vw;height:auto;opacity:0;
-  animation:yc-logo-in .55s .15s forwards cubic-bezier(.25,.46,.45,.94);
-}
-@keyframes yc-logo-in{
-  from{opacity:0;transform:scale(.88) translateY(6px);}
-  to{opacity:1;transform:scale(1) translateY(0);}
-}
-/* 角落框 */
-.yc-br{stroke-dasharray:58;stroke-dashoffset:58;}
-.yc-c1{animation:yc-draw .45s .3s forwards ease-out;}
-.yc-c2{animation:yc-draw .45s .38s forwards ease-out;}
-.yc-c3{animation:yc-draw .45s .36s forwards ease-out;}
-.yc-c4{animation:yc-draw .45s .44s forwards ease-out;}
-/* 房屋輪廓 */
-.yc-wl,.yc-wr{stroke-dasharray:100;stroke-dashoffset:100;}
-.yc-wl{animation:yc-draw .48s .5s forwards ease-out;}
-.yc-wr{animation:yc-draw .48s .55s forwards ease-out;}
-#yc-fl{stroke-dasharray:165;stroke-dashoffset:165;animation:yc-draw .55s .62s forwards ease-out;}
-/* Y 屋脊 */
-#yc-al{stroke-dasharray:112;stroke-dashoffset:112;animation:yc-draw .62s .72s forwards cubic-bezier(.25,.46,.45,.94);}
-#yc-ar{stroke-dasharray:112;stroke-dashoffset:112;animation:yc-draw .62s .9s forwards cubic-bezier(.25,.46,.45,.94);}
-#yc-cap{stroke-dasharray:24;stroke-dashoffset:24;animation:yc-draw .22s 1.18s forwards ease;}
-/* Y 中柱 */
-#yc-st{stroke-dasharray:100;stroke-dashoffset:100;animation:yc-draw .5s 1.2s forwards cubic-bezier(.25,.46,.45,.94);}
-/* C 弧 */
-#yc-cc{stroke-dasharray:320;stroke-dashoffset:320;animation:yc-draw 1.15s 1.35s forwards cubic-bezier(.25,.46,.45,.94);}
-/* 通用 draw */
-@keyframes yc-draw{to{stroke-dashoffset:0;}}
-/* 尺 + 標注 + 工具 */
-#yc-ruler{opacity:0;animation:yc-fade .5s 1.95s forwards;}
-#yc-dim{opacity:0;animation:yc-fade .4s 2.05s forwards;}
-.yc-tool{opacity:0;animation:yc-fade .45s 2.12s forwards;}
-@keyframes yc-fade{to{opacity:1;}}
-/* 文字 */
-#yc-wm{
-  font-family:'DM Serif Display',serif;font-size:1.9rem;color:#584738;
-  letter-spacing:.38em;margin-top:1.05rem;
-  opacity:0;transform:translateY(10px);
-  animation:yc-up .72s 2.28s forwards;
-}
-#yc-tg{
-  font-family:'DM Mono',monospace;font-size:.5rem;color:#9A9184;
-  letter-spacing:.55em;text-transform:uppercase;margin-top:.42rem;
-  opacity:0;transform:translateY(8px);
-  animation:yc-up .62s 2.62s forwards;
-}
-@keyframes yc-up{to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
-<body><div id="yc-splash">
-  <div class="yc-inner">
-    <svg id="yc-logo-svg" viewBox="0 0 280 225" xmlns="http://www.w3.org/2000/svg">
-      <!-- 角落框架 -->
-      <g stroke="#584738" stroke-width="1.6" fill="none">
-        <path d="M10,36 L10,10 L36,10" class="yc-br yc-c1"/>
-        <path d="M244,10 L270,10 L270,36" class="yc-br yc-c2"/>
-        <path d="M10,189 L10,215 L36,215" class="yc-br yc-c3"/>
-        <path d="M244,215 L270,215 L270,189" class="yc-br yc-c4"/>
-      </g>
-      <!-- 薄外框 -->
-      <rect x="10" y="10" width="260" height="205" stroke="#584738" stroke-width="0.35" fill="none" opacity="0.15"/>
-
-      <!-- 房屋左右牆壁（細線，建築感）-->
-      <path class="yc-wl" d="M44,183 L44,90" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
-      <path class="yc-wr" d="M198,183 L198,90" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
-      <!-- 地板 -->
-      <path id="yc-fl" d="M44,183 L198,183" stroke="#584738" stroke-width="1.2" fill="none" opacity="0.5"/>
-      <!-- 屋簷虛線參考 -->
-      <line x1="28" y1="90" x2="215" y2="90" stroke="#B59E7D" stroke-width="0.5" opacity="0.22" stroke-dasharray="4,3"/>
-
-      <!-- Y：左屋脊 -->
-      <path id="yc-al" d="M44,90 L121,30" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-      <!-- Y：右屋脊 -->
-      <path id="yc-ar" d="M198,90 L121,30" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-      <!-- 屋脊帽 -->
-      <line id="yc-cap" x1="111" y1="30" x2="131" y2="30" stroke="#584738" stroke-width="2.5" stroke-linecap="round" opacity="0.65"/>
-      <!-- Y：中柱（門框）-->
-      <path id="yc-st" d="M121,90 L121,183" stroke="#584738" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-
-      <!-- C：右側大弧（外側擴展，弧形設計語彙）-->
-      <path id="yc-cc" d="M198,74 C 264,74 264,183 198,183" stroke="#B59E7D" stroke-width="5.5" fill="none" stroke-linecap="round"/>
-
-      <!-- 捲尺（底部）-->
-      <g id="yc-ruler">
-        <rect x="26" y="198" width="228" height="9" rx="2" fill="#EDE6D8" stroke="#9A9184" stroke-width="0.55" opacity="0.75"/>
-        <rect x="26" y="198" width="12" height="9" rx="1" fill="#CEC1A8" opacity="0.5"/>
-        <!-- 主刻度 -->
-        <g stroke="#584738" stroke-width="0.75" opacity="0.65">
-          <line x1="72" y1="198" x2="72" y2="204"/>
-          <line x1="119" y1="198" x2="119" y2="205"/>
-          <line x1="166" y1="198" x2="166" y2="204"/>
-          <line x1="213" y1="198" x2="213" y2="205"/>
-        </g>
-        <!-- 小刻度 -->
-        <g stroke="#9A9184" stroke-width="0.5" opacity="0.5">
-          <line x1="49" y1="198" x2="49" y2="201"/>
-          <line x1="96" y1="198" x2="96" y2="201"/>
-          <line x1="143" y1="198" x2="143" y2="201"/>
-          <line x1="190" y1="198" x2="190" y2="201"/>
-          <line x1="237" y1="198" x2="237" y2="201"/>
-        </g>
-        <text x="116" y="213" font-family="'DM Mono',monospace" font-size="5.5" fill="#9A9184" text-anchor="middle" opacity="0.65">100cm</text>
-        <text x="210" y="213" font-family="'DM Mono',monospace" font-size="5.5" fill="#9A9184" text-anchor="middle" opacity="0.65">200cm</text>
-      </g>
-
-      <!-- 建築尺寸標注線（房子寬度）-->
-      <g id="yc-dim">
-        <line x1="44" y1="190" x2="198" y2="190" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
-        <line x1="44" y1="188" x2="44" y2="193" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
-        <line x1="198" y1="188" x2="198" y2="193" stroke="#B59E7D" stroke-width="0.65" opacity="0.55"/>
-        <path d="M48,189 L44,190.5 L48,192" stroke="#B59E7D" stroke-width="0.65" fill="none" opacity="0.55"/>
-        <path d="M194,189 L198,190.5 L194,192" stroke="#B59E7D" stroke-width="0.65" fill="none" opacity="0.55"/>
-      </g>
-
-      <!-- 鉛筆工具（右上角）-->
-      <g class="yc-tool" transform="translate(248,22) rotate(-42)">
-        <rect x="-3" y="-17" width="6" height="24" rx="1" fill="#F8F4EC" stroke="#B59E7D" stroke-width="0.85"/>
-        <path d="M-3,7 L0,15 L3,7Z" fill="#CEC1A8" stroke="#B59E7D" stroke-width="0.7"/>
-        <rect x="-3" y="-19" width="6" height="4" rx="0.5" fill="#B59E7D" opacity="0.55"/>
-        <line x1="0" y1="-15" x2="0" y2="5" stroke="#B59E7D" stroke-width="0.4" opacity="0.35"/>
-      </g>
-
-      <!-- 直角尺（左上角）-->
-      <g class="yc-tool" transform="translate(20,17)">
-        <path d="M0,24 L0,0 L24,0" stroke="#9A9184" stroke-width="1.1" fill="none" opacity="0.5" stroke-linecap="round"/>
-        <g stroke="#9A9184" stroke-width="0.55" opacity="0.4">
-          <line x1="5" y1="0" x2="5" y2="4"/>
-          <line x1="10" y1="0" x2="10" y2="5"/>
-          <line x1="15" y1="0" x2="15" y2="4"/>
-          <line x1="20" y1="0" x2="20" y2="4"/>
-          <line x1="0" y1="5" x2="4" y2="5"/>
-          <line x1="0" y1="10" x2="5" y2="10"/>
-          <line x1="0" y1="15" x2="4" y2="15"/>
-          <line x1="0" y1="20" x2="4" y2="20"/>
-        </g>
-      </g>
-    </svg>
-    <div id="yc-wm">YC STUDIO</div>
-    <div id="yc-tg">INTERIOR DESIGN</div>
-  </div>
-</div>
+<body>
 <div id="root"></div>
 <script type="text/babel" data-presets="react,env">
 const { useState, useEffect, useCallback, useRef } = React;
@@ -232,7 +87,7 @@ const INIT={materialLibrary:[],
     hardware:[],materials:[{id:"mt1",name:"橡木實木地板",category:"地板",brand:"永記木業",spec:"15mm×180mm",supplier:"永記木業",imageUrl:"",notes:"自然木節紋，溫暖色調",inLibrary:false}],
     finances:[{id:"f1",type:"income",name:"設計費第一期",amt:150000,status:"paid",date:"2026-02-01",note:"",cat:"設計費"},{id:"f2",type:"income",name:"設計費第二期",amt:150000,status:"unpaid",date:"2026-05-01",note:"",cat:"設計費"},{id:"f3",type:"expense",name:"測量費",amt:5000,status:"paid",date:"2026-01-15",note:"",cat:"測量費"}],
     extras:[{id:"e1",title:"增設插座8組",amt:12000,date:"2026-04-15",note:"業主追加"}],
-    financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],
+    financeTodos:[{id:"ftt1",text:"追繳設計費第二期",done:false,due:"2026-06-01",note:"已提醒業主一次"},{id:"ftt2",text:"確認廠商請款單",done:false,due:"2026-05-30",note:""}],attachments:[],
     timelines:[{id:"tl1",type:"site",title:"現場丈量",date:"2026-01-05",note:"完成平面圖所需尺寸量測"},{id:"tl2",type:"meet",title:"概念提案會議",date:"2026-01-18",note:"業主確認北歐風格方向"},{id:"tl3",type:"site",title:"木作施工查驗",date:"2026-05-08",note:"天花板骨架確認"}]},
   {id:"p2",name:"新北板橋商業空間",archived:false,owner:"陳小姐",loc:"新北市板橋區",contact:"陳美君",tel:"0988-765-432",stage:"drawing",color:"#9A7A60",contractAmt:450000,
     milestones:[{id:"m1",title:"平面規劃完成",status:"done",start:"2026-03-01",end:"2026-03-15",prio:"high"},{id:"m2",title:"3D提案簡報",status:"doing",start:"2026-04-01",end:"2026-04-25",prio:"high"},{id:"m3",title:"施工圖發包",status:"pending",start:"2026-05-15",end:"2026-05-31",prio:"mid"}],
@@ -242,7 +97,7 @@ const INIT={materialLibrary:[],
     hardware:[],materials:[],
     finances:[{id:"f1",type:"income",name:"設計費全額",amt:280000,status:"unpaid",date:"2026-03-01",note:"",cat:"設計費"},{id:"f2",type:"expense",name:"3D製作費",amt:25000,status:"paid",date:"2026-04-01",note:"",cat:"外包費用"}],
     extras:[],
-    financeTodos:[{id:"ftt3",text:"確認合約簽署完成",done:false,due:"2026-05-15",note:""},{id:"ftt4",text:"發送設計費第一期請款單",done:false,due:"2026-05-20",note:""}],
+    financeTodos:[{id:"ftt3",text:"確認合約簽署完成",done:false,due:"2026-05-15",note:""},{id:"ftt4",text:"發送設計費第一期請款單",done:false,due:"2026-05-20",note:""}],attachments:[],
     timelines:[{id:"tl1",type:"meet",title:"初次簡報",date:"2026-03-05",note:"確認設計方向為輕奢風格"},{id:"tl2",type:"site",title:"現場複量",date:"2026-04-05",note:"確認柱位尺寸"}]}
 ]};
 
@@ -739,7 +594,7 @@ function DayDetailPanel({dateStr,proj,allProjects}){
           <div className="day-event-group-title">待辦截止</div>
           {detail.todos.map((t,i)=>{
             const c=PRC[t.prio];
-            return(<div key={i} className="day-event-card" style={{opacity:t.done?.7:1}}>
+            return(<div key={i} className="day-event-card" style={{opacity:t.done?0.7:1}}>
               <div className="day-event-icon" style={{background:c.bg,color:c.color}}>{t.done?"✓":"!"}</div>
               <div className="day-event-body">
                 <div className="day-event-title" style={{textDecoration:t.done?"line-through":"none"}}>{t.text}</div>
@@ -1188,6 +1043,142 @@ function HardwareModal({hw,close,onSave}){
 }
 
 /* ── OverviewTab ── */
+/* ── AttachmentSection（現場圖 / 附件）── */
+const ATT_CATS = ["丈量圖","需求表","手繪圖","現場照","其他"];
+
+function AttachmentSection({proj,upd}){
+  const [lb,setLb]=React.useState(null);
+  const [filter,setFilter]=React.useState("all");
+  const [uploading,setUploading]=React.useState(false);
+  const fileRef=React.useRef();
+  const atts=proj.attachments||[];
+  const shown=filter==="all"?atts:atts.filter(a=>a.category===filter);
+
+  function compressImg(file,cb){
+    const reader=new FileReader();
+    reader.onload=e=>{
+      const img=new Image();
+      img.onload=()=>{
+        const MAX=1200;
+        let w=img.width,h=img.height;
+        if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+        const cv=document.createElement("canvas");
+        cv.width=w;cv.height=h;
+        cv.getContext("2d").drawImage(img,0,0,w,h);
+        cb(cv.toDataURL("image/jpeg",0.78));
+      };
+      img.src=e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function addFiles(e){
+    const files=Array.from(e.target.files||[]);
+    if(!files.length)return;
+    setUploading(true);
+    let done=0;
+    files.forEach(file=>{
+      compressImg(file,url=>{
+        const att={id:Math.random().toString(36).slice(2,8),name:file.name.replace(/\.[^.]+$/,""),category:ATT_CATS[0],imageUrl:url,note:"",date:new Date().toISOString().slice(0,10)};
+        upd(p=>({...p,attachments:[...(p.attachments||[]),att]}));
+        done++;
+        if(done===files.length)setUploading(false);
+      });
+    });
+    e.target.value="";
+  }
+
+  function delAtt(id){upd(p=>({...p,attachments:(p.attachments||[]).filter(a=>a.id!==id)}));}
+  function updAtt(id,ch){upd(p=>({...p,attachments:(p.attachments||[]).map(a=>a.id===id?{...a,...ch}:a)}));}
+
+  const att=lb!==null?shown[lb]:null;
+
+  return(<div className="card full" style={{marginTop:"1rem"}}>
+    {/* Lightbox */}
+    {lb!==null&&att&&(
+      <div onClick={()=>setLb(null)}
+        style={{position:"fixed",inset:0,background:"rgba(0,0,0,.93)",zIndex:9000,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center"}}>
+        <div onClick={e=>e.stopPropagation()}
+          style={{position:"absolute",top:0,left:0,right:0,padding:"1rem 1.2rem",display:"flex",alignItems:"center",justifyContent:"space-between",background:"linear-gradient(rgba(0,0,0,.6),transparent)"}}>
+          <div>
+            <div style={{color:"#fff",fontSize:".95rem",fontWeight:600}}>{att.name}</div>
+            <div style={{color:"rgba(255,255,255,.4)",fontSize:".7rem",fontFamily:"'DM Mono',monospace",marginTop:".1rem"}}>{att.category} · {att.date}</div>
+          </div>
+          <button onClick={()=>setLb(null)}
+            style={{background:"rgba(255,255,255,.12)",border:"none",color:"#fff",fontSize:"1.1rem",width:36,height:36,borderRadius:18,cursor:"pointer"}}>✕</button>
+        </div>
+        <img src={att.imageUrl} alt={att.name} onClick={e=>e.stopPropagation()}
+          style={{maxWidth:"100vw",maxHeight:"calc(100vh - 150px)",objectFit:"contain"}}/>
+        <div onClick={e=>e.stopPropagation()}
+          style={{position:"absolute",bottom:0,left:0,right:0,padding:".75rem 1rem",background:"linear-gradient(transparent,rgba(0,0,0,.7))",display:"flex",gap:".5rem",alignItems:"center"}}>
+          <select value={att.category} onChange={e=>updAtt(att.id,{category:e.target.value})}
+            style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",borderRadius:6,padding:".3rem .5rem",fontSize:".78rem",flex:1}}>
+            {ATT_CATS.map(cat=><option key={cat} value={cat}>{cat}</option>)}
+          </select>
+          <input value={att.note} onChange={e=>updAtt(att.id,{note:e.target.value})}
+            placeholder="備註..."
+            style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",borderRadius:6,padding:".3rem .6rem",fontSize:".78rem",flex:2}}/>
+          <button onClick={()=>{delAtt(att.id);setLb(null);}}
+            style={{background:"rgba(200,60,60,.5)",border:"none",color:"#fff",borderRadius:6,padding:".3rem .7rem",cursor:"pointer",fontSize:".78rem",flexShrink:0}}>刪除</button>
+        </div>
+        {shown.length>1&&<>
+          <button onClick={e=>{e.stopPropagation();setLb(i=>i>0?i-1:shown.length-1);}}
+            style={{position:"absolute",left:"1rem",top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:44,height:44,borderRadius:22,cursor:"pointer",fontSize:"1.4rem",display:"flex",alignItems:"center",justifyContent:"center"}}>‹</button>
+          <button onClick={e=>{e.stopPropagation();setLb(i=>i<shown.length-1?i+1:0);}}
+            style={{position:"absolute",right:"1rem",top:"50%",transform:"translateY(-50%)",background:"rgba(255,255,255,.1)",border:"none",color:"#fff",width:44,height:44,borderRadius:22,cursor:"pointer",fontSize:"1.4rem",display:"flex",alignItems:"center",justifyContent:"center"}}>›</button>
+          <div style={{position:"absolute",bottom:"4.5rem",left:"50%",transform:"translateX(-50%)",color:"rgba(255,255,255,.4)",fontSize:".68rem",fontFamily:"'DM Mono',monospace"}}>{lb+1} / {shown.length}</div>
+        </>}
+      </div>
+    )}
+    {/* 頂部 */}
+    <div className="card-hd">
+      <span>📎 現場圖 / 附件</span>
+      <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
+        {uploading&&<span style={{fontSize:".7rem",color:"var(--t3)"}}>上傳中…</span>}
+        <button className="add-btn" onClick={()=>fileRef.current&&fileRef.current.click()}>＋ 新增</button>
+      </div>
+    </div>
+    <input ref={fileRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={addFiles}/>
+    {/* 類別篩選 */}
+    {atts.length>0&&(
+      <div style={{display:"flex",gap:".35rem",flexWrap:"wrap",marginBottom:".75rem"}}>
+        {["all",...ATT_CATS].map(cat=>{
+          const cnt=cat==="all"?atts.length:atts.filter(a=>a.category===cat).length;
+          if(cnt===0&&cat!=="all")return null;
+          return(<button key={cat} onClick={()=>setFilter(cat)}
+            style={{padding:".2rem .65rem",borderRadius:20,border:"1px solid",fontSize:".72rem",cursor:"pointer",
+              background:filter===cat?"var(--dark)":"transparent",
+              color:filter===cat?"#F8F4EC":"var(--t2)",
+              borderColor:filter===cat?"var(--dark)":"var(--b2)"}}>
+            {cat==="all"?"全部":cat}{" "}{cnt}
+          </button>);
+        })}
+      </div>
+    )}
+    {/* 圖片格 */}
+    {shown.length===0?(
+      <div style={{textAlign:"center",padding:"2rem 0",color:"var(--t3)",fontSize:".85rem"}}>
+        {atts.length===0?"點擊「＋ 新增」上傳丈量圖、需求表等附件":"此類別無圖片"}
+      </div>
+    ):(
+      <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:".5rem"}}>
+        {shown.map((a,idx)=>(
+          <div key={a.id} onClick={()=>setLb(idx)}
+            style={{cursor:"pointer",borderRadius:"var(--rs)",overflow:"hidden",position:"relative",aspectRatio:"3/4",background:"var(--sf2)"}}>
+            <img src={a.imageUrl} alt={a.name}
+              style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,.7))",padding:".35rem .4rem"}}>
+              <div style={{fontSize:".58rem",color:"rgba(255,255,255,.55)",textTransform:"uppercase",letterSpacing:".06em"}}>{a.category}</div>
+              <div style={{fontSize:".7rem",color:"#fff",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>);
+}
+
+
 function OverviewTab({proj,upd,openModal,setTab}){
   const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
   const updMs=(id,ch)=>upd(p=>({...p,milestones:p.milestones.map(m=>m.id===id?{...m,...ch}:m)}));
@@ -1245,6 +1236,7 @@ function OverviewTab({proj,upd,openModal,setTab}){
         </div>);
       })()}
     </div>
+    <AttachmentSection proj={proj} upd={upd}/>
   </>);
 }
 
@@ -1290,11 +1282,16 @@ function FinanceTab({proj,upd,openModal}){
   const collected=inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
   const outstanding=inc.filter(f=>f.status==="unpaid").reduce((a,f)=>a+Number(f.amt),0);
   const totalExp=exp.reduce((a,f)=>a+Number(f.amt),0);
+  const expPaid=exp.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
+  const expUnpaid=exp.filter(f=>f.status!=="paid").reduce((a,f)=>a+Number(f.amt),0);
   const exTot=proj.extras.reduce((a,e)=>a+Number(e.amt),0);
-  const unbilled=contractAmt-totalInvoiced;
+  const unbilled=Math.max(0,contractAmt-totalInvoiced);
+  const realProfit=collected-expPaid;
+  const projProfit=contractAmt-totalExp;
   const grossProfit=collected-totalExp;
   const invoicePct=contractAmt>0?Math.min(100,Math.round(totalInvoiced/contractAmt*100)):0;
   const collectPct=contractAmt>0?Math.min(100,Math.round(collected/contractAmt*100)):0;
+  const marginPct=contractAmt>0?Math.round(projProfit/contractAmt*100):0;
   const rl=(items,type)=>{
     if(items.length===0) return <Empty text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>;
     const unpaid=items.filter(f=>f.status!=="paid");
@@ -1320,42 +1317,130 @@ function FinanceTab({proj,upd,openModal}){
   return(<>
     <div className="fin-health">
       <div className="fin-health-title">Financial Health — 財務概況</div>
-      <div className="fin-h-grid">
-        <div className="fin-h-stat"><div className="fin-h-l">合約金額</div><div className="fin-h-v" style={{color:"#F8F4EC"}}>{editingContract?(
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem",marginBottom:"1rem"}}>
+
+        {/* ── 左：收款狀況 ── */}
+        <div>
+          <div style={{fontSize:".6rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.25)",textTransform:"uppercase",marginBottom:".6rem"}}>收款狀況</div>
+
+          {/* 合約金額 */}
+          <div style={{marginBottom:".75rem"}}>
+            <div style={{fontSize:".68rem",color:"rgba(255,255,255,.35)",marginBottom:".18rem"}}>合約金額</div>
+            {editingContract?(
               <div style={{display:"flex",gap:".4rem",alignItems:"center",marginTop:".2rem"}} onClick={e=>e.stopPropagation()}>
-                <input
-                  type="number"
-                  value={contractInput}
-                  onChange={e=>setContractInput(e.target.value)}
+                <input type="number" value={contractInput} onChange={e=>setContractInput(e.target.value)}
                   placeholder="輸入合約金額"
                   style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:6,padding:".3rem .6rem",color:"#F8F4EC",fontSize:"1rem",width:"160px"}}
                   autoFocus
-                  onKeyDown={e=>{
-                    if(e.key==="Enter"){upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}
-                    if(e.key==="Escape")setEditingContract(false);
-                  }}
+                  onKeyDown={e=>{if(e.key==="Enter"){upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}if(e.key==="Escape")setEditingContract(false);}}
                 />
                 <button onClick={()=>{upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}} style={{background:"var(--acc)",color:"#F8F4EC",border:"none",borderRadius:6,padding:".3rem .65rem",cursor:"pointer",fontSize:".8rem"}}>儲存</button>
                 <button onClick={()=>setEditingContract(false)} style={{background:"transparent",color:"rgba(248,244,236,.5)",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,padding:".3rem .55rem",cursor:"pointer",fontSize:".8rem"}}>✕</button>
               </div>
             ):(
-              <div style={{cursor:"pointer",display:"flex",alignItems:"center",gap:".5rem"}}
-                onClick={()=>{setContractInput(contractAmt?String(contractAmt):"");setEditingContract(true);}}>
-                <span>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定（點擊設定）</span>}</span>
-                <span style={{fontSize:".65rem",color:"rgba(248,244,236,.3)",opacity:.7}}>✎</span>
+              <div style={{cursor:"pointer",display:"flex",alignItems:"center",gap:".4rem"}} onClick={()=>{setContractInput(contractAmt?String(contractAmt):"");setEditingContract(true);}}>
+                <span style={{fontSize:"1.1rem",fontWeight:600,color:"#F8F4EC"}}>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定（點擊設定）</span>}</span>
+                <span style={{fontSize:".6rem",color:"rgba(248,244,236,.3)"}}>✎</span>
               </div>
-            )}</div></div>
-        <div className="fin-h-stat"><div className="fin-h-l">已請款</div><div className="fin-h-v" style={{color:"rgba(248,244,236,.8)"}}>NT${fmtN(totalInvoiced)}</div></div>
-        <div className="fin-h-stat"><div className="fin-h-l">已收款</div><div className="fin-h-v" style={{color:"#A8C8A8"}}>NT${fmtN(collected)}</div></div>
-        <div className="fin-h-stat"><div className="fin-h-l">待收款</div><div className="fin-h-v" style={{color:"#D4C080"}}>NT${fmtN(outstanding)}</div></div>
-        <div className="fin-h-stat"><div className="fin-h-l">未請款</div><div className="fin-h-v" style={{color:"rgba(248,244,236,.45)"}}>NT${fmtN(Math.max(0,unbilled))}</div></div>
-        <div className="fin-h-stat"><div className="fin-h-l">毛利</div><div className="fin-h-v" style={{color:grossProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(grossProfit)}</div></div>
+            )}
+          </div>
+
+          {/* 已請款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
+            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>已請款</span>
+            <div style={{textAlign:"right"}}>
+              <span style={{fontSize:".95rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalInvoiced)}</span>
+              {contractAmt>0&&<span style={{fontSize:".65rem",color:"rgba(201,146,79,.7)",marginLeft:".4rem"}}>{invoicePct}%</span>}
+            </div>
+          </div>
+
+          {/* 已收款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
+            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>已收款</span>
+            <div style={{textAlign:"right"}}>
+              <span style={{fontSize:".95rem",fontWeight:600,color:"#A8C8A8"}}>NT${fmtN(collected)}</span>
+              {contractAmt>0&&<span style={{fontSize:".65rem",color:"rgba(168,200,168,.7)",marginLeft:".4rem"}}>{collectPct}%</span>}
+            </div>
+          </div>
+
+          {/* 分隔 */}
+          <div style={{borderTop:"1px solid rgba(255,255,255,.07)",margin:".5rem 0"}}/>
+
+          {/* 待收款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>待收款</span>
+            <span style={{fontSize:".85rem",fontWeight:500,color:outstanding>0?"#D4C080":"rgba(248,244,236,.4)"}}>{outstanding>0?`NT$${fmtN(outstanding)}`:"NT$0"}</span>
+          </div>
+
+          {/* 未請款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>未請款</span>
+            <span style={{fontSize:".85rem",fontWeight:500,color:unbilled>0?"rgba(248,244,236,.55)":"rgba(248,244,236,.25)"}}>{unbilled>0?`NT$${fmtN(unbilled)}`:"NT$0"}</span>
+          </div>
+        </div>
+
+        {/* ── 右：支出 + 獲利 ── */}
+        <div>
+          <div style={{fontSize:".6rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.25)",textTransform:"uppercase",marginBottom:".6rem"}}>支出 / 獲利</div>
+
+          {/* 總支出 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
+            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>總支出</span>
+            <span style={{fontSize:".95rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalExp)}</span>
+          </div>
+
+          {/* 已付款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>已付款</span>
+            <span style={{fontSize:".85rem",color:"rgba(248,244,236,.55)"}}>NT${fmtN(expPaid)}</span>
+          </div>
+
+          {/* 待付款 */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".5rem"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>待付款</span>
+            <span style={{fontSize:".85rem",color:expUnpaid>0?"#D4C080":"rgba(248,244,236,.25)"}}>{expUnpaid>0?`NT$${fmtN(expUnpaid)}`:"NT$0"}</span>
+          </div>
+
+          {/* 分隔 */}
+          <div style={{borderTop:"1px solid rgba(255,255,255,.07)",margin:".5rem 0"}}/>
+
+          {/* 實際毛利（已收-已付） */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>實際毛利</span>
+            <span style={{fontSize:".88rem",fontWeight:600,color:realProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(realProfit)}</span>
+          </div>
+
+          {/* 預計毛利（合約-總支） */}
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>預計毛利</span>
+            <span style={{fontSize:".88rem",fontWeight:600,color:projProfit>=0?"#A8C8A8":"#C89090"}}>{contractAmt>0?`NT$${fmtN(projProfit)}`:"—"}</span>
+          </div>
+
+          {/* 毛利率 */}
+          {contractAmt>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
+            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>毛利率</span>
+            <span style={{fontSize:".88rem",fontWeight:700,color:marginPct>=20?"#A8C8A8":marginPct>=10?"#D4C080":"#C89090"}}>{marginPct}%</span>
+          </div>}
+        </div>
       </div>
+
+      {/* 進度條 */}
       {contractAmt>0&&<>
-        <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(181,158,125,.6)"}}/></div>
-        <div style={{height:4}}/>
-        <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:collectPct+"%",background:"#A8C8A8"}}/></div>
-        <div className="fin-progress-labels" style={{marginTop:".4rem"}}><span>請款率 {invoicePct}%</span><span>收款率 {collectPct}%</span></div>
+        <div style={{marginBottom:".25rem"}}>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:".2rem"}}>
+            <span style={{fontSize:".6rem",color:"rgba(255,255,255,.3)",fontFamily:"'DM Mono',monospace"}}>請款率</span>
+            <span style={{fontSize:".6rem",color:"rgba(201,146,79,.7)",fontFamily:"'DM Mono',monospace"}}>{invoicePct}%</span>
+          </div>
+          <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(201,146,79,.55)"}}/></div>
+        </div>
+        <div>
+          <div style={{display:"flex",justifyContent:"space-between",marginBottom:".2rem"}}>
+            <span style={{fontSize:".6rem",color:"rgba(255,255,255,.3)",fontFamily:"'DM Mono',monospace"}}>收款率</span>
+            <span style={{fontSize:".6rem",color:"rgba(168,200,168,.8)",fontFamily:"'DM Mono',monospace"}}>{collectPct}%</span>
+          </div>
+          <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:collectPct+"%",background:"#A8C8A8"}}/></div>
+        </div>
       </>}
     </div>
     <div className="fin-actions">
@@ -1366,8 +1451,48 @@ function FinanceTab({proj,upd,openModal}){
       </div>
       <button className="csv-btn" onClick={()=>exportCSV(proj)}>↓ CSV</button>
     </div>
-    {sub==="income"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finIncome")}>＋ 新增</button></div><div className="card">{rl(inc,"income")}</div></>}
-    {sub==="expense"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finExpense")}>＋ 新增</button></div><div className="card">{rl(exp,"expense")}</div></>}
+    {sub==="income"&&<>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finIncome")}>＋ 新增</button></div>
+      {inc.length>0&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:".5rem",marginBottom:".75rem"}}>
+        <div style={{background:"var(--dark)",borderRadius:"var(--rs)",padding:".65rem .8rem",color:"#F8F4EC"}}>
+          <div style={{fontSize:".6rem",color:"rgba(255,255,255,.35)",letterSpacing:".08em",marginBottom:".25rem"}}>總請款</div>
+          <div style={{fontSize:".88rem",fontWeight:700}}>NT${fmtN(inc.reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"rgba(255,255,255,.3)",marginTop:".15rem"}}>{inc.length} 筆</div>
+        </div>
+        <div style={{background:"rgba(77,122,90,.15)",border:"1px solid rgba(77,122,90,.25)",borderRadius:"var(--rs)",padding:".65rem .8rem"}}>
+          <div style={{fontSize:".6rem",color:"var(--t3)",letterSpacing:".08em",marginBottom:".25rem"}}>已收款</div>
+          <div style={{fontSize:".88rem",fontWeight:700,color:"var(--done)"}}>NT${fmtN(inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"var(--t3)",marginTop:".15rem"}}>{inc.filter(f=>f.status==="paid").length} 筆</div>
+        </div>
+        <div style={{background:"rgba(139,96,32,.12)",border:"1px solid rgba(139,96,32,.22)",borderRadius:"var(--rs)",padding:".65rem .8rem"}}>
+          <div style={{fontSize:".6rem",color:"var(--t3)",letterSpacing:".08em",marginBottom:".25rem"}}>待收款</div>
+          <div style={{fontSize:".88rem",fontWeight:700,color:"var(--amber)"}}>NT${fmtN(inc.filter(f=>f.status!=="paid").reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"var(--t3)",marginTop:".15rem"}}>{inc.filter(f=>f.status!=="paid").length} 筆</div>
+        </div>
+      </div>}
+      <div className="card">{rl(inc,"income")}</div>
+    </>}
+    {sub==="expense"&&<>
+      <div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("finExpense")}>＋ 新增</button></div>
+      {exp.length>0&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:".5rem",marginBottom:".75rem"}}>
+        <div style={{background:"var(--dark)",borderRadius:"var(--rs)",padding:".65rem .8rem",color:"#F8F4EC"}}>
+          <div style={{fontSize:".6rem",color:"rgba(255,255,255,.35)",letterSpacing:".08em",marginBottom:".25rem"}}>總支出</div>
+          <div style={{fontSize:".88rem",fontWeight:700}}>NT${fmtN(exp.reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"rgba(255,255,255,.3)",marginTop:".15rem"}}>{exp.length} 筆</div>
+        </div>
+        <div style={{background:"rgba(77,122,90,.15)",border:"1px solid rgba(77,122,90,.25)",borderRadius:"var(--rs)",padding:".65rem .8rem"}}>
+          <div style={{fontSize:".6rem",color:"var(--t3)",letterSpacing:".08em",marginBottom:".25rem"}}>已付款</div>
+          <div style={{fontSize:".88rem",fontWeight:700,color:"var(--done)"}}>NT${fmtN(exp.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"var(--t3)",marginTop:".15rem"}}>{exp.filter(f=>f.status==="paid").length} 筆</div>
+        </div>
+        <div style={{background:"rgba(139,96,32,.12)",border:"1px solid rgba(139,96,32,.22)",borderRadius:"var(--rs)",padding:".65rem .8rem"}}>
+          <div style={{fontSize:".6rem",color:"var(--t3)",letterSpacing:".08em",marginBottom:".25rem"}}>待付款</div>
+          <div style={{fontSize:".88rem",fontWeight:700,color:"var(--amber)"}}>NT${fmtN(exp.filter(f=>f.status!=="paid").reduce((a,f)=>a+Number(f.amt),0))}</div>
+          <div style={{fontSize:".65rem",color:"var(--t3)",marginTop:".15rem"}}>{exp.filter(f=>f.status!=="paid").length} 筆</div>
+        </div>
+      </div>}
+      <div className="card">{rl(exp,"expense")}</div>
+    </>}
     {sub==="extras"&&<><div style={{display:"flex",justifyContent:"flex-end",marginBottom:".75rem"}}><button className="add-btn" onClick={()=>openModal("extra")}>＋ 新增</button></div>
       <div className="card">{proj.extras.length===0?<Empty text="尚無追加項目"/>:
         proj.extras.map(e=><div key={e.id} className="fin-item">
@@ -2197,7 +2322,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
 <script>
 (function(){
   function exitSplash(){
-    var sp = document.getElementById('yc-splash');
+    var sp = 
     if (!sp) return;
     // Phase 1: 內容縮小淡出
     var inn = sp.querySelector('.yc-inner');
@@ -2214,7 +2339,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
   setTimeout(exitSplash, 3000);
   // 安全保險：4 秒內一定移除，不管任何錯誤
   setTimeout(function(){
-    var s = document.getElementById('yc-splash');
+    var s = 
     if (s && s.parentNode) s.parentNode.removeChild(s);
   }, 4200);
 })();
