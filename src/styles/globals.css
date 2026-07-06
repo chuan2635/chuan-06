@@ -76,7 +76,7 @@ body {
 }
 
 .tab-item {
-  @apply px-4 py-2 text-dark-text-secondary font-medium cursor-pointer border-b-2 border-transparent hover:text-dark transition-colors;
+  @apply px-4 py-2 text-dark-secondary font-medium cursor-pointer border-b-2 border-transparent hover:text-dark transition-colors;
 }
 
 .tab-item.active {
@@ -88,7 +88,7 @@ body {
 }
 
 .mention-pill {
-  @apply inline-flex items-center gap-1 px-2 py-1 rounded-pill bg-dark-secondary text-dark-text-secondary text-sm;
+  @apply inline-flex items-center gap-1 px-2 py-1 rounded-pill bg-dark-secondary text-dark-secondary text-sm;
 }
 
 /* Scrollbar */
