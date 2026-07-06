@@ -1,5 +1,4 @@
-import Anthropic from '@anthropic-ai/sdk';
-import { CLAUDE_TOOLS, ContentBlock, ToolUseBlock, TextBlock, getClaudeClient } from './claudeTools';
+import { CLAUDE_TOOLS, ContentBlock, getClaudeClient } from './claudeTools';
 import { executeTool } from './agentExecutor';
 
 interface AgentExecutionContext {
@@ -23,7 +22,6 @@ export const executeAgentWithClaude = async (
 ): Promise<ExecutionResult> => {
   const client = getClaudeClient();
   let totalTokens = 0;
-  const messages: Anthropic.Messages.MessageParam[] = [];
   let allContentBlocks: ContentBlock[] = [];
 
   // 構建系統提示
@@ -40,7 +38,7 @@ Focus on completing your assigned tasks efficiently.`;
   // 初始用戶消息
   const userMessage = `Please execute your assigned tasks now. You have up to ${context.maxRounds} tool calls available.`;
 
-  let currentMessages: Anthropic.Messages.MessageParam[] = [
+  let currentMessages: Array<{ role: string; content: any }> = [
     {
       role: 'user',
       content: userMessage,
@@ -52,43 +50,47 @@ Focus on completing your assigned tasks efficiently.`;
   while (roundCount < context.maxRounds) {
     try {
       // 呼叫 Claude API
-      const response = await client.messages.create({
+      const response = await (client as any).messages.create({
         model: 'claude-sonnet-4-6',
         max_tokens: 4096,
         system: systemPrompt,
-        tools: CLAUDE_TOOLS as unknown as Anthropic.Messages.Tool[],
-        messages: currentMessages,
+        tools: CLAUDE_TOOLS as unknown as any[],
+        messages: currentMessages as any,
       });
 
       // 累積 tokens
       totalTokens += response.usage.input_tokens + response.usage.output_tokens;
 
       // 處理響應
-      const toolResults: Anthropic.Messages.ToolResultBlockParam[] = [];
+      const toolResults: any[] = [];
       let hasToolUse = false;
 
       for (const block of response.content) {
         if (block.type === 'text') {
           allContentBlocks.push({
             type: 'text',
-            text: block.text,
+            text: (block as any).text,
           });
         } else if (block.type === 'tool_use') {
           hasToolUse = true;
           allContentBlocks.push({
             type: 'tool_use',
-            id: block.id,
-            name: block.name,
-            input: block.input as Record<string, any>,
+            id: (block as any).id,
+            name: (block as any).name,
+            input: (block as any).input as Record<string, any>,
           });
 
           // 執行工具
-          const result = await executeTool(block.name, block.input as Record<string, any>, context.folderId);
+          const result = await executeTool(
+            (block as any).name,
+            (block as any).input as Record<string, any>,
+            context.folderId
+          );
 
           // 準備工具結果回覆
           toolResults.push({
             type: 'tool_result',
-            tool_use_id: block.id,
+            tool_use_id: (block as any).id,
             content: JSON.stringify(result),
           });
         }

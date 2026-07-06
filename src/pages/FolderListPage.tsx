@@ -3,7 +3,6 @@ import { Agent, Folder } from '@/types';
 import { agentApi } from '@/api/agentApi';
 import { folderApi } from '@/api/folderApi';
 import { AgentCard, FAB } from '@/components';
-import { getCurrentUser } from '@/utils/supabaseClient';
 
 interface FolderListPageProps {
   folderId: string;

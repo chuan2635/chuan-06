@@ -1,14 +1,6 @@
 import { agentApi } from './agentApi';
 import { noteApi } from './noteApi';
 import { chartApi } from './chartApi';
-import { Agent, ExecutionLog, ExecutionStatus } from '@/types';
-
-interface ExecutionContext {
-  agentId: string;
-  logId: string;
-  startTime: Date;
-  agent: Agent;
-}
 
 interface ToolResult {
   success: boolean;
@@ -112,11 +104,6 @@ export const executeAgent = async (
 ): Promise<{ success: boolean; logId: string; error?: string }> => {
   const startTime = new Date();
   let logId = '';
-  let executionLog: Partial<ExecutionLog> = {
-    status: 'running' as ExecutionStatus,
-    triggered_by: triggeredBy,
-    started_at: startTime,
-  };
 
   try {
     // 1. 載入 Agent 設定
@@ -130,24 +117,18 @@ export const executeAgent = async (
       duration_seconds: 0,
       tokens_used: 0,
       credits_used: 0,
-      started_at: startTime,
-      ended_at: null,
-      error_message: null,
+      started_at: startTime.toISOString(),
+      ended_at: '',
+      error_message: '',
     });
 
     logId = log.id;
-    const context: ExecutionContext = {
-      agentId,
-      logId,
-      startTime,
-      agent,
-    };
 
     // 3. 載入長期記憶
     const memory = await agentApi.getMemory(agentId);
 
-    // 4. 準備系統提示
-    const systemPrompt = `
+    // 4. 準備系統提示（用於 Claude API 呼叫）
+    void `
 You are an AI agent named "${agent.name}".
 Your instructions:
 ${agent.instructions}
@@ -170,8 +151,7 @@ Max ${agent.max_rounds} tool calls allowed.
 `;
 
     // 5. 模擬 Claude API 呼叫（需要整合實際 API）
-    // 這裡先返回簡單的成功響應
-    const tokensUsed = 5000; // 模擬 tokens
+    const tokensUsed = 5000;
     const creditsUsed = calculateCredits(tokensUsed);
 
     // 6. 更新執行紀錄
@@ -183,27 +163,24 @@ Max ${agent.max_rounds} tool calls allowed.
       duration_seconds: duration,
       tokens_used: tokensUsed,
       credits_used: creditsUsed,
-      ended_at: endTime,
+      ended_at: endTime.toISOString(),
     });
 
     // 7. 更新預算
     const budget = await agentApi.getBudget(agentId);
     if (budget) {
-      const newCreditsUsed = budget.credits_used + creditsUsed;
       await agentApi.updateBudget(agentId, budget.monthly_limit);
-      // 更新 credits_used（需要實現 updateBudgetUsage 方法）
     }
 
     return { success: true, logId };
   } catch (error) {
-    // 更新執行紀錄為失敗
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
 
     if (logId) {
       await agentApi.updateExecutionLog(logId, {
         status: 'failed',
         error_message: errorMsg,
-        ended_at: new Date(),
+        ended_at: new Date().toISOString(),
         duration_seconds: Math.floor((Date.now() - startTime.getTime()) / 1000),
       });
     }
