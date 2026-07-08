@@ -1180,7 +1180,7 @@ function AttachmentSection({proj,upd}){
 
 
 function OverviewTab({proj,upd,openModal,setTab}){
-  const done=proj.milestones.filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
+  const done=(proj.milestones||[]).filter(m=>m.status==="done").length,total=proj.milestones.length,pct=total?Math.round(done/total*100):0,stIdx=STAGES.indexOf(proj.stage);
   const updMs=(id,ch)=>upd(p=>({...p,milestones:p.milestones.map(m=>m.id===id?{...m,...ch}:m)}));
   const delMs=id=>upd(p=>({...p,milestones:p.milestones.filter(m=>m.id!==id)}));
   const togTodo=id=>upd(p=>({...p,todos:p.todos.map(t=>t.id===id?{...t,done:!t.done}:t)}));
@@ -1276,7 +1276,7 @@ function FinanceTab({proj,upd,openModal}){
   const togSt=id=>upd(p=>({...p,finances:p.finances.map(f=>f.id===id?{...f,status:f.status==="paid"?"unpaid":"paid"}:f)}));
   const delFin=id=>upd(p=>({...p,finances:p.finances.filter(f=>f.id!==id)}));
   const delEx=id=>upd(p=>({...p,extras:p.extras.filter(e=>e.id!==id)}));
-  const inc=proj.finances.filter(f=>f.type==="income"),exp=proj.finances.filter(f=>f.type==="expense");
+  const inc=(proj.finances||[]).filter(f=>f.type==="income"),exp=(proj.finances||[]).filter(f=>f.type==="expense");
   const contractAmt=Number(proj.contractAmt||0);
   const totalInvoiced=inc.reduce((a,f)=>a+Number(f.amt),0);
   const collected=inc.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
@@ -1284,7 +1284,7 @@ function FinanceTab({proj,upd,openModal}){
   const totalExp=exp.reduce((a,f)=>a+Number(f.amt),0);
   const expPaid=exp.filter(f=>f.status==="paid").reduce((a,f)=>a+Number(f.amt),0);
   const expUnpaid=exp.filter(f=>f.status!=="paid").reduce((a,f)=>a+Number(f.amt),0);
-  const exTot=proj.extras.reduce((a,e)=>a+Number(e.amt),0);
+  const exTot=(proj.extras||[]).reduce((a,e)=>a+Number(e.amt),0);
   const unbilled=Math.max(0,contractAmt-totalInvoiced);
   const realProfit=collected-expPaid;
   const projProfit=contractAmt-totalExp;
@@ -1293,7 +1293,6 @@ function FinanceTab({proj,upd,openModal}){
   const collectPct=contractAmt>0?Math.min(100,Math.round(collected/contractAmt*100)):0;
   const marginPct=contractAmt>0?Math.round(projProfit/contractAmt*100):0;
   const rl=(items,type)=>{
-    if(items.length===0) return <Empty text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>;
     const unpaid=items.filter(f=>f.status!=="paid");
     const paid=items.filter(f=>f.status==="paid");
     const row=f=>(<div key={f.id} className="fin-item">
@@ -1304,13 +1303,13 @@ function FinanceTab({proj,upd,openModal}){
       </div>
       <DelX onClick={()=>delFin(f.id)}/>
     </div>);
-    return(<>
+    return items.length===0?(<Empty text={type==="income"?"尚無收款項目":"尚無支出記錄"}/>):(<>
       {unpaid.map(row)}
-      {paid.length>0&&<div style={{display:"flex",alignItems:"center",gap:".6rem",margin:".9rem 0 .5rem",opacity:.55}}>
+      {paid.length>0&&(<div style={{display:"flex",alignItems:"center",gap:".6rem",margin:".9rem 0 .5rem",opacity:.55}}>
         <div style={{flex:1,height:"1px",background:"var(--b1)"}}/>
         <span style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",letterSpacing:".1em",color:"var(--t3)",textTransform:"uppercase"}}>已完成 {paid.length} 筆</span>
         <div style={{flex:1,height:"1px",background:"var(--b1)"}}/>
-      </div>}
+      </div>)}
       {paid.map(row)}
     </>);
   };
