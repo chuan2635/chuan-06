@@ -1317,131 +1317,111 @@ function FinanceTab({proj,upd,openModal}){
     <div className="fin-health">
       <div className="fin-health-title">Financial Health — 財務概況</div>
 
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"1rem",marginBottom:"1rem"}}>
-
-        {/* ── 左：收款狀況 ── */}
-        <div>
-          <div style={{fontSize:".6rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.25)",textTransform:"uppercase",marginBottom:".6rem"}}>收款狀況</div>
-
-          {/* 合約金額 */}
-          <div style={{marginBottom:".75rem"}}>
-            <div style={{fontSize:".68rem",color:"rgba(255,255,255,.35)",marginBottom:".18rem"}}>合約金額</div>
-            {editingContract?(
-              <div style={{display:"flex",gap:".4rem",alignItems:"center",marginTop:".2rem"}} onClick={e=>e.stopPropagation()}>
-                <input type="number" value={contractInput} onChange={e=>setContractInput(e.target.value)}
-                  placeholder="輸入合約金額"
-                  style={{background:"rgba(255,255,255,.12)",border:"1px solid rgba(255,255,255,.3)",borderRadius:6,padding:".3rem .6rem",color:"#F8F4EC",fontSize:"1rem",width:"160px"}}
-                  autoFocus
-                  onKeyDown={e=>{if(e.key==="Enter"){upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}if(e.key==="Escape")setEditingContract(false);}}
-                />
-                <button onClick={()=>{upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}} style={{background:"var(--acc)",color:"#F8F4EC",border:"none",borderRadius:6,padding:".3rem .65rem",cursor:"pointer",fontSize:".8rem"}}>儲存</button>
-                <button onClick={()=>setEditingContract(false)} style={{background:"transparent",color:"rgba(248,244,236,.5)",border:"1px solid rgba(255,255,255,.2)",borderRadius:6,padding:".3rem .55rem",cursor:"pointer",fontSize:".8rem"}}>✕</button>
-              </div>
-            ):(
-              <div style={{cursor:"pointer",display:"flex",alignItems:"center",gap:".4rem"}} onClick={()=>{setContractInput(contractAmt?String(contractAmt):"");setEditingContract(true);}}>
-                <span style={{fontSize:"1.1rem",fontWeight:600,color:"#F8F4EC"}}>{contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".8rem",color:"rgba(248,244,236,.3)"}}>未設定（點擊設定）</span>}</span>
-                <span style={{fontSize:".6rem",color:"rgba(248,244,236,.3)"}}>✎</span>
-              </div>
-            )}
+      {/* 合約金額 */}
+      <div style={{marginBottom:".9rem",paddingBottom:".75rem",borderBottom:"1px solid rgba(255,255,255,.08)"}}>
+        <div style={{fontSize:".6rem",color:"rgba(255,255,255,.3)",letterSpacing:".1em",textTransform:"uppercase",marginBottom:".3rem"}}>合約金額</div>
+        {editingContract?(
+          <div style={{display:"flex",gap:".4rem",alignItems:"center"}} onClick={e=>e.stopPropagation()}>
+            <input type="number" value={contractInput} onChange={e=>setContractInput(e.target.value)}
+              placeholder="輸入合約金額"
+              style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.25)",borderRadius:6,padding:".35rem .6rem",color:"#F8F4EC",fontSize:".95rem",flex:1,minWidth:0}}
+              autoFocus
+              onKeyDown={e=>{
+                if(e.key==="Enter"){upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}
+                if(e.key==="Escape")setEditingContract(false);
+              }}/>
+            <button onClick={()=>{upd(p=>({...p,contractAmt:Number(contractInput)||0}));setEditingContract(false);}}
+              style={{background:"var(--acc)",color:"#fff",border:"none",borderRadius:6,padding:".35rem .7rem",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>儲存</button>
+            <button onClick={()=>setEditingContract(false)}
+              style={{background:"transparent",color:"rgba(255,255,255,.4)",border:"1px solid rgba(255,255,255,.15)",borderRadius:6,padding:".35rem .55rem",cursor:"pointer",fontSize:".82rem",flexShrink:0}}>✕</button>
           </div>
-
-          {/* 已請款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
-            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>已請款</span>
-            <div style={{textAlign:"right"}}>
-              <span style={{fontSize:".95rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalInvoiced)}</span>
-              {contractAmt>0&&<span style={{fontSize:".65rem",color:"rgba(201,146,79,.7)",marginLeft:".4rem"}}>{invoicePct}%</span>}
-            </div>
+        ):(
+          <div style={{display:"flex",alignItems:"center",gap:".5rem",cursor:"pointer"}}
+            onClick={()=>{setContractInput(contractAmt?String(contractAmt):"");setEditingContract(true);}}>
+            <span style={{fontSize:"1.3rem",fontWeight:700,color:"#F8F4EC",letterSpacing:"-.01em"}}>
+              {contractAmt?`NT$${fmtN(contractAmt)}`:<span style={{fontSize:".85rem",color:"rgba(255,255,255,.25)"}}>未設定，點此設定</span>}
+            </span>
+            <span style={{fontSize:".62rem",color:"rgba(255,255,255,.25)"}}>✎</span>
           </div>
+        )}
+      </div>
 
-          {/* 已收款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
-            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>已收款</span>
-            <div style={{textAlign:"right"}}>
-              <span style={{fontSize:".95rem",fontWeight:600,color:"#A8C8A8"}}>NT${fmtN(collected)}</span>
-              {contractAmt>0&&<span style={{fontSize:".65rem",color:"rgba(168,200,168,.7)",marginLeft:".4rem"}}>{collectPct}%</span>}
-            </div>
-          </div>
-
-          {/* 分隔 */}
-          <div style={{borderTop:"1px solid rgba(255,255,255,.07)",margin:".5rem 0"}}/>
-
-          {/* 待收款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>待收款</span>
-            <span style={{fontSize:".85rem",fontWeight:500,color:outstanding>0?"#D4C080":"rgba(248,244,236,.4)"}}>{outstanding>0?`NT$${fmtN(outstanding)}`:"NT$0"}</span>
-          </div>
-
-          {/* 未請款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>未請款</span>
-            <span style={{fontSize:".85rem",fontWeight:500,color:unbilled>0?"rgba(248,244,236,.55)":"rgba(248,244,236,.25)"}}>{unbilled>0?`NT$${fmtN(unbilled)}`:"NT$0"}</span>
-          </div>
+      {/* 收款狀況 */}
+      <div style={{fontSize:".58rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.22)",textTransform:"uppercase",marginBottom:".5rem"}}>收款狀況</div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+        <span style={{fontSize:".8rem",color:"rgba(255,255,255,.5)",whiteSpace:"nowrap"}}>已請款</span>
+        <div style={{display:"flex",alignItems:"center",gap:".5rem"}}>
+          <span style={{fontSize:".92rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalInvoiced)}</span>
+          {contractAmt>0&&<span style={{fontSize:".68rem",color:"rgba(201,146,79,.75)",fontFamily:"'DM Mono',monospace"}}>{invoicePct}%</span>}
         </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+        <span style={{fontSize:".8rem",color:"rgba(255,255,255,.5)",whiteSpace:"nowrap"}}>已收款</span>
+        <div style={{display:"flex",alignItems:"center",gap:".5rem"}}>
+          <span style={{fontSize:".92rem",fontWeight:600,color:"#A8C8A8"}}>NT${fmtN(collected)}</span>
+          {contractAmt>0&&<span style={{fontSize:".68rem",color:"rgba(168,200,168,.7)",fontFamily:"'DM Mono',monospace"}}>{collectPct}%</span>}
+        </div>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".25rem 0"}}>
+        <span style={{fontSize:".75rem",color:"rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>待收款</span>
+        <span style={{fontSize:".85rem",fontWeight:500,color:outstanding>0?"#D4C080":"rgba(248,244,236,.3)"}}>NT${fmtN(outstanding)}</span>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".25rem 0",marginBottom:".75rem"}}>
+        <span style={{fontSize:".75rem",color:"rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>未請款</span>
+        <span style={{fontSize:".85rem",fontWeight:500,color:unbilled>0?"rgba(248,244,236,.5)":"rgba(248,244,236,.2)"}}>NT${fmtN(unbilled)}</span>
+      </div>
 
-        {/* ── 右：支出 + 獲利 ── */}
-        <div>
-          <div style={{fontSize:".6rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.25)",textTransform:"uppercase",marginBottom:".6rem"}}>支出 / 獲利</div>
-
-          {/* 總支出 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".4rem"}}>
-            <span style={{fontSize:".75rem",color:"rgba(255,255,255,.45)"}}>總支出</span>
-            <span style={{fontSize:".95rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalExp)}</span>
-          </div>
-
-          {/* 已付款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>已付款</span>
-            <span style={{fontSize:".85rem",color:"rgba(248,244,236,.55)"}}>NT${fmtN(expPaid)}</span>
-          </div>
-
-          {/* 待付款 */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".5rem"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>待付款</span>
-            <span style={{fontSize:".85rem",color:expUnpaid>0?"#D4C080":"rgba(248,244,236,.25)"}}>{expUnpaid>0?`NT$${fmtN(expUnpaid)}`:"NT$0"}</span>
-          </div>
-
-          {/* 分隔 */}
-          <div style={{borderTop:"1px solid rgba(255,255,255,.07)",margin:".5rem 0"}}/>
-
-          {/* 實際毛利（已收-已付） */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>實際毛利</span>
-            <span style={{fontSize:".88rem",fontWeight:600,color:realProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(realProfit)}</span>
-          </div>
-
-          {/* 預計毛利（合約-總支） */}
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline",marginBottom:".3rem"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>預計毛利</span>
-            <span style={{fontSize:".88rem",fontWeight:600,color:projProfit>=0?"#A8C8A8":"#C89090"}}>{contractAmt>0?`NT$${fmtN(projProfit)}`:"—"}</span>
-          </div>
-
-          {/* 毛利率 */}
-          {contractAmt>0&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"baseline"}}>
-            <span style={{fontSize:".72rem",color:"rgba(255,255,255,.35)"}}>毛利率</span>
-            <span style={{fontSize:".88rem",fontWeight:700,color:marginPct>=20?"#A8C8A8":marginPct>=10?"#D4C080":"#C89090"}}>{marginPct}%</span>
-          </div>}
+      {/* 支出 */}
+      <div style={{borderTop:"1px solid rgba(255,255,255,.08)",paddingTop:".75rem",marginBottom:".5rem"}}>
+        <div style={{fontSize:".58rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.22)",textTransform:"uppercase",marginBottom:".5rem"}}>支出</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+          <span style={{fontSize:".8rem",color:"rgba(255,255,255,.5)",whiteSpace:"nowrap"}}>總支出</span>
+          <span style={{fontSize:".92rem",fontWeight:600,color:"rgba(248,244,236,.85)"}}>NT${fmtN(totalExp)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".25rem 0"}}>
+          <span style={{fontSize:".75rem",color:"rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>已付款</span>
+          <span style={{fontSize:".85rem",color:"rgba(248,244,236,.5)"}}>NT${fmtN(expPaid)}</span>
+        </div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".25rem 0",marginBottom:".75rem"}}>
+          <span style={{fontSize:".75rem",color:"rgba(255,255,255,.3)",whiteSpace:"nowrap"}}>待付款</span>
+          <span style={{fontSize:".85rem",fontWeight:500,color:expUnpaid>0?"#D4C080":"rgba(248,244,236,.2)"}}>NT${fmtN(expUnpaid)}</span>
         </div>
       </div>
 
+      {/* 獲利 */}
+      <div style={{borderTop:"1px solid rgba(255,255,255,.08)",paddingTop:".75rem",marginBottom:".75rem"}}>
+        <div style={{fontSize:".58rem",fontWeight:700,letterSpacing:".12em",color:"rgba(255,255,255,.22)",textTransform:"uppercase",marginBottom:".5rem"}}>獲利分析</div>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+          <span style={{fontSize:".78rem",color:"rgba(255,255,255,.4)",whiteSpace:"nowrap"}}>實際毛利</span>
+          <span style={{fontSize:".9rem",fontWeight:600,color:realProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(realProfit)}</span>
+        </div>
+        {contractAmt>0&&<>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+            <span style={{fontSize:".78rem",color:"rgba(255,255,255,.4)",whiteSpace:"nowrap"}}>預計毛利</span>
+            <span style={{fontSize:".9rem",fontWeight:600,color:projProfit>=0?"#A8C8A8":"#C89090"}}>NT${fmtN(projProfit)}</span>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:".3rem 0"}}>
+            <span style={{fontSize:".78rem",color:"rgba(255,255,255,.4)",whiteSpace:"nowrap"}}>毛利率</span>
+            <span style={{fontSize:".95rem",fontWeight:700,color:marginPct>=20?"#A8C8A8":marginPct>=10?"#D4C080":"#C89090"}}>{marginPct}%</span>
+          </div>
+        </>}
+      </div>
+
       {/* 進度條 */}
-      {contractAmt>0&&<>
-        <div style={{marginBottom:".25rem"}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:".2rem"}}>
-            <span style={{fontSize:".6rem",color:"rgba(255,255,255,.3)",fontFamily:"'DM Mono',monospace"}}>請款率</span>
-            <span style={{fontSize:".6rem",color:"rgba(201,146,79,.7)",fontFamily:"'DM Mono',monospace"}}>{invoicePct}%</span>
-          </div>
-          <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(201,146,79,.55)"}}/></div>
+      {contractAmt>0&&<div style={{borderTop:"1px solid rgba(255,255,255,.08)",paddingTop:".7rem"}}>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:".22rem"}}>
+          <span style={{fontSize:".62rem",color:"rgba(255,255,255,.28)",fontFamily:"'DM Mono',monospace",letterSpacing:".08em"}}>請款率</span>
+          <span style={{fontSize:".62rem",color:"rgba(201,146,79,.7)",fontFamily:"'DM Mono',monospace"}}>{invoicePct}%</span>
         </div>
-        <div>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:".2rem"}}>
-            <span style={{fontSize:".6rem",color:"rgba(255,255,255,.3)",fontFamily:"'DM Mono',monospace"}}>收款率</span>
-            <span style={{fontSize:".6rem",color:"rgba(168,200,168,.8)",fontFamily:"'DM Mono',monospace"}}>{collectPct}%</span>
-          </div>
-          <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:collectPct+"%",background:"#A8C8A8"}}/></div>
+        <div className="fin-progress-track" style={{marginBottom:".55rem"}}><div className="fin-progress-fill" style={{width:invoicePct+"%",background:"rgba(201,146,79,.6)"}}/></div>
+        <div style={{display:"flex",justifyContent:"space-between",marginBottom:".22rem"}}>
+          <span style={{fontSize:".62rem",color:"rgba(255,255,255,.28)",fontFamily:"'DM Mono',monospace",letterSpacing:".08em"}}>收款率</span>
+          <span style={{fontSize:".62rem",color:"rgba(168,200,168,.8)",fontFamily:"'DM Mono',monospace"}}>{collectPct}%</span>
         </div>
-      </>}
+        <div className="fin-progress-track"><div className="fin-progress-fill" style={{width:collectPct+"%",background:"#A8C8A8"}}/></div>
+      </div>}
     </div>
+
     <div className="fin-actions">
       <div className="fin-toggle">
         <button className={`fin-tab${sub==="income"?" on":""}`} onClick={()=>setSub("income")}>收款項目</button>
