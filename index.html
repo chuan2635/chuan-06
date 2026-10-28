@@ -1940,7 +1940,7 @@ function AllCalendar({data,calYM,setCalYM}){
       <div className="proj-title">總合行事曆</div>
       <div className="proj-meta-row"><span className="proj-meta">All Projects</span></div>
       <div style={{display:"flex",gap:".4rem",flexWrap:"wrap",marginTop:".6rem"}}>
-        {data.projects.map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",padding:".18rem .58rem",borderRadius:20,border:"1px solid var(--b2)",color:p.color,background:"var(--sf)"}}>{p.name}</span>)}
+        {data.projects.filter(p=>!p.archived).map(p=><span key={p.id} style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",padding:".18rem .58rem",borderRadius:20,border:"1px solid var(--b2)",color:p.color,background:"var(--sf)"}}>{p.name}</span>)}
       </div>
     </div>
     <CalendarView allProjects={data.projects.filter(p=>!p.archived)} calYM={calYM} setCalYM={setCalYM}/>
@@ -2519,7 +2519,7 @@ function App(){
   const handleArchived=useCallback(()=>{setPid(null);setShowDash(true);},[]);
   const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);return curr;});},[ ]);
   const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);},[]);
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F2EFE9",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>YC Studio</div>);
 
