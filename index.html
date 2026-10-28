@@ -2097,6 +2097,52 @@ function CaseOverviewView({data,selectProj}){
 
 // ── ProgressTab ────────────────────────────────────────────────
 function ProgressTab({proj,upd}){
+  // ── Reminders state ──
+  const remGroups=proj.remGroups||[];
+  const [activeGid,setActiveGid]=React.useState(()=>(proj.remGroups||[])[0]?.id||null);
+  const [showGForm,setShowGForm]=React.useState(false);
+  const [newGName,setNewGName]=React.useState("");
+  const [newItemTitle,setNewItemTitle]=React.useState("");
+  const [editId,setEditId]=React.useState(null);
+  const [editForm,setEditForm]=React.useState({title:"",note:"",date:""});
+  const activeGroup=remGroups.find(g=>g.id===activeGid)||null;
+  const totalDone=remGroups.reduce((s,g)=>s+g.items.filter(i=>i.done).length,0);
+  const hasCompleted=remGroups.some(g=>g.items.some(i=>i.done));
+  const isOverdue=(d)=>d&&new Date(d)<new Date(new Date().toDateString());
+  const addGroup=()=>{
+    if(!newGName.trim())return;
+    const g={id:uid(),name:newGName.trim(),items:[]};
+    upd(d=>({...d,remGroups:[...(d.remGroups||[]),g]}));
+    setActiveGid(g.id);
+    setNewGName("");setShowGForm(false);
+  };
+  const addRemItem=()=>{
+    if(!newItemTitle.trim()||!activeGid)return;
+    const item={id:uid(),title:newItemTitle.trim(),note:"",date:"",done:false};
+    upd(d=>({...d,remGroups:(d.remGroups||[]).map(g=>g.id===activeGid?{...g,items:[...g.items,item]}:g)}));
+    setNewItemTitle("");
+  };
+  const toggleRem=(gid,iid)=>{
+    upd(d=>({...d,remGroups:(d.remGroups||[]).map(g=>g.id===gid?{...g,items:g.items.map(i=>i.id===iid?{...i,done:!i.done}:i)}:g)}));
+  };
+  const clearDone=()=>{
+    upd(d=>({...d,remGroups:(d.remGroups||[]).map(g=>({...g,items:g.items.filter(i=>!i.done)}))}));
+  };
+  const openEdit=(item)=>{setEditId(item.id);setEditForm({title:item.title,note:item.note||"",date:item.date||""}); };
+  const saveEdit=(gid)=>{
+    upd(d=>({...d,remGroups:(d.remGroups||[]).map(g=>g.id===gid?{...g,items:g.items.map(i=>i.id===editId?{...i,...editForm}:i)}:g)}));
+    setEditId(null);
+  };
+  const removeRemItem=(gid,iid)=>{
+    upd(d=>({...d,remGroups:(d.remGroups||[]).map(g=>g.id===gid?{...g,items:g.items.filter(i=>i.id!==iid)}:g)}));
+    setEditId(null);
+  };
+  const removeGroup=(gid)=>{
+    upd(d=>({...d,remGroups:(d.remGroups||[]).filter(g=>g.id!==gid)}));
+    const rem=remGroups.filter(g=>g.id!==gid);
+    setActiveGid(rem[0]?.id||null);
+  };
+  // ── Progress log state ──
   const progress=proj.progress||[];
   const [showForm,setShowForm]=React.useState(false);
   const [form,setForm]=React.useState({date:"",title:"",note:"",done:false});
@@ -2107,14 +2153,81 @@ function ProgressTab({proj,upd}){
     setForm({date:"",title:"",note:"",done:false});
     setShowForm(false);
   };
-  const toggleDone=(id)=>{
-    upd(d=>({...d,progress:(d.progress||[]).map(x=>x.id===id?{...x,done:!x.done}:x)}));
-  };
-  const removeItem=(id)=>{
-    upd(d=>({...d,progress:(d.progress||[]).filter(x=>x.id!==id)}));
-  };
+  const toggleDone=(id)=>{upd(d=>({...d,progress:(d.progress||[]).map(x=>x.id===id?{...x,done:!x.done}:x)}));};
+  const removeItem=(id)=>{upd(d=>({...d,progress:(d.progress||[]).filter(x=>x.id!==id)}));};
   return(
     <div>
+      {/* ══ 提醒事項 ══ */}
+      <div style={{marginBottom:"1.6rem"}}>
+        <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:".75rem"}}>
+          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)",letterSpacing:".12em",textTransform:"uppercase"}}>提醒事項</div>
+          {hasCompleted&&<button onClick={clearDone} style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--acc)",background:"none",border:"none",cursor:"pointer"}}>已完成 {totalDone} 個 · 清除</button>}
+        </div>
+        {/* group pills */}
+        <div style={{display:"flex",gap:".4rem",overflowX:"auto",paddingBottom:".4rem",marginBottom:".75rem",scrollbarWidth:"none",WebkitOverflowScrolling:"touch"}}>
+          {remGroups.map(g=>(
+            <button key={g.id} onClick={()=>setActiveGid(g.id)} style={{flexShrink:0,padding:".28rem .75rem",background:activeGid===g.id?"var(--acc)":"var(--sf)",color:activeGid===g.id?"#fff":"var(--t2)",border:"1px solid "+(activeGid===g.id?"var(--acc)":"var(--b2)"),borderRadius:"20px",fontFamily:"'DM Mono',monospace",fontSize:".72rem",cursor:"pointer",whiteSpace:"nowrap"}}>{g.name}</button>
+          ))}
+          {showGForm?(
+            <div style={{display:"flex",gap:".35rem",flexShrink:0,alignItems:"center"}}>
+              <input autoFocus value={newGName} onChange={e=>setNewGName(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addGroup();if(e.key==="Escape"){setShowGForm(false);setNewGName("");}}} placeholder="類別名稱" style={{padding:".26rem .6rem",border:"1px solid var(--acc)",borderRadius:"20px",background:"var(--sf)",color:"var(--t1)",fontFamily:"'DM Mono',monospace",fontSize:".72rem",width:"90px",outline:"none"}}/>
+              <button onClick={addGroup} style={{padding:".26rem .6rem",background:"var(--acc)",color:"#fff",border:"none",borderRadius:"20px",fontFamily:"'DM Mono',monospace",fontSize:".72rem",cursor:"pointer"}}>加入</button>
+              <button onClick={()=>{setShowGForm(false);setNewGName("");}} style={{padding:".26rem .4rem",background:"none",color:"var(--t3)",border:"none",fontSize:".8rem",cursor:"pointer"}}>✕</button>
+            </div>
+          ):(
+            <button onClick={()=>setShowGForm(true)} style={{flexShrink:0,padding:".28rem .7rem",background:"var(--sf)",color:"var(--t3)",border:"1px dashed var(--b2)",borderRadius:"20px",fontFamily:"'DM Mono',monospace",fontSize:".72rem",cursor:"pointer"}}>＋ 類別</button>
+          )}
+        </div>
+        {/* empty state */}
+        {remGroups.length===0&&<div style={{textAlign:"center",padding:"1.8rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>點擊「＋ 類別」新增工程類別</div>}
+        {/* items card */}
+        {activeGroup&&(
+          <div style={{background:"var(--sf)",border:"1px solid var(--b2)",borderRadius:"var(--r)",overflow:"hidden"}}>
+            {/* group header row */}
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:".5rem .9rem",borderBottom:"1px solid var(--b2)"}}>
+              <div style={{fontFamily:"'DM Mono',monospace",fontSize:".75rem",fontWeight:600,color:"var(--t1)"}}>{activeGroup.name}</div>
+              <button onClick={()=>{if(window.confirm(`刪除「${activeGroup.name}」類別及所有任務？`))removeGroup(activeGid);}} style={{background:"none",border:"none",color:"var(--t3)",cursor:"pointer",fontSize:".82rem",padding:"0 .2rem"}}>⋯</button>
+            </div>
+            {/* item rows */}
+            {activeGroup.items.map((item,idx)=>(
+              <div key={item.id} style={{borderBottom:idx<activeGroup.items.length-1?"1px solid var(--b2)":"none"}}>
+                {editId===item.id?(
+                  <div style={{padding:".75rem .9rem",display:"flex",flexDirection:"column",gap:".48rem",background:"var(--bg)"}}>
+                    <input autoFocus value={editForm.title} onChange={e=>setEditForm(v=>({...v,title:e.target.value}))} style={{padding:".38rem .6rem",border:"1px solid var(--acc)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontSize:".88rem",outline:"none"}}/>
+                    <input value={editForm.note} onChange={e=>setEditForm(v=>({...v,note:e.target.value}))} placeholder="加入附註" style={{padding:".34rem .6rem",border:"1px solid var(--b2)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontSize:".8rem",outline:"none"}}/>
+                    <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
+                      <span style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>📅</span>
+                      <input type="date" value={editForm.date} onChange={e=>setEditForm(v=>({...v,date:e.target.value}))} style={{padding:".3rem .5rem",border:"1px solid var(--b2)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontFamily:"'DM Mono',monospace",fontSize:".72rem",outline:"none"}}/>
+                      <button onClick={()=>removeRemItem(activeGid,item.id)} style={{marginLeft:"auto",padding:".3rem .65rem",background:"rgba(255,59,48,.12)",color:"#ff3b30",border:"none",borderRadius:"6px",fontFamily:"'DM Mono',monospace",fontSize:".68rem",cursor:"pointer"}}>刪除</button>
+                      <button onClick={()=>saveEdit(activeGid)} style={{padding:".3rem .75rem",background:"var(--acc)",color:"#fff",border:"none",borderRadius:"6px",fontFamily:"'DM Mono',monospace",fontSize:".68rem",cursor:"pointer"}}>完成</button>
+                    </div>
+                  </div>
+                ):(
+                  <div onClick={()=>openEdit(item)} style={{display:"flex",alignItems:"flex-start",gap:".75rem",padding:".62rem .9rem",cursor:"pointer"}}>
+                    <button onClick={e=>{e.stopPropagation();toggleRem(activeGid,item.id);}} style={{width:"20px",height:"20px",borderRadius:"50%",flexShrink:0,marginTop:".06rem",background:item.done?"#007AFF":"transparent",border:item.done?"2px solid #007AFF":"2px solid var(--t3)",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",padding:0}}>
+                      {item.done&&<div style={{width:"7px",height:"7px",borderRadius:"50%",background:"#fff"}}/>}
+                    </button>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:".88rem",color:item.done?"var(--t3)":"var(--t1)",textDecoration:item.done?"line-through":"none",lineHeight:1.4}}>{item.title}</div>
+                      {item.note&&<div style={{fontSize:".78rem",color:"var(--t2)",marginTop:".16rem",lineHeight:1.4}}>{item.note}</div>}
+                      {item.date&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:isOverdue(item.date)&&!item.done?"#ff3b30":"var(--t3)",marginTop:".18rem"}}>📅 {item.date}</div>}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+            {/* inline add row */}
+            <div style={{display:"flex",alignItems:"center",gap:".75rem",padding:".58rem .9rem",borderTop:activeGroup.items.length>0?"1px solid var(--b2)":"none"}}>
+              <div style={{width:"20px",height:"20px",borderRadius:"50%",flexShrink:0,border:"1.5px dashed var(--b2)"}}/>
+              <input value={newItemTitle} onChange={e=>setNewItemTitle(e.target.value)} onKeyDown={e=>{if(e.key==="Enter")addRemItem();}} placeholder="新增提醒事項…" style={{flex:1,background:"none",border:"none",color:"var(--t2)",fontSize:".88rem",outline:"none"}}/>
+              {newItemTitle&&<button onClick={addRemItem} style={{background:"none",border:"none",color:"var(--acc)",fontFamily:"'DM Mono',monospace",fontSize:".72rem",cursor:"pointer",flexShrink:0}}>加入</button>}
+            </div>
+          </div>
+        )}
+      </div>
+      {/* divider */}
+      <div style={{borderTop:"1px solid var(--b2)",margin:"1.5rem 0"}}/>
+      {/* ══ 工程進度記錄 ══ */}
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.2rem"}}>
         <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)",letterSpacing:".12em",textTransform:"uppercase"}}>工程進度記錄</div>
         <button onClick={()=>setShowForm(v=>!v)} style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",padding:".3rem .8rem",background:showForm?"var(--b2)":"var(--acc)",color:showForm?"var(--t1)":"#fff",border:"none",borderRadius:"6px",cursor:"pointer"}}>
@@ -2138,7 +2251,7 @@ function ProgressTab({proj,upd}){
         </div>
       )}
       {progress.length===0&&!showForm&&(
-        <div style={{textAlign:"center",padding:"3rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>尚無進度記錄，點擊「新增進度」開始</div>
+        <div style={{textAlign:"center",padding:"2rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>尚無進度記錄，點擊「新增進度」開始</div>
       )}
       <div style={{position:"relative"}}>
         {progress.length>0&&<div style={{position:"absolute",left:"7px",top:0,bottom:0,width:"2px",background:"var(--b2)"}}/>}
