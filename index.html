@@ -1212,6 +1212,7 @@ function OverviewTab({proj,upd,openModal,setTab}){
       <div className="stage-row">{STAGES.map((s,i)=><div key={s} className={`stage-step${i<stIdx?" done-s":i===stIdx?" curr-s":""}`} onClick={()=>upd(p=>({...p,stage:s}))}>{STAGE_L[s]}</div>)}</div>
       <div className="prog-track"><div className="prog-fill-bar" style={{width:pct+"%"}}/></div>
     </div>
+    <AttachmentSection proj={proj} upd={upd}/>
     <div className="grid2">
       <div className="card">
         <div className="card-hd">里程碑<button className="add-btn" onClick={()=>openModal("ms")}>＋ 新增</button></div>
@@ -1249,7 +1250,6 @@ function OverviewTab({proj,upd,openModal,setTab}){
         </div>);
       })()}
     </div>
-    <AttachmentSection proj={proj} upd={upd}/>
   </>);
 }
 
@@ -1900,7 +1900,7 @@ function MobileNav({tab,setTab,pendCount}){
 
 function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,setShowAllTodos,setShowAllCal,setArchiveTarget,data,updGlobal}){
   const pendCount=0;
-  const TABS=[{id:"overview",l:"概覽"},{id:"progress",l:"工程進度"},{id:"floorplan",l:"平面配置"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"hardware",l:"五金表"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"progress",l:"工程進度"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"hardware",l:"五金表"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
@@ -1922,7 +1922,6 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,setShowAllTo
     <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
     {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal} setTab={setTab}/>}
     {tab==="progress"&&<ProgressTab proj={proj} upd={upd}/>}
-    {tab==="floorplan"&&<FloorPlanTab proj={proj} upd={upd}/>}
     {tab==="timeline"&&<ActivityLogTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="materials"&&<MaterialsTab proj={proj} upd={upd} data={data} updGlobal={updGlobal}/>}
