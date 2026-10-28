@@ -141,10 +141,10 @@ input,select,textarea{font-family:inherit;}
 .hdr-btn:hover{border-color:var(--acc);color:#C9924F;background:rgba(201,146,79,.1);}
 
 /* Layout */
-.workspace{display:grid;grid-template-columns:var(--sb) 1fr;min-height:calc(100vh - var(--hh));}
+.workspace{display:grid;grid-template-columns:var(--sb) 1fr;height:calc(100vh - var(--hh));overflow:hidden;}
 
 /* Sidebar */
-.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
+.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.06);padding:0;height:100%;overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
 .sb-brand{padding:1.1rem 1rem .85rem;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
 .sb-brand-logo{display:flex;align-items:center;gap:.75rem;margin-bottom:.45rem;}
 .sb-brand-icon{width:36px;height:36px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:.72rem;color:#fff;font-weight:400;flex-shrink:0;line-height:1.15;text-align:center;}
@@ -178,7 +178,7 @@ input,select,textarea{font-family:inherit;}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149;}
 
 /* Main */
-.main{padding:2rem 2.2rem 3rem;}
+.main{padding:2rem 2.2rem 3rem;height:100%;overflow-y:auto;box-sizing:border-box;}
 
 /* Project Header */
 .proj-hdr{margin-bottom:1.8rem;}
@@ -871,6 +871,10 @@ function MaterialsTab({proj,upd,data,updGlobal}){
 }
 
 /* ── 圖片壓縮工具（統一版）── */
+function isPdf(url){return url&&url.startsWith('data:application/pdf');}
+function readAsDataURL(file){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});}
+function downloadDataUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click();}
+
 function compressImage(file,maxPx=1200,quality=0.78){
   return new Promise(resolve=>{
     const reader=new FileReader();
@@ -1072,7 +1076,8 @@ function AttachmentSection({proj,upd}){
     if(!files.length)return;
     setUploading(true);
     for(const file of files){
-      const url=await compressImage(file,1200,0.78);
+      if(file.size>5*1024*1024){alert(`「${file.name}」超過 5MB，已略過`);continue;}
+      const url=file.type==='application/pdf'?await readAsDataURL(file):await compressImage(file,1200,0.78);
       const att={id:Math.random().toString(36).slice(2,8),name:file.name.replace(/\.[^.]+$/,""),category:ATT_CATS[0],imageUrl:url,note:"",date:new Date().toISOString().slice(0,10)};
       upd(p=>({...p,attachments:[...(p.attachments||[]),att]}));
     }
@@ -1099,8 +1104,14 @@ function AttachmentSection({proj,upd}){
           <button onClick={()=>setLb(null)}
             style={{background:"rgba(255,255,255,.12)",border:"none",color:"#fff",fontSize:"1.1rem",width:36,height:36,borderRadius:18,cursor:"pointer"}}>✕</button>
         </div>
-        <img src={att.imageUrl} alt={att.name} onClick={e=>e.stopPropagation()}
-          style={{maxWidth:"100vw",maxHeight:"calc(100vh - 150px)",objectFit:"contain"}}/>
+        {isPdf(att.imageUrl)?(
+          <div onClick={e=>e.stopPropagation()} style={{position:"relative"}}>
+            <embed src={att.imageUrl} type="application/pdf" style={{width:"90vw",height:"calc(100vh - 200px)",borderRadius:8}}/>
+          </div>
+        ):(
+          <img src={att.imageUrl} alt={att.name} onClick={e=>e.stopPropagation()}
+            style={{maxWidth:"100vw",maxHeight:"calc(100vh - 150px)",objectFit:"contain"}}/>
+        )}
         <div onClick={e=>e.stopPropagation()}
           style={{position:"absolute",bottom:0,left:0,right:0,padding:".75rem 1rem",background:"linear-gradient(transparent,rgba(0,0,0,.7))",display:"flex",gap:".5rem",alignItems:"center"}}>
           <select value={att.category} onChange={e=>updAtt(att.id,{category:e.target.value})}
@@ -1110,6 +1121,8 @@ function AttachmentSection({proj,upd}){
           <input value={att.note} onChange={e=>updAtt(att.id,{note:e.target.value})}
             placeholder="備註..."
             style={{background:"rgba(255,255,255,.1)",border:"1px solid rgba(255,255,255,.2)",color:"#fff",borderRadius:6,padding:".3rem .6rem",fontSize:".78rem",flex:2}}/>
+          <button onClick={()=>downloadDataUrl(att.imageUrl, att.name+(isPdf(att.imageUrl)?'.pdf':''))}
+            style={{background:"rgba(255,255,255,.12)",border:"none",color:"#fff",borderRadius:6,padding:".3rem .7rem",cursor:"pointer",fontSize:".78rem",flexShrink:0}}>↓ 下載</button>
           <button onClick={()=>{delAtt(att.id);setLb(null);}}
             style={{background:"rgba(200,60,60,.5)",border:"none",color:"#fff",borderRadius:6,padding:".3rem .7rem",cursor:"pointer",fontSize:".78rem",flexShrink:0}}>刪除</button>
         </div>
@@ -1130,7 +1143,7 @@ function AttachmentSection({proj,upd}){
         <button className="add-btn" onClick={()=>fileRef.current&&fileRef.current.click()}>＋ 新增</button>
       </div>
     </div>
-    <input ref={fileRef} type="file" accept="image/*" multiple style={{display:"none"}} onChange={addFiles}/>
+    <input ref={fileRef} type="file" accept="image/*,application/pdf" multiple style={{display:"none"}} onChange={addFiles}/>
     {/* 類別篩選 */}
     {atts.length>0&&(
       <div style={{display:"flex",gap:".35rem",flexWrap:"wrap",marginBottom:".75rem"}}>
@@ -1157,8 +1170,15 @@ function AttachmentSection({proj,upd}){
         {shown.map((a,idx)=>(
           <div key={a.id} onClick={()=>setLb(idx)}
             style={{cursor:"pointer",borderRadius:"var(--rs)",overflow:"hidden",position:"relative",aspectRatio:"3/4",background:"var(--sf2)"}}>
-            <img src={a.imageUrl} alt={a.name}
-              style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            {isPdf(a.imageUrl)?(
+              <div style={{width:"100%",height:"100%",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"var(--sf3)",gap:".3rem"}}>
+                <div style={{fontSize:"1.8rem"}}>📄</div>
+                <div style={{fontSize:".55rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace"}}>PDF</div>
+              </div>
+            ):(
+              <img src={a.imageUrl} alt={a.name}
+                style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
+            )}
             <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,.7))",padding:".35rem .4rem"}}>
               <div style={{fontSize:".58rem",color:"rgba(255,255,255,.55)",textTransform:"uppercase",letterSpacing:".06em"}}>{a.category}</div>
               <div style={{fontSize:".7rem",color:"#fff",fontWeight:500,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{a.name}</div>
@@ -2226,15 +2246,15 @@ function FloorPlanTab({proj,upd}){
   const plans=proj.floorPlans||[];
   const inputRef=React.useRef(null);
   const [uploading,setUploading]=React.useState(false);
-  const handleFile=(e)=>{
+  const handleFile=async(e)=>{
     const f=e.target.files[0];
     if(!f)return;
+    if(f.size>5*1024*1024){alert('檔案超過 5MB，請壓縮後再上傳');e.target.value="";return;}
     setUploading(true);
-    compressImage(f,1200,0.82).then(b64=>{
-      const item={id:uid(),name:f.name,data:b64,uploadedAt:new Date().toISOString().slice(0,10)};
-      upd(d=>({...d,floorPlans:[...(d.floorPlans||[]),item]}));
-      setUploading(false);
-    });
+    const b64=f.type==='application/pdf'?await readAsDataURL(f):await compressImage(f,1200,0.82);
+    const item={id:uid(),name:f.name,data:b64,uploadedAt:new Date().toISOString().slice(0,10)};
+    upd(d=>({...d,floorPlans:[...(d.floorPlans||[]),item]}));
+    setUploading(false);
     e.target.value="";
   };
   const remove=(id)=>{
@@ -2245,9 +2265,9 @@ function FloorPlanTab({proj,upd}){
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.2rem"}}>
         <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)",letterSpacing:".12em",textTransform:"uppercase"}}>平面配置圖</div>
         <button onClick={()=>inputRef.current&&inputRef.current.click()} disabled={uploading} style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",padding:".3rem .8rem",background:"var(--acc)",color:"#fff",border:"none",borderRadius:"6px",cursor:"pointer",opacity:uploading?0.6:1}}>
-          {uploading?"處理中…":"↑ 上傳圖片"}
+          {uploading?"處理中…":"↑ 上傳"}
         </button>
-        <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+        <input ref={inputRef} type="file" accept="image/*,application/pdf" onChange={handleFile} style={{display:"none"}}/>
       </div>
       {plans.length===0&&(
         <div style={{textAlign:"center",padding:"3rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>尚無平面圖，點擊「上傳圖片」新增</div>
@@ -2262,7 +2282,14 @@ function FloorPlanTab({proj,upd}){
               </div>
               <button onClick={()=>remove(item.id)} style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",padding:".25rem .6rem",background:"transparent",color:"var(--t3)",border:"1px solid var(--b2)",borderRadius:"4px",cursor:"pointer"}}>刪除</button>
             </div>
-            <img src={item.data} alt={item.name} style={{width:"100%",display:"block",maxHeight:"600px",objectFit:"contain",background:"var(--bg)"}}/>
+            {isPdf(item.data)?(
+              <div style={{position:"relative"}}>
+                <embed src={item.data} type="application/pdf" style={{width:"100%",height:"600px",display:"block",background:"var(--bg)"}}/>
+                <button onClick={()=>downloadDataUrl(item.data,item.name)} style={{position:"absolute",top:".6rem",right:".6rem",fontFamily:"'DM Mono',monospace",fontSize:".65rem",padding:".3rem .7rem",background:"rgba(0,0,0,.6)",color:"#fff",border:"none",borderRadius:"6px",cursor:"pointer"}}>↓ 下載 PDF</button>
+              </div>
+            ):(
+              <img src={item.data} alt={item.name} style={{width:"100%",display:"block",maxHeight:"600px",objectFit:"contain",background:"var(--bg)"}}/>
+            )}
           </div>
         ))}
       </div>
