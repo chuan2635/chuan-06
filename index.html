@@ -104,7 +104,7 @@ const INIT={materialLibrary:[],
 const CSS=`
 :root{
   --bg:#F2EFE9; --sf:#FFFFFF; --sf2:#F8F6F2; --sf3:#EEE9E2;
-  --nav:#1C1A17; --nav2:#242220;
+  --nav:#222220; --nav2:#2C2B29;
   --dark:#1C1A17; --dark2:#2C2A27;
   --acc:#C9924F; --acc2:#B07E3A;
   --brass:#C9924F; --brass-lt:#FAF0E1;
@@ -144,24 +144,37 @@ input,select,textarea{font-family:inherit;}
 .workspace{display:grid;grid-template-columns:var(--sb) 1fr;min-height:calc(100vh - var(--hh));}
 
 /* Sidebar */
-.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.06);padding:.85rem .7rem;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
-.sb-sec{font-family:'DM Mono',monospace;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:.55rem .65rem .3rem;margin-top:.3rem;}
-.sb-item{display:flex;align-items:center;gap:.6rem;padding:.72rem .8rem;border-radius:var(--rs);cursor:pointer;border:1px solid transparent;transition:all .15s;color:rgba(255,255,255,.45);font-size:.88rem;}
-.sb-item:hover{background:rgba(255,255,255,.05);color:#C8C3BC;}
-.sb-item.on{background:rgba(201,146,79,.12);color:#C9924F;border-left:2px solid #C9924F;margin-left:-2px;}
-.sb-item.on .sb-sub{color:rgba(201,146,79,.6);}
-.sb-item.on .sb-bar-track{background:rgba(248,244,236,.15);}
+.sidebar{background:var(--nav);border-right:1px solid rgba(255,255,255,.06);padding:0;position:sticky;top:var(--hh);height:calc(100vh - var(--hh));overflow-y:auto;display:flex;flex-direction:column;transition:transform .25s ease,box-shadow .25s ease;}
+.sb-brand{padding:1.1rem 1rem .85rem;border-bottom:1px solid rgba(255,255,255,.07);flex-shrink:0;}
+.sb-brand-logo{display:flex;align-items:center;gap:.75rem;margin-bottom:.45rem;}
+.sb-brand-icon{width:36px;height:36px;background:var(--acc);border-radius:9px;display:flex;align-items:center;justify-content:center;font-family:'DM Serif Display',serif;font-size:.72rem;color:#fff;font-weight:400;flex-shrink:0;line-height:1.15;text-align:center;}
+.sb-brand-name{font-family:'DM Serif Display',serif;font-size:1.05rem;color:rgba(255,255,255,.92);font-weight:400;line-height:1.2;}
+.sb-brand-tagline{font-family:'DM Mono',monospace;font-size:.5rem;color:rgba(255,255,255,.22);letter-spacing:.08em;text-transform:uppercase;margin-top:.05rem;}
+.sb-brand-sys{font-family:'DM Mono',monospace;font-size:.58rem;color:rgba(201,146,79,.5);letter-spacing:.04em;}
+.sb-body{padding:.75rem .75rem;flex:1;display:flex;flex-direction:column;overflow-y:auto;}
+.sb-create{width:100%;padding:.7rem 1rem;background:var(--acc);border:none;border-radius:10px;color:#fff;font-family:'DM Mono',monospace;font-size:.75rem;cursor:pointer;display:flex;align-items:center;gap:.5rem;margin-bottom:.65rem;transition:opacity .15s;font-weight:500;letter-spacing:.02em;}
+.sb-create:hover{opacity:.85;}
+.sb-sec{font-family:'DM Mono',monospace;font-size:.55rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.25);padding:.5rem .25rem .2rem;margin-top:.1rem;}
+.sb-item{display:flex;align-items:center;gap:.65rem;padding:.72rem .75rem;border-radius:10px;cursor:pointer;border:1px solid transparent;transition:all .15s;color:rgba(255,255,255,.42);margin-bottom:.08rem;}
+.sb-item:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);}
+.sb-item.on{background:rgba(255,255,255,.08);color:rgba(255,255,255,.88);border:1px solid rgba(255,255,255,.3);}
+.sb-item.on .sb-sub{color:rgba(255,255,255,.35);}
+.sb-item.on .sb-bar-track{background:rgba(248,244,236,.12);}
 .sb-item.on .sb-bar-fill{background:var(--acc);}
-.sb-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.sb-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
 .sb-info{flex:1;min-width:0;}
-.sb-name{font-size:.86rem;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:rgba(255,255,255,.75);}
-.sb-sub{font-family:'DM Mono',monospace;font-size:.62rem;color:rgba(255,255,255,.22);margin-top:.1rem;}
-.sb-bar-track{height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;margin-top:.45rem;}
+.sb-name{font-size:.86rem;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:inherit;}
+.sb-sub{font-family:'DM Mono',monospace;font-size:.6rem;color:rgba(255,255,255,.2);margin-top:.1rem;}
+.sb-bar-track{height:2px;background:rgba(255,255,255,.1);border-radius:1px;overflow:hidden;margin-top:.4rem;}
 .sb-bar-fill{height:100%;background:var(--acc);border-radius:1px;transition:width .5s;}
-.sb-sep{border:none;border-top:1px solid rgba(255,255,255,.07);margin:.55rem .3rem;}
-.sb-add{width:100%;padding:.72rem;background:transparent;border:1.5px dashed rgba(255,255,255,.12);border-radius:var(--rs);font-size:.85rem;color:rgba(255,255,255,.28);cursor:pointer;transition:all .2s;margin-top:auto;display:flex;align-items:center;justify-content:center;gap:.35rem;}
-.sb-add:hover{border-color:var(--acc);color:var(--acc);}
-.sb-close-btn{display:none;width:100%;padding:.55rem;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:var(--rxs);font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.4);cursor:pointer;margin-bottom:.5rem;}
+.sb-sep{border:none;border-top:1px solid rgba(255,255,255,.07);margin:.4rem .1rem;}
+.sb-overview{display:flex;align-items:center;gap:.65rem;padding:.72rem .75rem;border-radius:10px;cursor:pointer;border:1px solid transparent;color:rgba(255,255,255,.42);margin-bottom:.6rem;transition:all .15s;}
+.sb-overview:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.72);}
+.sb-overview.on{border:1px solid rgba(201,146,79,.32);background:rgba(201,146,79,.1);color:#C9924F;}
+.sb-overview.on .sb-name{color:#C9924F;}
+.sb-overview.on .sb-sub{color:rgba(201,146,79,.55);}
+.sb-add{display:none;}
+.sb-close-btn{display:none;width:100%;padding:.55rem;background:transparent;border:1px solid rgba(255,255,255,.12);border-radius:10px;font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.4);cursor:pointer;margin-bottom:.5rem;}
 .sb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:149;}
 
 /* Main */
@@ -1887,7 +1900,7 @@ function MobileNav({tab,setTab,pendCount}){
 
 function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,setShowAllTodos,setShowAllCal,setArchiveTarget,data,updGlobal}){
   const pendCount=0;
-  const TABS=[{id:"overview",l:"概覽"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"hardware",l:"五金表"},{id:"cal",l:"行事曆"}];
+  const TABS=[{id:"overview",l:"概覽"},{id:"progress",l:"工程進度"},{id:"floorplan",l:"平面配置"},{id:"timeline",l:"活動日誌"},{id:"finance",l:"財務"},{id:"materials",l:"材質表"},{id:"hardware",l:"五金表"},{id:"cal",l:"行事曆"}];
   return(<>
     {proj.archived&&<div className="archived-banner">
       <div><span className="archived-badge">已歸檔</span> <span className="archived-banner-txt">此案件已歸檔{proj.archivedAt?` · ${fmtD(proj.archivedAt)}`:""}</span></div>
@@ -1908,6 +1921,8 @@ function ProjectPanel({proj,tab,setTab,upd,openModal,calYM,setCalYM,setShowAllTo
     </div>
     <div className="tabs">{TABS.map(t=><button key={t.id} className={`tab-btn${tab===t.id?" on":""}`} onClick={()=>setTab(t.id)}>{t.l}</button>)}</div>
     {tab==="overview"&&<OverviewTab proj={proj} upd={upd} openModal={openModal} setTab={setTab}/>}
+    {tab==="progress"&&<ProgressTab proj={proj} upd={upd}/>}
+    {tab==="floorplan"&&<FloorPlanTab proj={proj} upd={upd}/>}
     {tab==="timeline"&&<ActivityLogTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="finance"&&<FinanceTab proj={proj} upd={upd} openModal={openModal}/>}
     {tab==="materials"&&<MaterialsTab proj={proj} upd={upd} data={data} updGlobal={updGlobal}/>}
@@ -1957,7 +1972,7 @@ function NewProjModal({close,upd,onCreated}){
   const [form,setForm]=useState({name:"",owner:"",loc:"",contact:"",tel:"",stage:"design",contractAmt:""});
   const [color,setColor]=useState(PCOLS[0]);
   const F=k=>e=>setForm(f=>({...f,[k]:e.target.value}));
-  const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,contractAmt:Number(form.contractAmt||0),archived:false,milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
+  const save=()=>{if(!form.name.trim())return;const np={id:uid(),...form,color,contractAmt:Number(form.contractAmt||0),archived:false,milestones:[],todos:[],comms:[],pendings:[],finances:[],extras:[],timelines:[],progress:[],floorPlans:[]};upd(d=>({...d,projects:[...d.projects,np]}));onCreated(np.id);close();};
   return(<div className="overlay" onClick={e=>e.target===e.currentTarget&&close()}><div className="modal">
     <h3>新增案件</h3>
     <label>案件名稱 *</label><input value={form.name} onChange={F("name")} placeholder="例：台北信義住宅裝修"/>
@@ -2034,6 +2049,429 @@ function ItemModal({type,close,updP,proj}){
   </div></div>);
 }
 
+/* ═══════════════════════════════════
+   計算工具 — Calculator View
+   ═══════════════════════════════════ */
+// ── CaseOverviewView ──────────────────────────────────────────
+function CaseOverviewView({data,selectProj}){
+  const active=data.projects.filter(p=>!p.archived);
+  return(
+    <div style={{padding:"2rem 2.2rem 3rem"}}>
+      <div style={{marginBottom:"1.8rem"}}>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",letterSpacing:".18em",textTransform:"uppercase",color:"var(--t3)",marginBottom:".5rem"}}>Overview</div>
+        <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"2.2rem",color:"var(--t1)",fontWeight:400,lineHeight:1.1,marginBottom:".5rem"}}>案件總覽</div>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)"}}>{active.length} 個進行中案件</div>
+      </div>
+      {active.length===0?(
+        <div style={{textAlign:"center",paddingTop:"4rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".78rem"}}>尚無進行中案件</div>
+      ):(
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(300px,1fr))",gap:"1.2rem"}}>
+          {active.map(p=>{
+            const pct=Math.round((p.milestones||[]).filter(m=>m.status==="done").length/Math.max((p.milestones||[]).length,1)*100);
+            const pendingTodos=(p.todos||[]).filter(t=>!t.done).length;
+            return(
+              <div key={p.id} onClick={()=>selectProj(p.id)} style={{background:"var(--sf)",border:"1px solid var(--b2)",borderRadius:"var(--r)",padding:"1.4rem",cursor:"pointer",transition:"all .15s",position:"relative",overflow:"hidden"}}>
+                <div style={{position:"absolute",top:0,left:0,right:0,height:"3px",background:`linear-gradient(90deg,${p.color} ${pct}%,var(--b2) ${pct}%)`}}/>
+                <div style={{display:"flex",alignItems:"flex-start",justifyContent:"space-between",gap:".5rem",marginBottom:".9rem"}}>
+                  <div>
+                    <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.25rem",color:"var(--t1)",fontWeight:400,lineHeight:1.2,marginBottom:".3rem"}}>{p.name}</div>
+                    <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>{p.owner}{p.loc?` · ${p.loc}`:""}</div>
+                  </div>
+                  <span style={{fontFamily:"'DM Mono',monospace",fontSize:".58rem",letterSpacing:".08em",textTransform:"uppercase",padding:".22rem .65rem",borderRadius:"20px",border:"1px solid var(--b2)",color:"var(--t3)",background:"var(--bg)",whiteSpace:"nowrap",flexShrink:0}}>{STAGE_L[p.stage]}</span>
+                </div>
+                <div style={{display:"flex",gap:"1.2rem",marginBottom:".9rem"}}>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>進度 <span style={{color:"var(--acc)",fontWeight:600}}>{pct}%</span></div>
+                  {pendingTodos>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>待辦 <span style={{color:"#e07070"}}>{pendingTodos}</span></div>}
+                  {p.contractAmt>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>合約 <span style={{color:"var(--t2)"}}>{(p.contractAmt/10000).toFixed(1)}萬</span></div>}
+                </div>
+                <div style={{height:"4px",background:"var(--b2)",borderRadius:"2px",overflow:"hidden"}}>
+                  <div style={{height:"100%",background:p.color,borderRadius:"2px",width:pct+"%",transition:"width .5s"}}/>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── ProgressTab ────────────────────────────────────────────────
+function ProgressTab({proj,upd}){
+  const progress=proj.progress||[];
+  const [showForm,setShowForm]=React.useState(false);
+  const [form,setForm]=React.useState({date:"",title:"",note:"",done:false});
+  const addItem=()=>{
+    if(!form.title.trim())return;
+    const item={id:uid(),date:form.date||new Date().toISOString().slice(0,10),title:form.title.trim(),note:form.note.trim(),done:form.done};
+    upd(d=>({...d,progress:[...(d.progress||[]),item]}));
+    setForm({date:"",title:"",note:"",done:false});
+    setShowForm(false);
+  };
+  const toggleDone=(id)=>{
+    upd(d=>({...d,progress:(d.progress||[]).map(x=>x.id===id?{...x,done:!x.done}:x)}));
+  };
+  const removeItem=(id)=>{
+    upd(d=>({...d,progress:(d.progress||[]).filter(x=>x.id!==id)}));
+  };
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.2rem"}}>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)",letterSpacing:".12em",textTransform:"uppercase"}}>工程進度記錄</div>
+        <button onClick={()=>setShowForm(v=>!v)} style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",padding:".3rem .8rem",background:showForm?"var(--b2)":"var(--acc)",color:showForm?"var(--t1)":"#fff",border:"none",borderRadius:"6px",cursor:"pointer"}}>
+          {showForm?"取消":"＋ 新增進度"}
+        </button>
+      </div>
+      {showForm&&(
+        <div style={{background:"var(--bg)",border:"1px solid var(--b2)",borderRadius:"var(--r)",padding:"1rem",marginBottom:"1.2rem",display:"flex",flexDirection:"column",gap:".6rem"}}>
+          <div style={{display:"flex",gap:".6rem"}}>
+            <input type="date" value={form.date} onChange={e=>setForm(v=>({...v,date:e.target.value}))} style={{flex:"0 0 auto",padding:".42rem .6rem",border:"1px solid var(--b2)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}/>
+            <input type="text" value={form.title} onChange={e=>setForm(v=>({...v,title:e.target.value}))} placeholder="進度標題" style={{flex:1,padding:".42rem .7rem",border:"1px solid var(--b2)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontSize:".88rem"}}/>
+          </div>
+          <textarea value={form.note} onChange={e=>setForm(v=>({...v,note:e.target.value}))} placeholder="備註說明（選填）" rows={2} style={{resize:"vertical",padding:".5rem .7rem",border:"1px solid var(--b2)",borderRadius:"6px",background:"var(--sf)",color:"var(--t1)",fontSize:".85rem"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:".8rem"}}>
+            <label style={{display:"flex",alignItems:"center",gap:".35rem",fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t2)",cursor:"pointer"}}>
+              <input type="checkbox" checked={form.done} onChange={e=>setForm(v=>({...v,done:e.target.checked}))} style={{accentColor:"var(--acc)"}}/>
+              已完成
+            </label>
+            <button onClick={addItem} style={{marginLeft:"auto",padding:".38rem 1rem",background:"var(--acc)",color:"#fff",border:"none",borderRadius:"6px",fontFamily:"'DM Mono',monospace",fontSize:".75rem",cursor:"pointer"}}>儲存</button>
+          </div>
+        </div>
+      )}
+      {progress.length===0&&!showForm&&(
+        <div style={{textAlign:"center",padding:"3rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>尚無進度記錄，點擊「新增進度」開始</div>
+      )}
+      <div style={{position:"relative"}}>
+        {progress.length>0&&<div style={{position:"absolute",left:"7px",top:0,bottom:0,width:"2px",background:"var(--b2)"}}/>}
+        {[...progress].sort((a,b)=>b.date.localeCompare(a.date)).map(item=>(
+          <div key={item.id} style={{display:"flex",gap:".9rem",marginBottom:".9rem",position:"relative"}}>
+            <div style={{width:"16px",height:"16px",borderRadius:"50%",background:item.done?"var(--acc)":"var(--sf)",border:`2px solid ${item.done?"var(--acc)":"var(--b2)"}`,flexShrink:0,marginTop:".25rem",zIndex:1}}/>
+            <div style={{flex:1,background:"var(--sf)",border:"1px solid var(--b2)",borderRadius:"var(--rs)",padding:".7rem .9rem"}}>
+              <div style={{display:"flex",alignItems:"flex-start",gap:".5rem",justifyContent:"space-between"}}>
+                <div>
+                  <div style={{fontFamily:"'DM Mono',monospace",fontSize:".62rem",color:"var(--t3)",marginBottom:".2rem"}}>{item.date}</div>
+                  <div style={{fontSize:".92rem",color:item.done?"var(--t3)":"var(--t1)",fontWeight:500,textDecoration:item.done?"line-through":"none"}}>{item.title}</div>
+                  {item.note&&<div style={{fontSize:".8rem",color:"var(--t2)",marginTop:".3rem",lineHeight:1.4}}>{item.note}</div>}
+                </div>
+                <div style={{display:"flex",gap:".35rem",flexShrink:0}}>
+                  <button onClick={()=>toggleDone(item.id)} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",padding:".2rem .5rem",background:item.done?"rgba(201,146,79,.15)":"var(--bg)",color:item.done?"var(--acc)":"var(--t3)",border:"1px solid var(--b2)",borderRadius:"4px",cursor:"pointer"}}>{item.done?"已完成":"完成"}</button>
+                  <button onClick={()=>removeItem(item.id)} style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",padding:".2rem .5rem",background:"transparent",color:"var(--t3)",border:"1px solid transparent",borderRadius:"4px",cursor:"pointer"}}>✕</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── FloorPlanTab ───────────────────────────────────────────────
+function FloorPlanTab({proj,upd}){
+  const plans=proj.floorPlans||[];
+  const inputRef=React.useRef(null);
+  const [uploading,setUploading]=React.useState(false);
+  const compress=(file,cb)=>{
+    const img=new Image();
+    img.onload=()=>{
+      const MAX=1200;
+      let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){const r=MAX/Math.max(w,h);w=Math.round(w*r);h=Math.round(h*r);}
+      const cv=document.createElement("canvas");cv.width=w;cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      cb(cv.toDataURL("image/jpeg",0.82));
+    };
+    img.src=URL.createObjectURL(file);
+  };
+  const handleFile=(e)=>{
+    const f=e.target.files[0];
+    if(!f)return;
+    setUploading(true);
+    compress(f,b64=>{
+      const item={id:uid(),name:f.name,data:b64,uploadedAt:new Date().toISOString().slice(0,10)};
+      upd(d=>({...d,floorPlans:[...(d.floorPlans||[]),item]}));
+      setUploading(false);
+    });
+    e.target.value="";
+  };
+  const remove=(id)=>{
+    upd(d=>({...d,floorPlans:(d.floorPlans||[]).filter(x=>x.id!==id)}));
+  };
+  return(
+    <div>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"1.2rem"}}>
+        <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)",letterSpacing:".12em",textTransform:"uppercase"}}>平面配置圖</div>
+        <button onClick={()=>inputRef.current&&inputRef.current.click()} disabled={uploading} style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",padding:".3rem .8rem",background:"var(--acc)",color:"#fff",border:"none",borderRadius:"6px",cursor:"pointer",opacity:uploading?0.6:1}}>
+          {uploading?"處理中…":"↑ 上傳圖片"}
+        </button>
+        <input ref={inputRef} type="file" accept="image/*" onChange={handleFile} style={{display:"none"}}/>
+      </div>
+      {plans.length===0&&(
+        <div style={{textAlign:"center",padding:"3rem 0",color:"var(--t3)",fontFamily:"'DM Mono',monospace",fontSize:".75rem"}}>尚無平面圖，點擊「上傳圖片」新增</div>
+      )}
+      <div style={{display:"flex",flexDirection:"column",gap:"1.2rem"}}>
+        {plans.map(item=>(
+          <div key={item.id} style={{border:"1px solid var(--b2)",borderRadius:"var(--r)",overflow:"hidden",background:"var(--sf)"}}>
+            <div style={{display:"flex",alignItems:"center",padding:".6rem .9rem",borderBottom:"1px solid var(--b2)",justifyContent:"space-between"}}>
+              <div>
+                <div style={{fontSize:".88rem",color:"var(--t1)",fontWeight:500}}>{item.name}</div>
+                <div style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"var(--t3)",marginTop:".1rem"}}>{item.uploadedAt}</div>
+              </div>
+              <button onClick={()=>remove(item.id)} style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",padding:".25rem .6rem",background:"transparent",color:"var(--t3)",border:"1px solid var(--b2)",borderRadius:"4px",cursor:"pointer"}}>刪除</button>
+            </div>
+            <img src={item.data} alt={item.name} style={{width:"100%",display:"block",maxHeight:"600px",objectFit:"contain",background:"var(--bg)"}}/>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CalculatorView(){
+  const [ct,setCt]=React.useState("tile");
+  const tabs=[
+    {k:"tile",label:"磁磚/地板"},
+    {k:"paint",label:"油漆"},
+    {k:"wallpaper",label:"壁紙"},
+    {k:"curtain",label:"窗簾才數"}
+  ];
+
+  /* ── 磁磚/地板 ── */
+  const [tileW,setTileW]=React.useState("");
+  const [tileH,setTileH]=React.useState("");
+  const [tileSzW,setTileSzW]=React.useState("60");
+  const [tileSzH,setTileSzH]=React.useState("60");
+  const [tileLoss,setTileLoss]=React.useState("10");
+  const tileArea=parseFloat(tileW)||0;
+  const tileAreaH=parseFloat(tileH)||0;
+  const tileRoom=tileArea*tileAreaH;
+  const tilePieceM2=(parseFloat(tileSzW)||60)*(parseFloat(tileSzH)||60)/10000;
+  const tileCount=tileRoom>0&&tilePieceM2>0?Math.ceil(tileRoom/tilePieceM2*(1+(parseFloat(tileLoss)||10)/100)):0;
+
+  /* ── 油漆 ── */
+  const [pWall,setPWall]=React.useState("");
+  const [pHeight,setPHeight]=React.useState("2.8");
+  const [pDoors,setPDoors]=React.useState("1");
+  const [pWindows,setPWindows]=React.useState("1");
+  const [pCoats,setPCoats]=React.useState("2");
+  const [pCover,setPCover]=React.useState("10");
+  const pPerim=parseFloat(pWall)||0;
+  const pH=parseFloat(pHeight)||2.8;
+  const pD=parseFloat(pDoors)||0;
+  const pW=parseFloat(pWindows)||0;
+  const pCt=parseFloat(pCoats)||2;
+  const pCov=parseFloat(pCover)||10;
+  const pGrossArea=pPerim*pH;
+  const pNetArea=Math.max(0,pGrossArea-(pD*1.8)-(pW*1.2));
+  const pLiters=pNetArea>0?parseFloat((pNetArea*pCt/pCov).toFixed(2)):0;
+  const p4L=Math.ceil(pLiters/4);
+
+  /* ── 壁紙 ── */
+  const [wpW,setWpW]=React.useState("");
+  const [wpH,setWpH]=React.useState("2.8");
+  const [wpRollW,setWpRollW]=React.useState("106");
+  const [wpRollL,setWpRollL]=React.useState("10");
+  const [wpRepeat,setWpRepeat]=React.useState("0");
+  const wpWall=parseFloat(wpW)||0;
+  const wpHt=parseFloat(wpH)||2.8;
+  const wpRW=(parseFloat(wpRollW)||106)/100;
+  const wpRL=parseFloat(wpRollL)||10;
+  const wpRep=(parseFloat(wpRepeat)||0)/100;
+  const wpDropH=wpRep>0?Math.ceil(wpHt/wpRep)*wpRep:wpHt;
+  const wpStripsPerRoll=wpRL>0?Math.floor(wpRL/wpDropH):0;
+  const wpTotalStrips=wpRW>0?Math.ceil(wpWall/wpRW):0;
+  const wpRolls=wpStripsPerRoll>0?Math.ceil(wpTotalStrips/wpStripsPerRoll):0;
+
+  /* ── 窗簾才數 ── */
+  const [crW,setCrW]=React.useState("");
+  const [crH,setCrH]=React.useState("");
+  const [crFold,setCrFold]=React.useState("2");
+  const [crReturn,setCrReturn]=React.useState("15");
+  const crWn=parseFloat(crW)||0;
+  const crHn=parseFloat(crH)||0;
+  const crFn=parseFloat(crFold)||2;
+  const crRt=(parseFloat(crReturn)||15)/100;
+  const crFabricW=(crWn*crFn+crRt*2);
+  const crFabricH=crHn+0.3;
+  const crCai=crFabricW>0&&crFabricH>0?parseFloat((crFabricW*crFabricH*10.76).toFixed(1)):0;
+
+  const numInput=(val,setter,ph,unit,min)=>(
+    <div style={{display:"flex",alignItems:"center",gap:".5rem"}}>
+      <input type="number" value={val} min={min||0} placeholder={ph||""} onChange={e=>setter(e.target.value)}
+        style={{flex:1,padding:".55rem .8rem",border:"1.5px solid var(--bdr)",borderRadius:"var(--r)",background:"var(--bg)",color:"var(--t1)",fontSize:".9rem",fontFamily:"'DM Mono',monospace",outline:"none"}}/>
+      {unit&&<span style={{fontSize:".78rem",color:"var(--t3)",whiteSpace:"nowrap",minWidth:"2.5rem"}}>{unit}</span>}
+    </div>
+  );
+
+  const presetBtn=(label,action)=>(
+    <button onClick={action} style={{padding:".3rem .7rem",fontSize:".72rem",background:"var(--bg)",border:"1px solid var(--bdr)",borderRadius:"var(--r)",color:"var(--t2)",cursor:"pointer",fontFamily:"'DM Mono',monospace"}}>
+      {label}
+    </button>
+  );
+
+  const resultBox=(label,val,unit,sub)=>(
+    <div style={{background:"var(--nav)",color:"#fff",borderRadius:"var(--r)",padding:"1rem 1.2rem",marginTop:".8rem"}}>
+      <div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"rgba(255,255,255,.45)",marginBottom:".25rem"}}>{label}</div>
+      <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"2rem",fontWeight:400,lineHeight:1}}>
+        {val>0?val:"-"}
+        {val>0&&<span style={{fontSize:"1rem",marginLeft:".4rem",color:"rgba(255,255,255,.6)"}}>{unit}</span>}
+      </div>
+      {sub&&val>0&&<div style={{fontFamily:"'DM Mono',monospace",fontSize:".68rem",color:"rgba(255,255,255,.4)",marginTop:".35rem"}}>{sub}</div>}
+    </div>
+  );
+
+  const field=(label,input)=>(
+    <div style={{marginBottom:".7rem"}}>
+      <div style={{fontSize:".72rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:".3rem"}}>{label}</div>
+      {input}
+    </div>
+  );
+
+  return(<div style={{maxWidth:"560px",margin:"0 auto",padding:"1.5rem 0"}}>
+    <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.6rem",fontWeight:400,marginBottom:"1.4rem",color:"var(--t1)"}}>計算工具</div>
+    {/* Tab bar */}
+    <div style={{display:"flex",gap:".4rem",marginBottom:"1.5rem",flexWrap:"wrap"}}>
+      {tabs.map(t=>(
+        <button key={t.k} onClick={()=>setCt(t.k)}
+          style={{padding:".45rem 1rem",borderRadius:"var(--r)",border:"1.5px solid",fontSize:".82rem",cursor:"pointer",fontFamily:"'DM Mono',monospace",
+            background:ct===t.k?"var(--acc)":"var(--sf)",
+            borderColor:ct===t.k?"var(--acc)":"var(--bdr)",
+            color:ct===t.k?"#fff":"var(--t2)",
+            fontWeight:ct===t.k?600:400}}>
+          {t.label}
+        </button>
+      ))}
+    </div>
+
+    {/* ── 磁磚/地板 ── */}
+    {ct==="tile"&&(<div style={{background:"var(--sf)",borderRadius:"12px",padding:"1.4rem",border:"1px solid var(--bdr)"}}>
+      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算空間所需磁磚/地板片數</div>
+      {field("空間寬度（公尺）",numInput(tileW,setTileW,"例：4.2","m"))}
+      {field("空間長度（公尺）",numInput(tileH,setTileH,"例：5.8","m"))}
+      <div style={{marginBottom:".7rem"}}>
+        <div style={{fontSize:".72rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:".4rem"}}>磁磚尺寸（公分）</div>
+        <div style={{display:"flex",gap:".5rem",alignItems:"center"}}>
+          {numInput(tileSzW,setTileSzW,"寬","cm")}
+          <span style={{color:"var(--t3)"}}>×</span>
+          {numInput(tileSzH,setTileSzH,"長","cm")}
+        </div>
+        <div style={{display:"flex",gap:".4rem",marginTop:".45rem",flexWrap:"wrap"}}>
+          {[["30×30",30,30],["60×60",60,60],["80×80",80,80],["30×60",30,60],["60×120",60,120]].map(([l,w,h])=>
+            presetBtn(l,()=>{setTileSzW(String(w));setTileSzH(String(h));})
+          )}
+        </div>
+      </div>
+      {field("耗損率（%）",
+        <div>
+          {numInput(tileLoss,setTileLoss,"","% 損耗")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["直鋪 5%","5"],["對角 10%","10"],["人字 15%","15"]].map(([l,v])=>
+              presetBtn(l,()=>setTileLoss(v))
+            )}
+          </div>
+        </div>
+      )}
+      {resultBox("建議採購數量",tileCount,"片",`空間 ${tileRoom.toFixed(2)} ㎡ / 每片 ${tilePieceM2.toFixed(4)} ㎡ / 耗損 ${tileLoss||10}%`)}
+    </div>)}
+
+    {/* ── 油漆 ── */}
+    {ct==="paint"&&(<div style={{background:"var(--sf)",borderRadius:"12px",padding:"1.4rem",border:"1px solid var(--bdr)"}}>
+      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算室內油漆用量（牆面）</div>
+      {field("牆壁總周長（公尺）",numInput(pWall,setPWall,"所有牆面加總","m"))}
+      {field("天花板高度（公尺）",
+        <div>
+          {numInput(pHeight,setPHeight,"","m")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["2.8m","2.8"],["3.0m","3.0"],["3.2m","3.2"]].map(([l,v])=>presetBtn(l,()=>setPHeight(v)))}
+          </div>
+        </div>
+      )}
+      {field("扣除門數量",numInput(pDoors,setPDoors,"","扇"))}
+      {field("扣除窗戶數量",numInput(pWindows,setPWindows,"","扇"))}
+      {field("塗刷層數",
+        <div>
+          {numInput(pCoats,setPCoats,"","層")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["底漆1+面漆1","2"],["底漆1+面漆2","3"]].map(([l,v])=>presetBtn(l,()=>setPCoats(v)))}
+          </div>
+        </div>
+      )}
+      {field("每公升遮蓋率（㎡）",
+        <div>
+          {numInput(pCover,setPCover,"","㎡/L")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["一般乳膠漆 10","10"],["進口漆 12","12"],["底漆 8","8"]].map(([l,v])=>presetBtn(l,()=>setPCover(v)))}
+          </div>
+        </div>
+      )}
+      {resultBox("建議採購量",pLiters,"公升",`淨面積 ${pNetArea.toFixed(1)} ㎡ × ${pCt} 層 → 約 ${p4L} 桶（4L裝）`)}
+    </div>)}
+
+    {/* ── 壁紙 ── */}
+    {ct==="wallpaper"&&(<div style={{background:"var(--sf)",borderRadius:"12px",padding:"1.4rem",border:"1px solid var(--bdr)"}}>
+      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算壁紙用量（捲數）</div>
+      {field("牆面總寬度（公尺）",numInput(wpW,setWpW,"要貼壁紙的總寬","m"))}
+      {field("牆面高度（公尺）",
+        <div>
+          {numInput(wpH,setWpH,"","m")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["2.8m","2.8"],["3.0m","3.0"]].map(([l,v])=>presetBtn(l,()=>setWpH(v)))}
+          </div>
+        </div>
+      )}
+      {field("壁紙幅寬（公分）",
+        <div>
+          {numInput(wpRollW,setWpRollW,"","cm")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["53cm","53"],["106cm","106"],["92cm","92"]].map(([l,v])=>presetBtn(l,()=>setWpRollW(v)))}
+          </div>
+        </div>
+      )}
+      {field("每捲長度（公尺）",
+        <div>
+          {numInput(wpRollL,setWpRollL,"","m")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["10m","10"],["15m","15"]].map(([l,v])=>presetBtn(l,()=>setWpRollL(v)))}
+          </div>
+        </div>
+      )}
+      {field("對花間距（公分，無對花填0）",numInput(wpRepeat,setWpRepeat,"0","cm"))}
+      {resultBox("建議採購捲數",wpRolls,"捲",`${wpTotalStrips} 幅 / 每捲可裁 ${wpStripsPerRoll} 幅${wpRep>0?" (含對花損耗)":""}`)}
+    </div>)}
+
+    {/* ── 窗簾才數 ── */}
+    {ct==="curtain"&&(<div style={{background:"var(--sf)",borderRadius:"12px",padding:"1.4rem",border:"1px solid var(--bdr)"}}>
+      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算窗簾布料才數（1才＝30.48cm²）</div>
+      {field("窗戶/開口寬度（公尺）",numInput(crW,setCrW,"例：2.4","m"))}
+      {field("窗戶/開口高度（公尺）",numInput(crH,setCrH,"例：2.2","m"))}
+      {field("打褶倍率",
+        <div>
+          {numInput(crFold,setCrFold,"","倍")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["平板 1.5×","1.5"],["一般 2×","2"],["豐盈 2.5×","2.5"]].map(([l,v])=>presetBtn(l,()=>setCrFold(v)))}
+          </div>
+        </div>
+      )}
+      {field("回折量（公分，雙側合計）",
+        <div>
+          {numInput(crReturn,setCrReturn,"","cm")}
+          <div style={{display:"flex",gap:".4rem",marginTop:".45rem"}}>
+            {[["無 0","0"],["各7.5cm","15"],["各10cm","20"]].map(([l,v])=>presetBtn(l,()=>setCrReturn(v)))}
+          </div>
+        </div>
+      )}
+      {resultBox("所需才數",crCai,"才",`布料寬 ${crFabricW.toFixed(2)}m × 高 ${crFabricH.toFixed(2)}m`)}
+      <div style={{marginTop:".8rem",padding:".7rem .9rem",background:"rgba(201,146,79,.08)",borderRadius:"var(--r)",border:"1px solid rgba(201,146,79,.2)"}}>
+        <div style={{fontSize:".7rem",color:"var(--acc)",fontFamily:"'DM Mono',monospace",lineHeight:1.6}}>
+          💡 才數公式：布寬(m) × 布高(m) × 10.76 = 才數<br/>
+          已含下墜份 +30cm，實際裁切需與布料幅寬確認
+        </div>
+      </div>
+    </div>)}
+  </div>);
+}
+
+
 function App(){
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -2050,6 +2488,8 @@ function App(){
   const [archiveTarget,setArchiveTarget]=useState(null);
   const [showArchived,setShowArchived]=useState(false);
   const [showAllMats,setShowAllMats]=useState(false);
+  const [showTools,setShowTools]=useState(false);
+  const [showCaseOverview,setShowCaseOverview]=useState(true);
   const [sbOpen,setSbOpen]=useState(false);
   const lastSaveTime=useRef(0);
 
@@ -2102,52 +2542,77 @@ function App(){
           <span style={{fontFamily:"'DM Serif Display',serif",fontSize:"1rem",color:"rgba(255,255,255,.88)",letterSpacing:".04em"}}>Studio</span>
         </span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showTools?"計算工具":showCaseOverview?"案件總覽":showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
         <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
         <span className="hdr-date">{dateParts}</span>
         {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
-        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos||showAllMats){setShowAllCal(false);setShowAllTodos(false);setShowAllMats(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos?"返回案件":"行事曆"}</button>
+        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview){setShowAllCal(false);setShowAllTodos(false);setShowAllMats(false);setShowTools(false);setShowCaseOverview(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview?"返回案件":"行事曆"}</button>
       </div>
     </header>
 
     <div className="workspace">
       <aside className={`sidebar${sbOpen?" open":""}`}>
-        <button className="sb-close-btn" onClick={()=>setSbOpen(false)}>✕ 關閉</button>
-        <hr className="sb-sep"/>
-        <div className="sb-sec">Cases</div>
-        {data.projects.filter(p=>!p.archived).map(p=>{const pct=Math.round(p.milestones.filter(m=>m.status==="done").length/Math.max(p.milestones.length,1)*100);return(
-          <div key={p.id} className={`sb-item${pid===p.id&&!showAllCal&&!showAllTodos&&!showDash?" on":""}`} onClick={()=>selectProj(p.id)}>
-            <span className="sb-dot" style={{background:p.color}}/>
-            <div className="sb-info"><div className="sb-name">{p.name}</div><div className="sb-sub">{p.owner} · {STAGE_L[p.stage]}</div><div className="sb-bar-track"><div className="sb-bar-fill" style={{width:pct+"%"}}/></div></div>
-          </div>);})}
-        <hr className="sb-sep"/>
-        <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setShowAllMats(false);setAllTodosFilter("pending");setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>☑</span>
-          <div className="sb-info">
-            <div className="sb-name">所有待辦</div>
-            <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
+        {/* Brand */}
+        <div className="sb-brand">
+          <button className="sb-close-btn" onClick={()=>setSbOpen(false)}>✕ 關閉</button>
+          <div className="sb-brand-logo">
+            <div className="sb-brand-icon">YC</div>
+            <div>
+              <div className="sb-brand-name">YC Studio</div>
+              <div className="sb-brand-tagline">Design · Operation · AI</div>
+            </div>
           </div>
+          <div className="sb-brand-sys">工程管理系統</div>
         </div>
-        <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◎</span>
-          <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
-        </div>
-        <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>▤</span>
-          <div className="sb-info"><div className="sb-name">材質與五金</div><div className="sb-sub">All Materials</div></div>
-        </div>
-        {data.projects.filter(p=>p.archived).length>0&&<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setSbOpen(false);}}>
-          <span style={{fontSize:"1rem",color:"var(--t3)"}}>◫</span>
-          <div className="sb-info">
-            <div className="sb-name">歸檔案件</div>
-            <div className="sb-sub">{data.projects.filter(p=>p.archived).length} 件已歸檔</div>
+        <div className="sb-body">
+          {/* 建立案件 */}
+          <button className="sb-create" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>
+            <span style={{fontSize:"1rem",lineHeight:1}}>＋</span> 建立案件
+          </button>
+          {/* 案件總覽 — 主要入口 */}
+          <div className={`sb-overview${showCaseOverview?" on":""}`} onClick={()=>{setShowCaseOverview(true);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setShowTools(false);setShowArchived(false);setShowDash(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>◉</span>
+            <div className="sb-info">
+              <div className="sb-name">案件總覽</div>
+              <div className="sb-sub">{data.projects.filter(p=>!p.archived).length} 個進行中</div>
+            </div>
           </div>
-        </div>}
-        <hr className="sb-sep"/>
-        {proj&&!showAllCal&&!proj.archived&&<div style={{padding:".2rem .5rem",display:"flex",gap:".3rem",flexWrap:"wrap"}}><button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button><button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button></div>}
-        <button className="sb-add" onClick={()=>{setModal({type:"newProj",pid:null});setSbOpen(false);}}>＋ 新增案件</button>
+          <hr className="sb-sep"/>
+          {/* 工具列 */}
+          <div className="sb-sec">工具</div>
+          <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowDash(false);setShowAllMats(false);setShowCaseOverview(false);setAllTodosFilter("pending");setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>☑</span>
+            <div className="sb-info">
+              <div className="sb-name">所有待辦</div>
+              <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
+            </div>
+          </div>
+          <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowDash(false);setShowArchived(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>◎</span>
+            <div className="sb-info"><div className="sb-name">總合行事曆</div><div className="sb-sub">All Projects</div></div>
+          </div>
+          <div className={`sb-item${showAllMats?" on":""}`} onClick={()=>{setShowAllMats(true);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowTools(false);setShowCaseOverview(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>▤</span>
+            <div className="sb-info"><div className="sb-name">材質與五金</div><div className="sb-sub">All Materials</div></div>
+          </div>
+          <div className={`sb-item${showTools?" on":""}`} onClick={()=>{setShowTools(true);setShowAllMats(false);setShowArchived(false);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowCaseOverview(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>◈</span>
+            <div className="sb-info"><div className="sb-name">計算工具</div><div className="sb-sub">用量試算</div></div>
+          </div>
+          {data.projects.filter(p=>p.archived).length>0&&(<div className={`sb-item${showArchived?" on":""}`} onClick={()=>{setShowArchived(true);setShowDash(false);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>◫</span>
+            <div className="sb-info">
+              <div className="sb-name">歸檔案件</div>
+              <div className="sb-sub">{data.projects.filter(p=>p.archived).length} 件已歸檔</div>
+            </div>
+          </div>)}
+          {proj&&!showAllCal&&!proj.archived&&<div style={{padding:".2rem .1rem",display:"flex",gap:".3rem",flexWrap:"wrap",marginTop:".3rem"}}>
+            <button className="meta-btn" style={{color:"var(--done)"}} onClick={()=>{setArchiveTarget(proj);setSbOpen(false);}}>✓ 歸檔</button>
+            <button className="del-meta-btn" onClick={()=>{setDelTarget(proj);setSbOpen(false);}}>刪除</button>
+          </div>}
+        </div>
       </aside>
 
       <main className="main">
@@ -2157,6 +2622,10 @@ function App(){
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
             <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
+        ):showCaseOverview?(
+          <CaseOverviewView data={data} selectProj={selectProj}/>
+        ):showTools?(
+          <CalculatorView/>
         ):showAllMats?(
           <AllMaterialsView data={data}/>
         ):showArchived?(
