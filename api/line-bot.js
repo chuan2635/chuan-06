@@ -1,10 +1,13 @@
 // YC Studio — LINE Bot v6（支援修改已確認記錄）
 import crypto from 'crypto';
+import { createStore, applyConfirm, applyMods, uid } from './_store.js';
 export const config = { api: { bodyParser: false } };
 
 const SURL = 'https://hrxyylqngkubruivwsdm.supabase.co';
 const SKEY = 'sb_publishable_-ShQ0-R3viUcSxjy0o-oeA_GnPuB8_O';
 const APP_URL = 'https://chuan-06.vercel.app/';
+// 資料空間：正式為 ''；測試時設環境變數 YS_NS=test:（有 NS+meta 列才用新格式，否則自動退回舊的 main 單列）
+const makeStore = () => createStore({ SURL, SKEY, NS: process.env.YS_NS || '', LEGACY_ID: process.env.YS_LEGACY_ID || 'main' });
 
 // ── 工具 ──────────────────────────────────────────────────
 async function getRawBody(req) {
@@ -18,7 +21,6 @@ async function getRawBody(req) {
 function verifySignature(rawBody, sig, secret) {
   return crypto.createHmac('SHA256', secret).update(rawBody).digest('base64') === sig;
 }
-function uid() { return Math.random().toString(36).slice(2, 10); }
 function fmtDate(d) {
   if (!d) return '';
   const p = d.split('-');
@@ -133,14 +135,6 @@ function modifySuccessFlex(projectName, mods) {
   }};
 }
 
-// ── Supabase ───────────────────────────────────────────────
-async function fetchData() {
-  const r = await fetch(SURL+'/rest/v1/studio_data?id=eq.main&select=data',{headers:{apikey:SKEY,Authorization:'Bearer '+SKEY}});
-  return (await r.json())?.[0]?.data||null;
-}
-async function saveData(data) {
-  await fetch(SURL+'/rest/v1/studio_data',{method:'POST',headers:{apikey:SKEY,Authorization:'Bearer '+SKEY,'Content-Type':'application/json',Prefer:'resolution=merge-duplicates'},body:JSON.stringify({id:'main',data,updated_at:new Date().toISOString()})});
-}
 
 // ── Claude：解析新記錄 ────────────────────────────────────
 async function parseMessage(userText, projects, apiKey) {
@@ -186,40 +180,40 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
   const replyToken=event.replyToken, userId=event.source?.userId;
   const text=(event.message?.text||'').trim();
   if (ALLOWED_ID&&userId!==ALLOWED_ID) return;
+  const store=makeStore();
 
   if (text==='說明'||text==='/help') { await replyMsg(replyToken,textMsg('🏠 YC Studio Bot\n\n📌 新增記錄：直接傳訊息\n✎ 修改草稿：確認卡按「✎ 修改」\n🔄 修改已有記錄：直接說「把石門湯旅的XXX改成...」\n✅ 標記完成：「石門湯旅的XXX完成了」\n\n⌨️ 指令：\n狀態 — 今日摘要\n案件 — 案件列表'),TOKEN); return;
   }
   if (text==='狀態') {
-    const data=await fetchData(); const today=new Date().toISOString().slice(0,10); let ov=0,td=0,tot=0;
-    for(const p of(data?.projects||[]).filter(x=>!x.archived))for(const t of(p.todos||[])){if(t.done)continue;tot++;if(t.due&&t.due<today)ov++;else if(t.due===today)td++;}
+    const projects=await store.listProjects(); const today=new Date().toISOString().slice(0,10); let ov=0,td=0,tot=0;
+    for(const p of projects.filter(x=>!x.archived))for(const t of(p.todos||[])){if(t.done)continue;tot++;if(t.due&&t.due<today)ov++;else if(t.due===today)td++;}
     await replyMsg(replyToken,textMsg('📊 今日狀態\n\n⚠️ 逾期：'+ov+' 件\n📌 今日截止：'+td+' 件\n📋 總待辦：'+tot+' 件'),TOKEN); return;
   }
   if (text==='案件') {
-    const data=await fetchData(); const active=(data?.projects||[]).filter(p=>!p.archived);
+    const active=(await store.listProjects()).filter(p=>!p.archived);
     await replyMsg(replyToken,textMsg('📁 目前案件（'+active.length+' 件）\n\n'+active.map(p=>'• '+p.name+'（'+(p.todos||[]).filter(t=>!t.done).length+' 待辦）').join('\n')),TOKEN); return;
   }
   if (!API_KEY) { await replyMsg(replyToken,textMsg('⚠️ 未設定 ANTHROPIC_API_KEY'),TOKEN); return; }
 
   try {
-    const data=await fetchData();
-    if (!data) throw new Error('無法連線到資料庫');
+    const projects=await store.listProjects();
+    if (!projects.length) throw new Error('無法連線到資料庫');
 
     // ── 修改模式（草稿編輯）──
-    const editingRecord=(data.pendingRecords||[]).find(r=>r.userId===userId&&r.editing);
+    const editingRecord=await store.pendEditing(userId);
     if (editingRecord) {
       const updatedActions=await applyEdit(text,editingRecord.actions,API_KEY);
-      editingRecord.actions=updatedActions; editingRecord.editing=false; editingRecord.createdAt=new Date().toISOString();
-      await saveData(data);
-      const proj=data.projects.find(p=>p.id===editingRecord.projectId);
+      await store.pendUpdate(editingRecord.id,{actions:updatedActions,editing:false,createdAt:new Date().toISOString()});
+      const proj=projects.find(p=>p.id===editingRecord.projectId);
       await replyMsg(replyToken,previewFlex(editingRecord.id,proj?proj.name:'案件',updatedActions),TOKEN); return;
     }
 
     // ── 找案件 ──
     let project=null;
-    const parsed=await parseMessage(text,data.projects,API_KEY);
-    if(parsed.projectName) project=data.projects.find(p=>p.name===parsed.projectName)||findBestProject(parsed.projectName,data.projects);
-    if(!project){const ms=extractMentions(text);for(const m of ms){project=findBestProject(m,data.projects);if(project)break;}}
-    if(!project){const nt=normalize(text);project=data.projects.filter(p=>!p.archived).find(p=>{const np=normalize(p.name);for(let i=0;i<=np.length-4;i++){const c=np.slice(i,i+4);if(/[\u4e00-\u9fff]{4}/.test(c)&&nt.includes(c))return true;}return false;})||null;}
+    const parsed=await parseMessage(text,projects,API_KEY);
+    if(parsed.projectName) project=projects.find(p=>p.name===parsed.projectName)||findBestProject(parsed.projectName,projects);
+    if(!project){const ms=extractMentions(text);for(const m of ms){project=findBestProject(m,projects);if(project)break;}}
+    if(!project){const nt=normalize(text);project=projects.filter(p=>!p.archived).find(p=>{const np=normalize(p.name);for(let i=0;i<=np.length-4;i++){const c=np.slice(i,i+4);if(/[\u4e00-\u9fff]{4}/.test(c)&&nt.includes(c))return true;}return false;})||null;}
 
     // ── 修改已有記錄流程 ──
     if (project && isModificationIntent(text)) {
@@ -227,24 +221,20 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
       const mods=modResult.modifications||[];
       if (mods.length>0) {
         const pendingId=uid();
-        data.pendingRecords=(data.pendingRecords||[]).filter(r=>new Date()-new Date(r.createdAt)<30*60*1000);
-        data.pendingRecords.push({id:pendingId,type:'modification',projectId:project.id,modifications:mods,userId,createdAt:new Date().toISOString()});
-        await saveData(data);
+        await store.pendPut({id:pendingId,type:'modification',projectId:project.id,modifications:mods,userId,createdAt:new Date().toISOString()});
         await replyMsg(replyToken,modifyPreviewFlex(pendingId,project.name,mods),TOKEN); return;
       }
     }
 
     // ── 新增記錄流程 ──
     if (!project) {
-      const names=data.projects.filter(p=>!p.archived).map(p=>'• '+p.name).join('\n');
+      const names=projects.filter(p=>!p.archived).map(p=>'• '+p.name).join('\n');
       await replyMsg(replyToken,textMsg('❓ 找不到對應案件\n\n目前案件：\n'+names),TOKEN); return;
     }
     let actions=(parsed.actions||[]);
     if(actions.length===0) actions=[{type:'comm',who:'業主',note:text,ch:'Line',date:new Date().toISOString().slice(0,10)}];
     const pendingId=uid();
-    data.pendingRecords=(data.pendingRecords||[]).filter(r=>new Date()-new Date(r.createdAt)<30*60*1000);
-    data.pendingRecords.push({id:pendingId,projectId:project.id,actions,userId,createdAt:new Date().toISOString(),editing:false});
-    await saveData(data);
+    await store.pendPut({id:pendingId,projectId:project.id,actions,userId,createdAt:new Date().toISOString(),editing:false});
     await replyMsg(replyToken,previewFlex(pendingId,project.name,actions),TOKEN);
   } catch(err) { console.error(err); await replyMsg(replyToken,textMsg('❌ 錯誤：'+err.message),TOKEN); }
 }
@@ -254,64 +244,28 @@ async function handlePostback(event, TOKEN, API_KEY) {
   const replyToken=event.replyToken;
   const params=new URLSearchParams(event.postback?.data||'');
   const action=params.get('action'), pendingId=params.get('id');
-  const data=await fetchData();
-  if(!data){await replyMsg(replyToken,textMsg('❌ 無法連線'),TOKEN);return;}
-  const pending=(data.pendingRecords||[]).find(r=>r.id===pendingId);
-
-  if(action==='cancel'){
-    data.pendingRecords=(data.pendingRecords||[]).filter(r=>r.id!==pendingId);
-    await saveData(data); await replyMsg(replyToken,textMsg('✖️ 已取消。'),TOKEN); return;
-  }
-  if(action==='edit'){
-    if(!pending){await replyMsg(replyToken,textMsg('⚠️ 記錄已過期，請重新傳訊息。'),TOKEN);return;}
-    pending.editing=true; await saveData(data);
-    await replyMsg(replyToken,textMsg('✎ 請告訴我要修改什麼：\n\n例如：\n・時間改成下禮拜三\n・待辦改成抓規格書給業主\n・溝通內容加上：業主希望保留窗簾盒'),TOKEN); return;
-  }
-  if(action==='confirm'){
-    if(!pending){await replyMsg(replyToken,textMsg('⚠️ 記錄已過期，請重新傳訊息。'),TOKEN);return;}
-    const proj=data.projects.find(p=>p.id===pending.projectId);
-    if(!proj){await replyMsg(replyToken,textMsg('❌ 找不到案件'),TOKEN);return;}
-    const today=new Date().toISOString().slice(0,10); const fi=[];
-    for(const a of pending.actions){
-      if(a.type==='comm'&&a.note){proj.comms=proj.comms||[];proj.comms.push({id:uid(),who:a.who||'業主',note:a.note,ch:a.ch||'Line',date:a.date||today});fi.push({icon:'📝',text:(a.who||'業主')+'：'+a.note});}
-      if(a.type==='todo'&&a.text){proj.todos=proj.todos||[];proj.todos.push({id:uid(),text:a.text,done:false,due:a.due||'',prio:a.prio||'mid',note:''});const pi=a.prio==='high'?'🔴':a.prio==='mid'?'🟡':'⚪';fi.push({icon:pi,text:a.text+(a.due?'（'+fmtDate(a.due)+'）':'')});}
+  const store=makeStore();
+  const expired=()=>replyMsg(replyToken,textMsg('⚠️ 記錄已過期，請重新傳訊息。'),TOKEN);
+  try {
+    if(action==='cancel'){
+      await store.pendClaim(pendingId); await replyMsg(replyToken,textMsg('✖️ 已取消。'),TOKEN); return;
     }
-    data.pendingRecords=(data.pendingRecords||[]).filter(r=>r.id!==pendingId);
-    await saveData(data); await replyMsg(replyToken,successFlex(proj.name,fi),TOKEN); return;
-  }
-
-  // ── 套用已有記錄修改 ──
-  if(action==='applymod'){
-    if(!pending){await replyMsg(replyToken,textMsg('⚠️ 記錄已過期，請重新傳訊息。'),TOKEN);return;}
-    const proj=data.projects.find(p=>p.id===pending.projectId);
-    if(!proj){await replyMsg(replyToken,textMsg('❌ 找不到案件'),TOKEN);return;}
-    const mods=pending.modifications||[]; const appliedMods=[];
-    for(const m of mods){
-      if(m.recordType==='todo'){
-        const idx=m.recordIndex;
-        const todos=proj.todos||[];
-        if(m.action==='done'&&todos[idx]){todos[idx].done=true;appliedMods.push({...m,newText:todos[idx].text+' ✅'});}
-        else if(m.action==='delete'&&todos[idx]){appliedMods.push({...m,newText:'已刪除：'+todos[idx].text});todos.splice(idx,1);}
-        else if(m.action==='edit'&&todos[idx]){
-          if(m.changes?.text)todos[idx].text=m.changes.text;
-          if(m.changes?.due)todos[idx].due=m.changes.due;
-          if(m.changes?.done!==undefined)todos[idx].done=m.changes.done;
-          appliedMods.push({...m,newText:todos[idx].text+(todos[idx].due?'（截止 '+fmtDate(todos[idx].due)+'）':'')});
-        }
-      }
-      if(m.recordType==='comm'){
-        const idx=m.recordIndex; const comms=proj.comms||[];
-        if(m.action==='delete'&&comms[idx]){appliedMods.push({...m,newText:'已刪除：'+comms[idx].note});comms.splice(idx,1);}
-        else if(m.action==='edit'&&comms[idx]){
-          if(m.changes?.note)comms[idx].note=m.changes.note;
-          if(m.changes?.who)comms[idx].who=m.changes.who;
-          appliedMods.push({...m,newText:comms[idx].note});
-        }
-      }
+    if(action==='edit'){
+      if(!await store.pendUpdate(pendingId,{editing:true})){await expired();return;}
+      await replyMsg(replyToken,textMsg('✎ 請告訴我要修改什麼：\n\n例如：\n・時間改成下禮拜三\n・待辦改成抓規格書給業主\n・溝通內容加上：業主希望保留窗簾盒'),TOKEN); return;
     }
-    data.pendingRecords=(data.pendingRecords||[]).filter(r=>r.id!==pendingId);
-    await saveData(data); await replyMsg(replyToken,modifySuccessFlex(proj.name,appliedMods.length>0?appliedMods:mods),TOKEN); return;
-  }
+    if(action==='confirm'||action==='applymod'){
+      const pending=await store.pendClaim(pendingId);   // 取走草稿；重複按只會成功一次
+      if(!pending){await expired();return;}
+      const today=new Date().toISOString().slice(0,10);
+      const res=await store.mutateProject(pending.projectId,proj=>action==='confirm'
+        ?applyConfirm(proj,pending,{fmtDate,today})
+        :applyMods(proj,pending.modifications||[],{fmtDate}));
+      if(!res){await replyMsg(replyToken,textMsg('❌ 找不到案件'),TOKEN);return;}
+      if(action==='confirm') await replyMsg(replyToken,successFlex(res.project.name,res.out),TOKEN);
+      else await replyMsg(replyToken,modifySuccessFlex(res.project.name,res.out.length>0?res.out:(pending.modifications||[])),TOKEN);
+    }
+  } catch(err) { console.error(err); await replyMsg(replyToken,textMsg('❌ 錯誤：'+err.message),TOKEN); }
 }
 
 // ── 主程式 ────────────────────────────────────────────────
