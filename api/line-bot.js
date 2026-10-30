@@ -51,6 +51,16 @@ function findBestProject(input, projects) {
   const sc = active.map(p=>{const np=normalize(p.name),ic=new Set(ni.split('')),pc=new Set(np.split(''));return{p,s:(([...ic].filter(c=>pc.has(c)).length)*2)/(ic.size+pc.size)};}).sort((a,b)=>b.s-a.s);
   return sc[0]&&sc[0].s>=0.45?sc[0].p:null;
 }
+// 備援（不靠 Claude）：案件名中「只屬於該案件」的連續中文片段（≥2字，如「學澄」）出現在訊息裡就比對；有並列則不猜
+function findByFragment(text, projects) {
+  const active = projects.filter(p => !p.archived);
+  const nt = normalize(text);
+  const frags = p => { const np = normalize(p.name), out = new Set(); for (let i = 0; i < np.length; i++) for (let j = i + 2; j <= np.length; j++) { const s = np.slice(i, j); if (/^[一-鿿]+$/.test(s)) out.add(s); } return out; };
+  const fs = active.map(p => ({ p, f: frags(p) }));
+  const df = new Map(); for (const x of fs) for (const s of x.f) df.set(s, (df.get(s) || 0) + 1);
+  const scored = fs.map(x => ({ p: x.p, s: Math.max(0, ...[...x.f].filter(s => df.get(s) === 1 && nt.includes(s)).map(s => s.length)) })).filter(x => x.s >= 2).sort((a, b) => b.s - a.s);
+  return scored[0] && (!scored[1] || scored[1].s < scored[0].s) ? scored[0].p : null;
+}
 function extractMentions(text) {
   const m=[];
   const p1=text.match(/跟(.{2,8}?)(?:的業主|業主|的廠商|廠商|那邊|討論|開會)/); if(p1)m.push(p1[1].trim());
@@ -136,6 +146,15 @@ function modifySuccessFlex(projectName, mods) {
 }
 
 
+// Claude 回應檢查：API 失敗或沒有內容時丟出明確錯誤（原本會靜默當成空物件，導致誤報「找不到對應案件」）
+async function claudeText(resp) {
+  const d = await resp.json().catch(() => null);
+  if (!resp.ok) throw new Error('AI 解析失敗（Claude API ' + resp.status + '：' + (d?.error?.message || d?.error?.type || '無回應內容').slice(0, 80) + '）');
+  const text = d?.content?.[0]?.text;
+  if (!text) throw new Error('AI 解析失敗（Claude 沒有回傳內容）');
+  return text.replace(/```json\n?|```/g, '').trim();
+}
+
 // ── Claude：解析新記錄 ────────────────────────────────────
 async function parseMessage(userText, projects, apiKey) {
   const today=new Date().toISOString().slice(0,10);
@@ -143,8 +162,7 @@ async function parseMessage(userText, projects, apiKey) {
   const dh=Object.entries(dm).map(e=>e[0]+'='+e[1]).join(', ');
   const pl=projects.filter(p=>!p.archived).map(p=>'- "'+p.name+'"').join('\n');
   const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1200,system:'你是室內設計助理，從訊息提取結構化資料，只回覆 JSON。',messages:[{role:'user',content:'今天：'+today+'\n日期：'+dh+'\n\n案件：\n'+pl+'\n\n規則：\n1. 有溝通內容→comm\n2. 有要做的事/期限→todo\n3. 下禮拜X=下週X\n4. comm+todo都要\n\n訊息：「'+userText+'」\n\nJSON：{"projectName":"完整案件名或null","confidence":0到1,"actions":[{"type":"comm","who":"...","note":"...","date":"YYYY-MM-DD","ch":"..."},{"type":"todo","text":"...","due":"YYYY-MM-DD或空","prio":"high/mid/low"}]}'}]})});
-  const d=await resp.json();
-  const raw=(d.content?.[0]?.text||'{}').replace(/```json\n?|```/g,'').trim();
+  const raw=await claudeText(resp);
   return JSON.parse(raw);
 }
 
@@ -159,8 +177,7 @@ async function parseModification(userText, project, apiKey) {
   const allTodos=(project.todos||[]).map((t,i)=>'[T'+i+'] '+(t.done?'✓':'')+t.text+(t.due?' '+t.due:'')).join('\n');
 
   const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,system:'你是室內設計助理，解析修改指令，只回覆 JSON。',messages:[{role:'user',content:'今天：'+today+'\n日期對照：'+dh+'\n\n案件：'+project.name+'\n\n現有待辦（未完成）：\n'+todos+'\n\n現有待辦（全部）：\n'+allTodos+'\n\n最近溝通記錄：\n'+comms+'\n\n修改指令：「'+userText+'」\n\n請分析要修改什麼，回覆 JSON：\n{"modifications":[\n  {\n    "recordType":"todo或comm",\n    "recordIndex":記錄的索引號(T0/C0等的數字),\n    "action":"done（標記完成）/edit（編輯）/delete（刪除）",\n    "originalText":"原始內容摘要",\n    "newText":"修改後內容（done/delete時與原本相同）",\n    "changes":{"text":"新文字","due":"新日期YYYY-MM-DD","note":"補充內容","done":true/false}\n  }\n]}'}]})});
-  const d=await resp.json();
-  const raw=(d.content?.[0]?.text||'{}').replace(/```json\n?|```/g,'').trim();
+  const raw=await claudeText(resp);
   return JSON.parse(raw);
 }
 
@@ -169,8 +186,7 @@ async function applyEdit(editText, currentActions, apiKey) {
   const dm=buildDateMap();
   const dh=Object.entries(dm).map(e=>e[0]+'='+e[1]).join(', ');
   const resp=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:800,system:'你是室內設計助理，根據指示修改記錄，只回覆 JSON。',messages:[{role:'user',content:'當前記錄：\n'+JSON.stringify(currentActions,null,2)+'\n\n日期：'+dh+'\n\n修改指示：「'+editText+'」\n\nJSON：{"actions":[...]}'}]})});
-  const d=await resp.json();
-  const raw=(d.content?.[0]?.text||'{}').replace(/```json\n?|```/g,'').trim();
+  const raw=await claudeText(resp);
   return JSON.parse(raw).actions||currentActions;
 }
 
@@ -214,6 +230,8 @@ async function handleMessage(event, TOKEN, API_KEY, ALLOWED_ID) {
     if(parsed.projectName) project=projects.find(p=>p.name===parsed.projectName)||findBestProject(parsed.projectName,projects);
     if(!project){const ms=extractMentions(text);for(const m of ms){project=findBestProject(m,projects);if(project)break;}}
     if(!project){const nt=normalize(text);project=projects.filter(p=>!p.archived).find(p=>{const np=normalize(p.name);for(let i=0;i<=np.length-4;i++){const c=np.slice(i,i+4);if(/[\u4e00-\u9fff]{4}/.test(c)&&nt.includes(c))return true;}return false;})||null;}
+
+    if(!project) project=findByFragment(text,projects);
 
     // ── 修改已有記錄流程 ──
     if (project && isModificationIntent(text)) {
