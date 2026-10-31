@@ -22,16 +22,278 @@ const SURL="https://hrxyylqngkubruivwsdm.supabase.co";
 const SKEY="sb_publishable_-ShQ0-R3viUcSxjy0o-oeA_GnPuB8_O";
 const DID="main";
 
-async function loadData(){
-  try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length)return rows[0].data;}catch(e){}
-  return INIT;
-}
-async function saveData(d){
-  try{await fetch(`${SURL}/rest/v1/studio_data`,{method:"POST",headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`,"Content-Type":"application/json",Prefer:"resolution=merge-duplicates"},body:JSON.stringify({id:DID,data:d,updated_at:new Date().toISOString()})});}catch(e){}
-}
+/* ═══════════════════════════════════
+   雲端同步引擎 v2 — 一案件一列
+   列：meta（材質庫/五金庫）、proj:<id>（單一案件，刪除以 deleted 標記）
+   每列 data = {_rev, ord, deleted?, v}；寫入用 _rev 條件更新（比對版本才寫）
+   NS：預設 ""（正式空間）；網址加 ?ns=test 才使用測試空間（顯示 TEST 標記）
+   ═══════════════════════════════════ */
+const NS=new URLSearchParams(location.search).get("ns")==="test"?"test:":"";
+const Sync=(()=>{
+  const rows=new Map();      // key -> {rev, ord}
+  const ops=new Map();       // key -> [{fn}]  尚未確認寫入的本機修改
+  const dirty=new Set(), flushing=new Set();
+  let cb={},timer=null,retryTimer=null,retryMs=3000,status="ok";
+  const enc=encodeURIComponent, pk=id=>"proj:"+id, rowId=k=>NS+k;
+  const PEND="ys-pending-"+NS;
+  const setStatus=s=>{if(s!==status){status=s;cb.onStatus&&cb.onStatus(s);}};
+  async function sb(q,opt={}){
+    const r=await fetch(`${SURL}/rest/v1/studio_data${q}`,{...opt,headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`,"Content-Type":"application/json",...(opt.headers||{})}});
+    if(!r.ok){const t=await r.text().catch(()=>"");throw new Error(`HTTP ${r.status} ${t.slice(0,120)}`);}
+    const t=await r.text();return t?JSON.parse(t):null;
+  }
+  /* 圖片倉庫：圖片/PDF 以內容雜湊命名，存成獨立列 NS+"img:<hash>[.pdf]"，資料裡只留 "img:<hash>" 參照。
+     之後要換成 Supabase Storage，只需改 remoteGet / remotePut。 */
+  const Img=(()=>{
+    const cache=new Map(),inflight=new Map(),known=new Set(),memo=new Map(),waiters=[];
+    let busy=0;
+    const slot=async()=>{if(busy>=4)await new Promise(r=>waiters.push(r));busy++;};
+    const free=()=>{busy--;const n=waiters.shift();if(n)n();};
+    const isData=s=>typeof s==="string"&&s.length>1000&&s.startsWith("data:");
+    const isRef=s=>typeof s==="string"&&s.startsWith("img:");
+    async function digest(s){
+      if(crypto&&crypto.subtle){
+        const b=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(s));
+        return Array.from(new Uint8Array(b).slice(0,16),x=>x.toString(16).padStart(2,"0")).join("");
+      }
+      let h1=0xdeadbeef,h2=0x41c6ce57;
+      for(let i=0;i<s.length;i++){const c=s.charCodeAt(i);h1=Math.imul(h1^c,2654435761);h2=Math.imul(h2^c,1597334677);}
+      h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+      h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+      return (h2>>>0).toString(16).padStart(8,"0")+(h1>>>0).toString(16).padStart(8,"0")+s.length.toString(16).padStart(8,"0");
+    }
+    async function remoteGet(ref){const r=await sb(`?id=eq.${enc(NS+ref)}&select=data`);return r&&r[0]&&r[0].data?r[0].data.d:null;}
+    async function remotePut(ref,mime,d){
+      await sb("?select=id",{method:"POST",headers:{Prefer:"resolution=ignore-duplicates,return=minimal"},body:JSON.stringify([{id:NS+ref,data:{mime,d},updated_at:new Date().toISOString()}])});
+    }
+    const peek=ref=>cache.get(ref)||null;
+    function get(ref){
+      if(cache.has(ref))return Promise.resolve(cache.get(ref));
+      if(inflight.has(ref))return inflight.get(ref);
+      const p=(async()=>{
+        await slot();
+        try{const d=await remoteGet(ref);if(d==null)throw new Error("找不到圖片 "+ref);cache.set(ref,d);known.add(ref);return d;}
+        finally{free();}
+      })().finally(()=>inflight.delete(ref));
+      inflight.set(ref,p);return p;
+    }
+    async function toRef(s,found){
+      let ref=memo.get(s);
+      if(!ref){ref="img:"+await digest(s)+(s.startsWith("data:application/pdf")?".pdf":"");memo.set(s,ref);}
+      cache.set(ref,s);
+      if(!known.has(ref))found.set(ref,s);
+      return ref;
+    }
+    /* 把 val 內所有 data: 字串換成參照；回傳新值與尚未上傳的圖片 */
+    async function externalize(val){
+      const found=new Map();
+      const walk=async v=>{
+        if(typeof v==="string")return isData(v)?toRef(v,found):v;
+        if(Array.isArray(v)){let ch=false;const o=[];for(const x of v){const y=await walk(x);if(y!==x)ch=true;o.push(y);}return ch?o:v;}
+        if(v&&typeof v==="object"){let ch=false;const o={};for(const k of Object.keys(v)){const y=await walk(v[k]);if(y!==v[k])ch=true;o[k]=y;}return ch?o:v;}
+        return v;
+      };
+      const v=await walk(val);
+      return {v,found};
+    }
+    async function upload(found){
+      await Promise.all([...found].map(async([ref,s])=>{
+        await slot();
+        try{await remotePut(ref,s.slice(5,s.indexOf(";")),s);known.add(ref);}finally{free();}
+      }));
+    }
+    /* 測試用：把參照還原成 data: 字串 */
+    async function hydrate(v){
+      if(isRef(v))return get(v);
+      if(Array.isArray(v))return Promise.all(v.map(hydrate));
+      if(v&&typeof v==="object"){const o={};for(const k of Object.keys(v))o[k]=await hydrate(v[k]);return o;}
+      return v;
+    }
+    return {get,peek,isRef,externalize,upload,hydrate};
+  })();
+  const extract=(d,key)=>key==="meta"?{materialLibrary:d.materialLibrary||[],hardwareLibrary:d.hardwareLibrary||[]}:d.projects.find(p=>pk(p.id)===key);
+  const ordOf=p=>{const r=rows.get(pk(p.id));return r?r.ord:Infinity;};
+  const sortP=d=>({...d,projects:[...d.projects].sort((a,b)=>(ordOf(a)-ordOf(b))||0)});
+  function put(d,key,val){
+    if(key==="meta")return {...d,materialLibrary:(val&&val.materialLibrary)||[],hardwareLibrary:(val&&val.hardwareLibrary)||[]};
+    const has=d.projects.some(p=>pk(p.id)===key);
+    let projects;
+    if(val===undefined)projects=d.projects.filter(p=>pk(p.id)!==key);
+    else if(has)projects=d.projects.map(p=>pk(p.id)===key?val:p);
+    else projects=[...d.projects,val];
+    return sortP({...d,projects});
+  }
+  function diffKeys(prev,next){
+    const keys=[];
+    if(prev.materialLibrary!==next.materialLibrary||prev.hardwareLibrary!==next.hardwareLibrary)keys.push("meta");
+    const pm=new Map(prev.projects.map(p=>[p.id,p]));
+    for(const p of next.projects){if(pm.get(p.id)!==p)keys.push(pk(p.id));pm.delete(p.id);}
+    for(const id of pm.keys())keys.push(pk(id));
+    return keys;
+  }
+  async function fetchRow(key){const r=await sb(`?id=eq.${enc(rowId(key))}&select=data`);return r&&r[0]?r[0]:null;}
+  async function insertRow(key,data){
+    const r=await sb("?select=id",{method:"POST",headers:{Prefer:"resolution=ignore-duplicates,return=representation"},body:JSON.stringify([{id:rowId(key),data,updated_at:new Date().toISOString()}])});
+    return !!(r&&r.length);
+  }
+  async function casRow(key,rev,data){
+    const r=await sb(`?id=eq.${enc(rowId(key))}&data->>_rev=eq.${rev}&select=id`,{method:"PATCH",headers:{Prefer:"return=representation"},body:JSON.stringify({data,updated_at:new Date().toISOString()})});
+    return !!(r&&r.length);
+  }
+  function backup(key,val){try{localStorage.setItem(`ys-lost-${NS}${key}-${Date.now()}`,JSON.stringify(val===undefined?null:val));}catch(e){}}
+  function persist(){
+    try{
+      if(!dirty.size){localStorage.removeItem(PEND);return;}
+      const d=cb.getData(),o={};
+      for(const k of dirty){const r=rows.get(k)||{rev:0,ord:Date.now()},v=extract(d,k);o[k]={base:r.rev,ord:r.ord,val:v===undefined?null:v};}
+      localStorage.setItem(PEND,JSON.stringify(o));
+    }catch(e){}
+  }
+  /* 衝突：以雲端最新版為底，重套尚未寫入的本機修改（只取該案件的結果） */
+  function rebase(key,srv){
+    const d=cb.getData();
+    if(srv&&srv.data.deleted){
+      ops.delete(key);dirty.delete(key);
+      rows.set(key,{rev:srv.data._rev,ord:srv.data.ord});
+      cb.commit(put(d,key,undefined));
+      cb.onNotice&&cb.onNotice("有案件在其他裝置已被刪除，你對它尚未儲存的修改已捨棄");
+      return "dropped";
+    }
+    if(!srv){const r=rows.get(key)||{ord:Date.now()};rows.set(key,{rev:0,ord:r.ord});return "ok";}
+    rows.set(key,{rev:srv.data._rev,ord:srv.data.ord});
+    const list=ops.get(key)||[];
+    if(list.some(o=>!o.fn)){backup(key,extract(d,key));cb.onNotice&&cb.onNotice("離線期間的修改與雲端衝突，已以雲端版本為準（舊內容備份在瀏覽器）");}
+    let k=put(d,key,srv.data.v);
+    for(const o of list){if(!o.fn)continue;try{k=o.fn(k);}catch(e){}}
+    cb.commit(put(d,key,extract(k,key)));
+    return "ok";
+  }
+  async function flushKey(key){
+    if(flushing.has(key))return;
+    flushing.add(key);
+    try{
+      let conflicts=0;
+      while(true){
+        const d=cb.getData(),val0=extract(d,key);
+        const info=rows.get(key)||{rev:0,ord:Date.now()};
+        const n=(ops.get(key)||[]).length,nextRev=info.rev+1;
+        let val=val0;
+        if(val0!==undefined){const x=await Img.externalize(val0);await Img.upload(x.found);val=x.v;}
+        const data={_rev:nextRev,ord:info.ord,...(val===undefined?{deleted:true,v:null}:{v:val})};
+        const ok=info.rev===0?await insertRow(key,data):await casRow(key,info.rev,data);
+        if(ok){
+          rows.set(key,{rev:nextRev,ord:info.ord});
+          const rest=(ops.get(key)||[]).slice(n);ops.set(key,rest);
+          if(!rest.length){dirty.delete(key);return;}
+          continue;
+        }
+        if(++conflicts>6)throw new Error("衝突重試次數過多："+key);
+        const srv=await fetchRow(key);
+        if(rebase(key,srv)==="dropped")return;
+      }
+    }finally{flushing.delete(key);}
+  }
+  async function flushAll(){
+    if(!dirty.size)return;
+    setStatus("saving");
+    const res=await Promise.allSettled([...dirty].map(flushKey));
+    persist();
+    if(res.some(r=>r.status==="rejected")){
+      setStatus("error");clearTimeout(retryTimer);retryTimer=setTimeout(flushAll,retryMs);retryMs=Math.min(retryMs*2,60000);
+    }else if(dirty.size){schedule(300);}
+    else{retryMs=3000;setStatus("ok");}
+  }
+  function schedule(ms){clearTimeout(timer);timer=setTimeout(flushAll,ms);}
+  function record(fn,prev,next){
+    for(const key of diffKeys(prev,next)){
+      if(!rows.has(key))rows.set(key,{rev:0,ord:Date.now()});
+      if(!ops.has(key))ops.set(key,[]);
+      ops.get(key).push({fn});
+      dirty.add(key);
+    }
+    persist();schedule(600);
+  }
+  async function fetchAll(){
+    const [m,ps]=await Promise.all([sb(`?id=eq.${enc(NS+"meta")}&select=id,data`),sb(`?id=like.${enc(NS+"proj:")}*&select=id,data`)]);
+    if(!m.length&&!ps.length)return null;
+    rows.clear();
+    let lib={materialLibrary:[],hardwareLibrary:[]};
+    if(m.length){const r=m[0].data;rows.set("meta",{rev:r._rev,ord:0});lib={materialLibrary:(r.v&&r.v.materialLibrary)||[],hardwareLibrary:(r.v&&r.v.hardwareLibrary)||[]};}
+    const projects=[];
+    for(const r of ps){
+      const key=r.id.slice(NS.length),dt=r.data;
+      rows.set(key,{rev:dt._rev,ord:dt.ord});
+      if(!dt.deleted&&dt.v)projects.push(dt.v);
+    }
+    return sortP({...lib,projects});
+  }
+  /* 測試空間第一次使用時，從舊的 main 列（唯讀）複製出來 */
+  async function seedFromLegacy(){
+    if(NS==="")throw new Error("正式資料尚未遷移到新格式（階段 3）");
+    const r=await sb(`?id=eq.${DID}&select=data`);
+    const legacy=(r&&r[0]&&r[0].data)||INIT,now=new Date().toISOString();
+    const ext=async v=>{const x=await Img.externalize(v);await Img.upload(x.found);return x.v;};
+    const body=[{id:NS+"meta",data:{_rev:1,v:await ext({materialLibrary:legacy.materialLibrary||[],hardwareLibrary:legacy.hardwareLibrary||[]})},updated_at:now}];
+    for(const [i,p] of (legacy.projects||[]).entries())body.push({id:NS+pk(p.id),data:{_rev:1,ord:i,v:await ext(p)},updated_at:now});
+    await sb("?select=id",{method:"POST",headers:{Prefer:"resolution=ignore-duplicates,return=representation"},body:JSON.stringify(body)});
+  }
+  function restorePending(d){
+    let raw=null;try{raw=JSON.parse(localStorage.getItem(PEND)||"null");}catch(e){}
+    if(!raw)return d;
+    let lost=false;
+    for(const key of Object.keys(raw)){
+      const e=raw[key],cur=rows.get(key),srvRev=cur?cur.rev:0;
+      if(srvRev===e.base){
+        if(!cur)rows.set(key,{rev:0,ord:e.ord});
+        d=put(d,key,e.val===null?undefined:e.val);
+        dirty.add(key);ops.set(key,[{fn:null}]);
+      }else{backup(key,e.val);lost=true;}
+    }
+    if(lost)cb.onNotice&&cb.onNotice("上次關閉前有未同步的修改，但雲端已有新版本，舊內容已備份在瀏覽器");
+    if(dirty.size){persist();schedule(300);}else persist();
+    return d;
+  }
+  async function loadAll(){
+    let d=await fetchAll();
+    if(!d){await seedFromLegacy();d=await fetchAll();}
+    if(!d)throw new Error("讀取雲端資料失敗");
+    return restorePending(d);
+  }
+  const typing=()=>{
+    const a=document.activeElement;if(!a)return false;
+    if(a.isContentEditable)return true;
+    if(/^(TEXTAREA|SELECT)$/.test(a.tagName))return true;
+    return a.tagName==="INPUT"&&!/^(checkbox|radio|button|submit|file)$/.test(a.type);
+  };
+  const guarded=key=>(typing()||!!document.querySelector(".overlay"))&&(key==="meta"||key===cb.activeKey());
+  function applyRemote(key,srv){
+    rows.set(key,{rev:srv.data._rev,ord:srv.data.ord});
+    const d=cb.getData();
+    cb.commit(key==="meta"?put(d,key,srv.data.v):put(d,key,srv.data.deleted?undefined:srv.data.v));
+  }
+  async function poll(){
+    if(document.hidden)return;
+    const list=await sb(`?select=id,rev:data->>_rev&or=(id.eq.${enc(NS+"meta")},id.like.${enc(NS+"proj:")}*)`);
+    for(const r of list||[]){
+      const key=r.id.slice(NS.length),known=rows.get(key);
+      if(known&&known.rev===Number(r.rev))continue;
+      if(dirty.has(key)||flushing.has(key)||guarded(key))continue;
+      const srv=await fetchRow(key);
+      if(!srv||dirty.has(key)||flushing.has(key)||guarded(key))continue;
+      applyRemote(key,srv);
+    }
+  }
+  function init(callbacks){
+    cb=callbacks;
+    addEventListener("visibilitychange",()=>{if(document.hidden&&dirty.size)flushAll();});
+    addEventListener("beforeunload",e=>{if(dirty.size){e.preventDefault();e.returnValue="";}});
+  }
+  return {init,loadAll,record,poll,flushAll,img:Img,_dbg:{rows,ops,dirty,get status(){return status;}}};
+})();
 
 const uid=()=>Math.random().toString(36).slice(2,8);
-const todayISO=()=>new Date().toISOString().slice(0,10);
+const localISO=d=>d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+const todayISO=()=>localISO(new Date());
 const fmtD=d=>d?d.replace(/-/g,".") :"—";
 const fmtN=n=>Number(n||0).toLocaleString("zh-TW");
 const MONTHS=["一月","二月","三月","四月","五月","六月","七月","八月","九月","十月","十一月","十二月"];
@@ -109,7 +371,7 @@ const CSS=`
   --acc:#C9924F; --acc2:#B07E3A;
   --brass:#C9924F; --brass-lt:#FAF0E1;
   --t1:#1C1A17; --t2:#6A6560; --t3:#A09890; --t4:#C8C3BC;
-  --b1:rgba(28,26,23,.08); --b2:rgba(28,26,23,.14); --b3:rgba(28,26,23,.22);
+  --b1:rgba(28,26,23,.08); --b2:rgba(28,26,23,.14); --b3:rgba(28,26,23,.22); --bdr:var(--b2);
   --sh:0 1px 4px rgba(28,26,23,.07),0 1px 2px rgba(28,26,23,.04);
   --shm:0 6px 24px rgba(28,26,23,.12);
   --done:#4D7A5A; --done-bg:#EBF2EC;
@@ -135,6 +397,8 @@ input,select,textarea{font-family:inherit;}
 .hdr-date{font-family:'DM Mono',monospace;font-size:.68rem;color:rgba(255,255,255,.25);}
 .sync-pip{width:7px;height:7px;border-radius:50%;background:var(--t4);transition:all .3s;flex-shrink:0;}
 .sync-pip.on{background:var(--done);}
+.sync-pip.saving{background:var(--acc);}
+.sync-pip.err{background:var(--red);box-shadow:0 0 6px rgba(139,37,37,.6);}
 .menu-btn{display:none;width:38px;height:38px;border-radius:var(--rxs);align-items:center;justify-content:center;font-size:1rem;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.14);transition:all .15s;}
 .menu-btn:hover{border-color:rgba(255,255,255,.3);color:#FFFFFF;}
 .hdr-btn{font-size:.82rem;font-weight:500;padding:.38rem .95rem;border:1px solid rgba(255,255,255,.14);border-radius:20px;color:rgba(255,255,255,.5);background:transparent;transition:all .15s;white-space:nowrap;cursor:pointer;}
@@ -431,6 +695,50 @@ input,select,textarea{font-family:inherit;}
 
 /* ── Dashboard ── */
 .dash-wrap{max-width:860px;}
+/* ── 今日 ── */
+.today-wrap{max-width:1100px;}
+.wk-strip{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:.3rem;}
+.wk-day{border-radius:var(--rs);padding:.45rem .25rem;text-align:center;cursor:pointer;border:1px solid transparent;min-height:84px;}
+.wk-day:hover{background:var(--sf2);}
+.wk-day.sel{border-color:var(--acc);background:var(--brass-lt);}
+.wk-dow{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);}
+.wk-n{width:28px;height:28px;border-radius:50%;margin:.15rem auto .3rem;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:600;color:var(--t1);}
+.wk-n.today{background:var(--dark);color:#F8F4EC;}
+.wk-chips{display:flex;flex-direction:column;gap:2px;}
+.wk-chip{font-size:.58rem;line-height:1.25;padding:1px 3px;border-left:3px solid;background:var(--sf2);border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;color:var(--t2);}
+.wk-more{font-family:'DM Mono',monospace;font-size:.55rem;color:var(--t3);}
+.today-grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:1.2rem;margin-top:1.2rem;align-items:start;}
+.today-sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:.6rem;font-family:'DM Serif Display',serif;font-size:1.15rem;color:var(--t1);}
+.qx-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem;}
+.qx-cell{background:var(--sf);border:1px solid var(--b1);border-top:3px solid var(--qc);border-radius:var(--r);padding:.65rem .65rem .5rem;min-height:170px;box-shadow:var(--sh);transition:background .12s,box-shadow .12s;}
+.qx-cell.over{background:var(--sf2);box-shadow:0 0 0 2px var(--qc);}
+.qx-hd{display:flex;align-items:center;gap:.4rem;margin-bottom:.4rem;}
+.qx-t{font-weight:600;font-size:.82rem;color:var(--qc);flex:1;}
+.qx-n{font-family:'DM Mono',monospace;font-size:.62rem;background:var(--qc);color:#fff;border-radius:10px;padding:0 .45rem;}
+.qx-empty{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t4);text-align:center;padding:1rem 0;}
+.qx-row{padding:.4rem .3rem;border-radius:var(--rxs);cursor:grab;user-select:none;-webkit-user-select:none;border-bottom:1px solid var(--b1);}
+.qx-row:last-child{border-bottom:none;}
+.qx-row:hover{background:var(--sf2);}
+.qx-row.done{opacity:.5;}
+.qx-row.lift{opacity:.35;}
+.qx-txt{font-size:.82rem;color:var(--t1);line-height:1.3;word-break:break-word;}
+.qx-meta{font-family:'DM Mono',monospace;font-size:.58rem;color:var(--t3);margin-top:.15rem;display:flex;align-items:center;gap:.25rem;flex-wrap:wrap;}
+.qx-dot{width:7px;height:7px;border-radius:50%;display:inline-block;}
+.qx-ov{color:var(--red);}
+.qx-move{display:flex;gap:.3rem;flex-wrap:wrap;margin:.45rem 0 .1rem 1.9rem;}
+.qx-mv{font-size:.62rem;padding:.2rem .5rem;border:1px solid var(--qc,var(--b2));border-radius:14px;background:var(--sf);color:var(--t2);cursor:pointer;}
+.qx-mv.on{background:var(--qc);color:#fff;}
+.qx-hint{font-size:.7rem;color:var(--t3);margin-top:.6rem;line-height:1.5;}
+.qx-ghost{position:fixed;transform:translate(-50%,-110%);background:var(--dark);color:#F8F4EC;font-size:.8rem;padding:.4rem .8rem;border-radius:10px;box-shadow:var(--shm);pointer-events:none;z-index:9500;max-width:70vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.tl-row{display:flex;gap:.6rem;align-items:flex-start;padding:.6rem 0;border-bottom:1px solid var(--b1);cursor:pointer;}
+.tl-row:last-child{border-bottom:none;}
+.tl-time{width:44px;flex-shrink:0;font-family:'DM Mono',monospace;font-size:.68rem;color:var(--t3);padding-top:.15rem;}
+.tl-bar{width:4px;align-self:stretch;border-radius:2px;flex-shrink:0;}
+.wp-grid{display:grid;grid-template-columns:minmax(0,230px) minmax(0,1fr);gap:1.4rem;align-items:start;}
+.wp-lab{font-family:'DM Mono',monospace;font-size:.62rem;color:var(--t3);margin:.8rem 0 .3rem;}
+.wp-lab:first-child{margin-top:0;}
+.wp-note{font-size:.7rem;color:var(--t3);margin-top:.7rem;line-height:1.5;}
+@media(max-width:760px){.today-grid{grid-template-columns:1fr;}.qx-grid{grid-template-columns:1fr 1fr;}.wp-grid{grid-template-columns:1fr;}.wp-prev{max-width:240px;}.wk-chip{display:none;}.wk-day{min-height:64px;}}
 .dash-greeting{font-family:'DM Serif Display',serif;font-size:2.6rem;line-height:1.05;color:var(--t1);}
 .dash-date{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--t3);margin-top:.3rem;}
 .dash-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin:1.5rem 0 1.8rem;}
@@ -689,13 +997,20 @@ function CalendarView({proj,allProjects,calYM,setCalYM}){
 /* ── TodoItem（可內嵌編輯）── */
 function TodoItem({todo,onToggle,onUpdate,onDelete}){
   const [editing,setEditing]=useState(false);
-  const [form,setForm]=useState({text:todo.text,due:todo.due||"",note:todo.note||"",prio:todo.prio||"mid"});
+  const initForm=()=>({text:todo.text,due:todo.due||"",time:todo.time||"",quad:todo.quad||"",note:todo.note||"",prio:todo.prio||"mid"});
+  const [form,setForm]=useState(initForm);
   const over=todo.due&&!todo.done&&todo.due<todayISO();
   if(editing) return(
     <div className="todo-item" style={{background:"var(--sf2)",borderRadius:"var(--rxs)",padding:".65rem .75rem",margin:".15rem 0"}}>
       <div className="ms-edit-grid">
         <div className="ef fw"><label>事項名稱</label><input value={form.text} onChange={e=>setForm(f=>({...f,text:e.target.value}))}/></div>
         <div className="ef"><label>截止日期</label><input type="date" value={form.due} onChange={e=>setForm(f=>({...f,due:e.target.value}))}/></div>
+        <div className="ef"><label>時間（選填）</label><input type="time" value={form.time} onChange={e=>setForm(f=>({...f,time:e.target.value}))}/></div>
+        <div className="ef"><label>矩陣象限</label>
+          <select value={form.quad} onChange={e=>setForm(f=>({...f,quad:e.target.value}))}>
+            <option value="">自動</option><option value="ue">重要且緊急</option><option value="i">重要</option><option value="u">緊急</option><option value="l">以後再說</option>
+          </select>
+        </div>
         <div className="ef"><label>優先級</label>
           <select value={form.prio} onChange={e=>setForm(f=>({...f,prio:e.target.value}))}>
             {Object.entries(PRC).map(([k,v])=><option key={k} value={k}>{v.l}</option>)}
@@ -704,7 +1019,7 @@ function TodoItem({todo,onToggle,onUpdate,onDelete}){
         <div className="ef fw"><label>備註</label><textarea value={form.note} onChange={e=>setForm(f=>({...f,note:e.target.value}))}/></div>
       </div>
       <div className="ms-edit-ft">
-        <button className="btn-ghost" onClick={()=>{setForm({text:todo.text,due:todo.due||"",note:todo.note||"",prio:todo.prio||"mid"});setEditing(false);}}>取消</button>
+        <button className="btn-ghost" onClick={()=>{setForm(initForm());setEditing(false);}}>取消</button>
         <button className="btn-solid" onClick={()=>{onUpdate(form);setEditing(false);}}>儲存</button>
       </div>
     </div>
@@ -820,7 +1135,7 @@ function MaterialsTab({proj,upd,data,updGlobal}){
     <div className="mat-grid">{materials.map(mat=>(
       <div key={mat.id} className="mat-card">
         <div className="mat-img">
-          {mat.imageUrl?<img src={mat.imageUrl} alt={mat.name} onError={e=>{e.target.style.display="none";e.target.nextSibling&&(e.target.nextSibling.style.display="flex");}}/>:<span>🪵</span>}
+          {mat.imageUrl?<Pic src={mat.imageUrl} alt={mat.name} onError={e=>{e.target.style.display="none";e.target.nextSibling&&(e.target.nextSibling.style.display="flex");}}/>:<span>🪵</span>}
         </div>
         <div className="mat-body">
           <div className="mat-name">{mat.name}</div>
@@ -856,7 +1171,7 @@ function MaterialsTab({proj,upd,data,updGlobal}){
         {library.length===0?<Empty text="材質庫是空的"/>:
         <div className="mat-grid" style={{maxHeight:"60vh",overflowY:"auto"}}>{library.map(mat=>(
           <div key={mat.id} className="mat-card" onClick={()=>importFromLib(mat)} style={{cursor:"pointer"}}>
-            <div className="mat-img">{mat.imageUrl?<img src={mat.imageUrl} alt={mat.name}/>:<span>🪵</span>}</div>
+            <div className="mat-img">{mat.imageUrl?<Pic src={mat.imageUrl} alt={mat.name}/>:<span>🪵</span>}</div>
             <div className="mat-body">
               <div className="mat-name">{mat.name}</div>
               {mat.category&&<div className="mat-cat">{mat.category}</div>}
@@ -871,9 +1186,28 @@ function MaterialsTab({proj,upd,data,updGlobal}){
 }
 
 /* ── 圖片壓縮工具（統一版）── */
-function isPdf(url){return url&&url.startsWith('data:application/pdf');}
+function isPdf(url){return !!url&&(url.startsWith('data:application/pdf')||(url.startsWith('img:')&&url.endsWith('.pdf')));}
 function readAsDataURL(file){return new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(file);});}
-function downloadDataUrl(url,name){const a=document.createElement('a');a.href=url;a.download=name;a.click();}
+async function downloadDataUrl(url,name){
+  if(Sync.img.isRef(url))url=await Sync.img.get(url);
+  const a=document.createElement('a');a.href=url;a.download=name;a.click();
+}
+/* 圖片參照（img:<hash>）→ 實際 data URL；一般字串原樣回傳。載入前回傳 null */
+function useImgSrc(v){
+  const ref=Sync.img.isRef(v)?v:null;
+  const [st,setSt]=useState({r:null,s:null});
+  useEffect(()=>{
+    if(!ref)return;
+    let on=true;
+    Sync.img.get(ref).then(s=>on&&setSt({r:ref,s})).catch(()=>on&&setSt({r:ref,s:""}));
+    return()=>{on=false;};
+  },[ref]);
+  if(!ref)return v;
+  return Sync.img.peek(ref)||(st.r===ref?st.s:null);
+}
+const BLANK_IMG="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==";
+function Pic({src,...p}){const s=useImgSrc(src);return <img {...p} src={s||BLANK_IMG}/>;}
+function PdfEmbed({src,...p}){const s=useImgSrc(src);return s?<embed {...p} src={s} type="application/pdf"/>:<div style={{color:"#fff",padding:"2rem"}}>載入中…</div>;}
 
 function compressImage(file,maxPx=1200,quality=0.78){
   return new Promise(resolve=>{
@@ -912,7 +1246,7 @@ function ImageUpload({value,onChange}){
       onMouseEnter={e=>e.currentTarget.style.borderColor="var(--acc)"}
       onMouseLeave={e=>e.currentTarget.style.borderColor="var(--b2)"}>
       {loading?<span style={{fontFamily:"'DM Mono',monospace",fontSize:".7rem",color:"var(--t3)"}}>壓縮中...</span>:
-       value?<img src={value} style={{width:"100%",maxHeight:200,objectFit:"cover"}} alt="材質圖"/>:
+       value?<Pic src={value} style={{width:"100%",maxHeight:200,objectFit:"cover"}} alt="材質圖"/>:
        <div style={{textAlign:"center",padding:"1rem"}}>
          <div style={{fontSize:"1.5rem",marginBottom:".3rem",opacity:.35}}>📷</div>
          <div style={{fontFamily:"'DM Mono',monospace",fontSize:".65rem",color:"var(--t3)"}}>點擊上傳圖片</div>
@@ -983,7 +1317,7 @@ function HardwareTab({proj,upd,data,updGlobal}){
     <div className="mat-grid">{hw.map(item=>(
       <div key={item.id} className="mat-card">
         <div className="mat-img">
-          {item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}
+          {item.imageUrl?<Pic src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}
         </div>
         <div className="mat-body">
           <div className="mat-name">{item.name}</div>
@@ -1014,7 +1348,7 @@ function HardwareTab({proj,upd,data,updGlobal}){
       <div className="modal"><h3>五金庫</h3>
         <div className="mat-grid" style={{maxHeight:"55vh",overflowY:"auto"}}>{library.map(item=>(
           <div key={item.id} className="mat-card" onClick={()=>importFromLib(item)} style={{cursor:"pointer"}}>
-            <div className="mat-img">{item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}</div>
+            <div className="mat-img">{item.imageUrl?<Pic src={item.imageUrl} alt={item.name}/>:<span>🔩</span>}</div>
             <div className="mat-body"><div className="mat-name">{item.name}</div>{item.category&&<div className="mat-cat">{item.category}</div>}</div>
           </div>
         ))}</div>
@@ -1106,10 +1440,10 @@ function AttachmentSection({proj,upd}){
         </div>
         {isPdf(att.imageUrl)?(
           <div onClick={e=>e.stopPropagation()} style={{position:"relative"}}>
-            <embed src={att.imageUrl} type="application/pdf" style={{width:"90vw",height:"calc(100vh - 200px)",borderRadius:8}}/>
+            <PdfEmbed src={att.imageUrl} style={{width:"90vw",height:"calc(100vh - 200px)",borderRadius:8}}/>
           </div>
         ):(
-          <img src={att.imageUrl} alt={att.name} onClick={e=>e.stopPropagation()}
+          <Pic src={att.imageUrl} alt={att.name} onClick={e=>e.stopPropagation()}
             style={{maxWidth:"100vw",maxHeight:"calc(100vh - 150px)",objectFit:"contain"}}/>
         )}
         <div onClick={e=>e.stopPropagation()}
@@ -1176,7 +1510,7 @@ function AttachmentSection({proj,upd}){
                 <div style={{fontSize:".55rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace"}}>PDF</div>
               </div>
             ):(
-              <img src={a.imageUrl} alt={a.name}
+              <Pic src={a.imageUrl} alt={a.name}
                 style={{width:"100%",height:"100%",objectFit:"cover",display:"block"}}/>
             )}
             <div style={{position:"absolute",bottom:0,left:0,right:0,background:"linear-gradient(transparent,rgba(0,0,0,.7))",padding:".35rem .4rem"}}>
@@ -1591,7 +1925,7 @@ function AllMaterialsView({data}){
     <div className="mat-grid">{filtered.map(item=>(
       <div key={item.id+item._type} className="mat-card">
         <div className="mat-img" style={{position:"relative"}}>
-          {item.imageUrl?<img src={item.imageUrl} alt={item.name}/>:<span>{item._type==="hw"?"🔩":"🪵"}</span>}
+          {item.imageUrl?<Pic src={item.imageUrl} alt={item.name}/>:<span>{item._type==="hw"?"🔩":"🪵"}</span>}
           <span style={{position:"absolute",top:6,right:6,fontFamily:"'DM Mono',monospace",fontSize:".55rem",
             padding:".12rem .4rem",borderRadius:4,background:item._type==="hw"?"#3A3530":"var(--dark)",color:"#F8F4EC",opacity:.85}}>
             {item._type==="hw"?"五金":"材質"}
@@ -1675,14 +2009,14 @@ function DashboardView({data,upd,selectProj,setShowAllTodos,setShowDash,setAllTo
     for(const t of(proj.todos||[])){
       if(t.done)continue;
       const item={...t,projName:ps,projColor:proj.color,projId:proj.id};
-      if(t.due<today)overdue.push(item);
+      if(t.due&&t.due<today)overdue.push(item);
       else if(t.due===today)dueToday.push(item);
       else if(t.due&&t.due<=nextWeek)thisWeek.push(item);
     }
   }
   thisWeek.sort((a,b)=>a.due.localeCompare(b.due));
   const alertCount=overdue.length+dueToday.length;
-  const totalPending=data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0);
+  const totalPending=data.projects.filter(p=>!p.archived).reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0);
   const togTodo=(projId,todoId)=>upd(d=>({...d,projects:d.projects.map(p=>p.id===projId?{...p,todos:p.todos.map(t=>t.id===todoId?{...t,done:!t.done}:t)}:p)}));
 
   function DItem({item,cls,badge,bs,onCheck}){
@@ -1715,7 +2049,7 @@ function DashboardView({data,upd,selectProj,setShowAllTodos,setShowDash,setAllTo
         <div className="dash-stat-l">件待辦事項</div>
       </div>
       <div className="dash-stat">
-        <div className="dash-stat-n">{data.projects.length}</div>
+        <div className="dash-stat-n">{data.projects.filter(p=>!p.archived).length}</div>
         <div className="dash-stat-l">進行中案件</div>
       </div>
     </div>
@@ -1978,7 +2312,7 @@ function DelProjModal({proj,close,upd,onDeleted}){
 const MC={
   ms:{title:"新增里程碑",defs:{status:"pending",prio:"mid"},fields:[{k:"title",l:"里程碑名稱 *",type:"text",ph:"例：概念提案簡報"},{k:"start",l:"開始日期",type:"date"},{k:"startTime",l:"開始時間",type:"time"},{k:"end",l:"完成日期",type:"date"},{k:"endTime",l:"結束時間",type:"time"},{k:"status",l:"狀態",type:"select",opts:[["done","已完成"],["doing","進行中"],["pending","待進行"]]},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註",type:"textarea",ph:"備註說明..."}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,milestones:[...p.milestones,{id:uid(),status:"pending",prio:"mid",note:"",...f}]}));c();}},
   finTodo:{title:"新增財務待辦",defs:{},fields:[{k:"text",l:"待辦事項 *",type:"text",ph:"例：追繳設計費第二期"},{k:"due",l:"截止日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,financeTodos:[...(p.financeTodos||[]),{id:uid(),done:false,...f}]}));c();}},
-  todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...f}]}));c();}},
+  todo:{title:"新增待辦事項",defs:{prio:"mid"},fields:[{k:"text",l:"事項名稱 *",type:"text",ph:"輸入待辦事項"},{k:"due",l:"截止日期",type:"date"},{k:"time",l:"時間（選填，顯示在今日時間軸）",type:"time"},{k:"prio",l:"優先級",type:"select",opts:[["high","高"],["mid","中"],["low","低"]]},{k:"quad",l:"矩陣象限（自動＝依優先級與截止日）",type:"select",opts:[["","自動"],["ue","重要且緊急"],["i","重要"],["u","緊急"],["l","以後再說"]]},{k:"note",l:"備註說明",type:"textarea",ph:"補充說明..."}],save:(f,u,c)=>{if(!f.text?.trim())return;u(p=>({...p,todos:[...p.todos,{id:uid(),done:false,prio:"mid",...f}]}));c();}},
   comm:{title:"新增溝通記錄",defs:{ch:"Line"},fields:[{k:"who",l:"對象",type:"text",ph:"業主 — 王先生"},{k:"note",l:"溝通內容",type:"textarea",ph:"記錄重要決定..."},{k:"ch",l:"管道",type:"select",opts:COMM_CH.map(c=>[c,c])},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.note?.trim())return;u(p=>({...p,comms:[...(p.comms||[]),{id:uid(),ch:"Line",date:todayISO(),...f}]}));c();}},
   pend:{title:"新增待確認事項",defs:{status:"pending"},fields:[{k:"title",l:"事項標題 *",type:"text",ph:"需業主或廠商確認的事項"},{k:"status",l:"狀態",type:"select",opts:[["urgent","緊急"],["pending","待處理"],["confirmed","已確認"],["closed","已關閉"]]},{k:"note",l:"說明",type:"textarea",ph:"詳細說明..."},{k:"date",l:"日期",type:"date"}],save:(f,u,c)=>{if(!f.title?.trim())return;u(p=>({...p,pendings:[...p.pendings,{id:uid(),status:"pending",date:todayISO(),...f}]}));c();},msLinkable:true},
   finIncome:{title:"新增收款項目",defs:{status:"unpaid"},fields:[{k:"name",l:"項目名稱 *",type:"text",ph:"例：設計費第一期"},{k:"amt",l:"金額 (NT$) *",type:"number",ph:"0"},{k:"cat",l:"分類",type:"select",opts:[["設計費","設計費"],["監造費","監造費"],["工程款","工程款"],["其他","其他"]]},{k:"status",l:"狀態",type:"select",opts:[["unpaid","待收款"],["paid","已收款"]]},{k:"date",l:"日期",type:"date"},{k:"note",l:"備註",type:"textarea",ph:"說明..."}],save:(f,u,c)=>{if(!f.name?.trim()||!f.amt)return;u(p=>({...p,finances:[...p.finances,{id:uid(),type:"income",status:"unpaid",date:todayISO(),...f,amt:Number(f.amt)}]}));c();}},
@@ -2284,11 +2618,11 @@ function FloorPlanTab({proj,upd}){
             </div>
             {isPdf(item.data)?(
               <div style={{position:"relative"}}>
-                <embed src={item.data} type="application/pdf" style={{width:"100%",height:"600px",display:"block",background:"var(--bg)"}}/>
+                <PdfEmbed src={item.data} style={{width:"100%",height:"600px",display:"block",background:"var(--bg)"}}/>
                 <button onClick={()=>downloadDataUrl(item.data,item.name)} style={{position:"absolute",top:".6rem",right:".6rem",fontFamily:"'DM Mono',monospace",fontSize:".65rem",padding:".3rem .7rem",background:"rgba(0,0,0,.6)",color:"#fff",border:"none",borderRadius:"6px",cursor:"pointer"}}>↓ 下載 PDF</button>
               </div>
             ):(
-              <img src={item.data} alt={item.name} style={{width:"100%",display:"block",maxHeight:"600px",objectFit:"contain",background:"var(--bg)"}}/>
+              <Pic src={item.data} alt={item.name} style={{width:"100%",display:"block",maxHeight:"600px",objectFit:"contain",background:"var(--bg)"}}/>
             )}
           </div>
         ))}
@@ -2511,7 +2845,7 @@ function CalculatorView(){
 
     {/* ── 窗簾才數 ── */}
     {ct==="curtain"&&(<div style={{background:"var(--sf)",borderRadius:"12px",padding:"1.4rem",border:"1px solid var(--bdr)"}}>
-      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算窗簾布料才數（1才＝30.48cm²）</div>
+      <div style={{fontSize:".78rem",color:"var(--t3)",fontFamily:"'DM Mono',monospace",marginBottom:"1rem"}}>計算窗簾布料才數（1才＝30.48cm × 30.48cm）</div>
       {field("窗戶/開口寬度（公尺）",numInput(crW,setCrW,"例：2.4","m"))}
       {field("窗戶/開口高度（公尺）",numInput(crH,setCrH,"例：2.2","m"))}
       {field("打褶倍率",
@@ -2542,6 +2876,288 @@ function CalculatorView(){
 }
 
 
+/* ═══════════════════════════════════
+   今日 — 四象限矩陣 / 時間軸 / 鎖定畫面桌布匯出
+   待辦 quad 欄位：ue 重要且緊急、i 重要、u 緊急、l 以後再說；空值＝依優先級與截止日自動判定
+   ═══════════════════════════════════ */
+const QUADS=[
+  {k:"ue",l:"重要且緊急",c:"#E5675A",icon:"🔥"},
+  {k:"i",l:"重要",c:"#4C9BF0",icon:"▣"},
+  {k:"u",l:"緊急",c:"#E8B03A",icon:"⚡"},
+  {k:"l",l:"以後再說",c:"#9A9590",icon:"≡"},
+];
+const QMAP=Object.fromEntries(QUADS.map(q=>[q.k,q]));
+const addDays=(iso,n)=>{const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()+n);return localISO(d);};
+const autoQuad=(t,today)=>{
+  const imp=t.prio==="high",urg=!!t.due&&t.due<=addDays(today,3);
+  return imp&&urg?"ue":imp?"i":urg?"u":"l";
+};
+const quadOf=(t,today)=>QMAP[t.quad]?t.quad:autoQuad(t,today);
+const fmtMD=iso=>iso?`${Number(iso.slice(5,7))}月${Number(iso.slice(8,10))}日`:"";
+const weekStart=(iso,off)=>addDays(iso,-new Date(iso+"T00:00:00").getDay()+off*7);
+
+/* 某日的所有項目（待辦、進行中里程碑、工地/會議紀錄） */
+function dayItems(iso,projects){
+  const out=[];
+  const today=todayISO();
+  for(const p of projects){
+    for(const t of (p.todos||[]))if(t.due===iso)out.push({kind:"todo",key:p.id+":"+t.id,projId:p.id,todoId:t.id,text:t.text,time:t.time||"",done:!!t.done,color:QMAP[quadOf(t,today)].c,q:quadOf(t,today),projName:p.name});
+    for(const m of (p.milestones||[])){const s=m.start,e=m.end||m.start;if(s&&iso>=s&&iso<=e)out.push({kind:"ms",key:p.id+":ms:"+m.id,projId:p.id,text:m.title,time:"",done:m.status==="done",color:p.color,projName:p.name,range:s===e?"":`${fmtMD(s)} → ${fmtMD(e)}`});}
+    for(const t of (p.timelines||[]))if(t.date===iso)out.push({kind:"tl",key:p.id+":tl:"+t.id,projId:p.id,text:t.title,time:"",done:false,color:(TLT[t.type]||TLT.site).color,projName:p.name});
+  }
+  return out.sort((a,b)=>(a.time?1:0)-(b.time?1:0)||a.time.localeCompare(b.time));
+}
+
+/* 長按（滑鼠：拖動超過 8px）→ 拖到另一個象限格 */
+function useQuadDrag(onDrop){
+  const [drag,setDrag]=useState(null);
+  const st=useRef({drag:null,suppress:false});
+  const dropRef=useRef(onDrop);dropRef.current=onDrop;
+  const active=!!drag;
+  useEffect(()=>{
+    if(!active)return;
+    const zoneAt=(x,y)=>{const e=document.elementFromPoint(x,y);const z=e&&e.closest&&e.closest("[data-quad]");return z?z.dataset.quad:null;};
+    const mv=e=>setDrag(d=>d&&{...d,x:e.clientX,y:e.clientY,over:zoneAt(e.clientX,e.clientY)});
+    const end=e=>{
+      const d=st.current.drag,z=zoneAt(e.clientX,e.clientY);
+      st.current.drag=null;st.current.suppress=true;setTimeout(()=>{st.current.suppress=false;},80);
+      setDrag(null);
+      if(e.type==="pointerup"&&d&&z)dropRef.current(d,z);
+    };
+    const pv=e=>e.preventDefault();
+    addEventListener("pointermove",mv);addEventListener("pointerup",end);addEventListener("pointercancel",end);
+    document.addEventListener("touchmove",pv,{passive:false});
+    return()=>{removeEventListener("pointermove",mv);removeEventListener("pointerup",end);removeEventListener("pointercancel",end);document.removeEventListener("touchmove",pv);};
+  },[active]);
+  const bind=item=>({onPointerDown:e=>{
+    if(e.button>0||(e.target.closest&&e.target.closest("button,select,input")))return;
+    const sx=e.clientX,sy=e.clientY,touch=e.pointerType!=="mouse";
+    let timer=null;
+    const start=()=>{cleanup();st.current.drag=item;setDrag({...item,x:sx,y:sy,over:null});};
+    const early=ev=>{if(Math.hypot(ev.clientX-sx,ev.clientY-sy)>8){cleanup();if(!touch)start();}};
+    const cleanup=()=>{clearTimeout(timer);removeEventListener("pointermove",early);removeEventListener("pointerup",cleanup);removeEventListener("pointercancel",cleanup);};
+    addEventListener("pointermove",early);addEventListener("pointerup",cleanup);addEventListener("pointercancel",cleanup);
+    if(touch)timer=setTimeout(start,350);
+  }});
+  return {drag,bind,suppressed:()=>st.current.suppress};
+}
+
+/* ── 桌布繪製（Canvas）── */
+const WP_FONT='"Plus Jakarta Sans","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+const WP_BG={night:["#0b1530","#1c2f5e","#0d1a33"],dusk:["#2a1f3d","#7a4a5c","#1d1830"],forest:["#10261f","#2c5a45","#0c1a16"],graphite:["#16171a","#2a2c31","#101113"]};
+const WP_SIZES=[["1179×2556（iPhone 14/15/16）",1179,2556],["1290×2796（Pro Max）",1290,2796],["1170×2532（iPhone 12/13）",1170,2532]];
+function wpRR(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath();}
+function wpFit(c,txt,maxW){if(c.measureText(txt).width<=maxW)return txt;let s=txt;while(s.length>1&&c.measureText(s+"…").width>maxW)s=s.slice(0,-1);return s+"…";}
+function drawWallpaper(cv,W,H,m,o){
+  cv.width=W;cv.height=H;
+  const c=cv.getContext("2d"),s=W/1179,F=(w,px)=>`${w} ${px*s}px ${WP_FONT}`;
+  if(o.photo){const im=o.photo,r=Math.max(W/im.width,H/im.height),w=im.width*r,h=im.height*r;c.drawImage(im,(W-w)/2,(H-h)/2,w,h);c.fillStyle="rgba(0,0,0,.28)";c.fillRect(0,0,W,H);}
+  else{const cols=WP_BG[o.bg]||WP_BG.night,g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,cols[0]);g.addColorStop(.5,cols[1]);g.addColorStop(1,cols[2]);c.fillStyle=g;c.fillRect(0,0,W,H);}
+  const mx=64*s,cw=W-2*mx,card="rgba(18,20,26,.74)",dim="rgba(255,255,255,.55)";
+  let y=H*0.31;
+  /* 週曆 */
+  const wh=290*s;
+  c.fillStyle=card;wpRR(c,mx,y,cw,wh,40*s);c.fill();
+  const colw=(cw-56*s)/7;
+  m.week.forEach((d,i)=>{
+    const cx=mx+28*s+colw*i+colw/2;
+    c.textAlign="center";c.textBaseline="middle";
+    c.font=F(600,26);c.fillStyle=dim;c.fillText(d.dow,cx,y+48*s);
+    if(d.today){c.fillStyle="#fff";c.beginPath();c.arc(cx,y+108*s,36*s,0,Math.PI*2);c.fill();}
+    c.font=F(700,44);c.fillStyle=d.today?"#111":"#fff";c.fillText(String(d.n),cx,y+108*s);
+    d.chips.slice(0,2).forEach((ch,j)=>{
+      const cy=y+168*s+j*44*s,w=colw-10*s;
+      c.globalAlpha=.3;c.fillStyle=ch.c;wpRR(c,cx-w/2,cy,w,36*s,8*s);c.fill();c.globalAlpha=1;
+      c.fillStyle=ch.c;c.fillRect(cx-w/2,cy+6*s,5*s,24*s);
+      c.font=F(500,20);c.fillStyle="rgba(255,255,255,.9)";c.textAlign="left";c.fillText(wpFit(c,ch.t,w-20*s),cx-w/2+14*s,cy+19*s);c.textAlign="center";
+    });
+    if(d.chips.length>2){c.font=F(500,20);c.fillStyle=dim;c.fillText("+"+(d.chips.length-2),cx,y+262*s);}
+  });
+  y+=wh+26*s;
+  c.textAlign="left";
+  if(o.layout==="timeline"){
+    const rows=m.timeline.slice(0,9),h=(130+Math.max(rows.length,1)*100+40)*s;
+    c.fillStyle=card;wpRR(c,mx,y,cw,h,40*s);c.fill();
+    c.font=F(700,38);c.fillStyle="#fff";c.textBaseline="middle";c.fillText(m.dateLabel,mx+44*s,y+66*s);
+    c.font=F(700,28);c.fillStyle="#111";const bw=64*s;
+    c.fillStyle="#fff";wpRR(c,mx+cw-44*s-bw,y+40*s,bw,52*s,26*s);c.fill();
+    c.fillStyle="#111";c.textAlign="center";c.fillText(String(m.timeline.length),mx+cw-44*s-bw/2,y+66*s);c.textAlign="left";
+    if(!rows.length){c.font=F(500,34);c.fillStyle=dim;c.textAlign="center";c.fillText("這天沒有行程或待辦",mx+cw/2,y+h/2+30*s);c.textAlign="left";}
+    rows.forEach((r,i)=>{
+      const ry=y+150*s+i*100*s+40*s;
+      c.font=F(500,28);c.fillStyle=dim;c.fillText(r.time||"整天",mx+44*s,ry);
+      c.fillStyle=r.c;wpRR(c,mx+190*s,ry-30*s,8*s,60*s,4*s);c.fill();
+      if(r.kind==="todo"){
+        c.lineWidth=5*s;c.strokeStyle=r.c;c.beginPath();c.arc(mx+240*s,ry,18*s,0,Math.PI*2);
+        if(r.done){c.fillStyle=r.c;c.fill();c.strokeStyle="#111";c.lineWidth=5*s;c.beginPath();c.moveTo(mx+231*s,ry);c.lineTo(mx+238*s,ry+8*s);c.lineTo(mx+250*s,ry-8*s);c.stroke();}else c.stroke();
+      }
+      c.font=F(600,36);c.fillStyle=r.done?"rgba(255,255,255,.45)":"#fff";
+      c.fillText(wpFit(c,r.t,cw-(r.kind==="todo"?330:260)*s),mx+(r.kind==="todo"?280:224)*s,ry);
+    });
+    if(m.timeline.length>rows.length){c.font=F(500,26);c.fillStyle=dim;c.fillText(`還有 ${m.timeline.length-rows.length} 項`,mx+44*s,y+h-30*s);}
+  }else{
+    const g=24*s,qw=(cw-g)/2,qh=440*s;
+    QUADS.forEach((q,i)=>{
+      const x=mx+(i%2)*(qw+g),yy=y+Math.floor(i/2)*(qh+g),list=m.quads[q.k]||[];
+      c.fillStyle=card;wpRR(c,x,yy,qw,qh,36*s);c.fill();
+      c.textBaseline="middle";c.textAlign="left";
+      c.font=F(700,30);c.fillStyle=q.c;c.fillText(q.l,x+36*s,yy+58*s);
+      c.fillStyle=q.c;c.beginPath();c.arc(x+qw-52*s,yy+58*s,24*s,0,Math.PI*2);c.fill();
+      c.font=F(700,26);c.fillStyle="#111";c.textAlign="center";c.fillText(String(list.length),x+qw-52*s,yy+58*s);c.textAlign="left";
+      list.slice(0,4).forEach((t,j)=>{
+        const ry=yy+128*s+j*66*s;
+        c.lineWidth=4*s;c.strokeStyle=q.c;c.beginPath();c.arc(x+50*s,ry,15*s,0,Math.PI*2);c.stroke();
+        const right=t.due?(t.time||fmtMD(t.due)):"";
+        c.font=F(500,26);const rw=right?c.measureText(right).width+16*s:0;
+        c.font=F(600,32);c.fillStyle="#fff";c.fillText(wpFit(c,t.text,qw-110*s-rw),x+82*s,ry);
+        if(right){c.font=F(500,26);c.fillStyle=t.overdue?"#FF8A80":dim;c.textAlign="right";c.fillText(right,x+qw-30*s,ry);c.textAlign="left";}
+      });
+      if(list.length>4){c.font=F(500,26);c.fillStyle=dim;c.fillText(`還有 ${list.length-4} 項`,x+36*s,yy+qh-34*s);}
+      if(!list.length){c.font=F(500,28);c.fillStyle="rgba(255,255,255,.3)";c.fillText("沒有事項",x+36*s,yy+130*s);}
+    });
+  }
+}
+
+function WallpaperPanel({model}){
+  const cvRef=useRef(null);
+  const [size,setSize]=useState(0),[bg,setBg]=useState("night"),[layout,setLayout]=useState("matrix"),[photo,setPhoto]=useState(null),[msg,setMsg]=useState("");
+  const [,W,H]=WP_SIZES[size];
+  useEffect(()=>{if(cvRef.current)drawWallpaper(cvRef.current,W,H,model,{bg,layout,photo});},[model,W,H,bg,layout,photo]);
+  function pickPhoto(e){
+    const f=e.target.files&&e.target.files[0];if(!f)return;
+    const url=URL.createObjectURL(f),im=new Image();
+    im.onload=()=>{setPhoto(im);};im.onerror=()=>setMsg("無法讀取這張圖片");im.src=url;
+    e.target.value="";
+  }
+  function toBlob(){return new Promise(res=>cvRef.current.toBlob(res,"image/png"));}
+  async function save(){
+    const b=await toBlob();if(!b){setMsg("匯出失敗");return;}
+    const name=`YCStudio_桌布_${todayISO()}.png`,file=new File([b],name,{type:"image/png"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      try{await navigator.share({files:[file]});setMsg("已開啟分享選單，選「儲存圖片」或「用作桌布」");return;}catch(e){if(e&&e.name==="AbortError")return;}
+    }
+    const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+    setMsg("已下載 PNG，到相簿找到後「用作桌布」");
+  }
+  const chip=(on,fn,l)=><button className={"filt-btn"+(on?" on":"")} onClick={fn}>{l}</button>;
+  return(<div className="card" style={{marginTop:"1.2rem"}}>
+    <div className="card-hd"><span>🖼 鎖定畫面桌布</span></div>
+    <div className="wp-grid">
+      <div className="wp-prev"><canvas ref={cvRef} style={{width:"100%",height:"auto",borderRadius:18,display:"block",background:"#111"}}/></div>
+      <div className="wp-opts">
+        <div className="wp-lab">版型</div>
+        <div className="filt-row">{chip(layout==="matrix",()=>setLayout("matrix"),"週曆＋矩陣")}{chip(layout==="timeline",()=>setLayout("timeline"),"週曆＋時間軸")}</div>
+        <div className="wp-lab">背景</div>
+        <div className="filt-row">
+          {[["night","夜空"],["dusk","暮色"],["forest","森林"],["graphite","石墨"]].map(([k,l])=>chip(!photo&&bg===k,()=>{setPhoto(null);setBg(k);},l))}
+          <label className={"filt-btn"+(photo?" on":"")} style={{cursor:"pointer"}}>{photo?"自選照片 ✓":"自選照片"}<input type="file" accept="image/*" style={{display:"none"}} onChange={pickPhoto}/></label>
+        </div>
+        <div className="wp-lab">尺寸</div>
+        <select value={size} onChange={e=>setSize(Number(e.target.value))}>{WP_SIZES.map((z,i)=><option key={i} value={i}>{z[0]}</option>)}</select>
+        <button className="btn-solid" style={{marginTop:".9rem",padding:".6rem 1.2rem"}} onClick={save}>儲存 / 分享桌布</button>
+        {msg&&<div className="wp-note">{msg}</div>}
+        <div className="wp-note">時鐘由 iOS 自己畫在上方留白處。桌布是靜態圖片，待辦改變後要重新匯出才會更新。自選照片只在本機使用，不會上傳。</div>
+      </div>
+    </div>
+  </div>);
+}
+
+function TodayView({data,upd,selectProj}){
+  const today=todayISO();
+  const projects=React.useMemo(()=>data.projects.filter(p=>!p.archived),[data]);
+  const [sel,setSel]=useState(today),[wk,setWk]=useState(0),[showDone,setShowDone]=useState(false),[openKey,setOpenKey]=useState(null);
+  const setQuad=(d,q)=>upd(dd=>({...dd,projects:dd.projects.map(p=>p.id===d.projId?{...p,todos:(p.todos||[]).map(t=>t.id===d.todoId?{...t,quad:q}:t)}:p)}));
+  const togTodo=(projId,id)=>upd(dd=>({...dd,projects:dd.projects.map(p=>p.id===projId?{...p,todos:(p.todos||[]).map(t=>t.id===id?{...t,done:!t.done}:t)}:p)}));
+  const {drag,bind,suppressed}=useQuadDrag((d,q)=>{if(QMAP[q])setQuad(d,q);});
+  const tasks=React.useMemo(()=>projects.flatMap(p=>(p.todos||[]).map(t=>({...t,projId:p.id,projName:p.name,projColor:p.color,q:quadOf(t,today),overdue:!!t.due&&!t.done&&t.due<today}))),[projects,today]);
+  const byQ=k=>tasks.filter(t=>t.q===k&&(showDone||!t.done)).sort((a,b)=>(a.done-b.done)||((a.due||"9999").localeCompare(b.due||"9999")));
+  const start=weekStart(today,wk);
+  const week=Array.from({length:7},(_,i)=>{const iso=addDays(start,i);return {iso,dow:WDAYS[i],n:Number(iso.slice(8,10)),today:iso===today,sel:iso===sel,items:dayItems(iso,projects)};});
+  const timeline=React.useMemo(()=>dayItems(sel,projects),[sel,projects]);
+  const lunar=solarToLunar(sel);
+  const selLabel=`${fmtMD(sel)} 星期${WDAYS[new Date(sel+"T00:00:00").getDay()]}`;
+  const openCount=tasks.filter(t=>!t.done).length;
+  const model=React.useMemo(()=>({
+    dateLabel:selLabel,
+    week:Array.from({length:7},(_,i)=>{const iso=addDays(weekStart(today,0),i);return {dow:WDAYS[i],n:Number(iso.slice(8,10)),today:iso===today,chips:dayItems(iso,projects).map(x=>({t:x.text,c:x.color}))};}),
+    quads:Object.fromEntries(QUADS.map(q=>[q.k,tasks.filter(t=>t.q===q.k&&!t.done).sort((a,b)=>(a.due||"9999").localeCompare(b.due||"9999"))])),
+    timeline:timeline.map(x=>({time:x.time,text:x.text,t:x.text,c:x.color,kind:x.kind,done:x.done})),
+  }),[projects,tasks,timeline,selLabel,today]);
+
+  return(<div className="today-wrap">
+    <div className="proj-hdr">
+      <div className="proj-title">今日</div>
+      <div className="proj-meta-row"><span className="proj-meta">{fmtMD(today)} 星期{WDAYS[new Date().getDay()]}{solarToLunar(today)?` · 農曆${solarToLunar(today).m}月${solarToLunar(today).d}`:""} · {openCount} 件待辦</span></div>
+    </div>
+    {/* 週列 */}
+    <div className="card" style={{padding:".9rem 1rem"}}>
+      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:".5rem"}}>
+        <button className="filt-btn" onClick={()=>setWk(w=>w-1)}>‹ 上週</button>
+        <button className="filt-btn" onClick={()=>{setWk(0);setSel(today);}}>回到今天</button>
+        <button className="filt-btn" onClick={()=>setWk(w=>w+1)}>下週 ›</button>
+      </div>
+      <div className="wk-strip">
+        {week.map(d=>(<div key={d.iso} className={"wk-day"+(d.sel?" sel":"")} onClick={()=>setSel(d.iso)}>
+          <div className="wk-dow">{d.dow}</div>
+          <div className={"wk-n"+(d.today?" today":"")}>{d.n}</div>
+          <div className="wk-chips">{d.items.slice(0,2).map(x=><span key={x.key} className="wk-chip" style={{borderColor:x.color,opacity:x.done?.45:1}}>{x.text}</span>)}{d.items.length>2&&<span className="wk-more">+{d.items.length-2}</span>}</div>
+        </div>))}
+      </div>
+    </div>
+    <div className="today-grid">
+      {/* 矩陣 */}
+      <div>
+        <div className="today-sec-hd"><span>優先矩陣</span>
+          <button className={"filt-btn"+(showDone?" on":"")} onClick={()=>setShowDone(v=>!v)}>顯示已完成</button>
+        </div>
+        <div className="qx-grid">
+          {QUADS.map(q=>{const list=byQ(q.k);return(
+            <div key={q.k} data-quad={q.k} className={"qx-cell"+(drag&&drag.over===q.k?" over":"")} style={{"--qc":q.c}}>
+              <div className="qx-hd"><span className="qx-ic">{q.icon}</span><span className="qx-t">{q.l}</span><span className="qx-n">{list.filter(t=>!t.done).length}</span></div>
+              {list.length===0&&<div className="qx-empty">拖曳事項到這裡</div>}
+              {list.map(t=>{const key=t.projId+":"+t.id,open=openKey===key;return(
+                <div key={key} className={"qx-row"+(t.done?" done":"")+(drag&&drag.todoId===t.id&&drag.projId===t.projId?" lift":"")}
+                  {...bind({projId:t.projId,todoId:t.id,text:t.text})}
+                  onClick={()=>{if(suppressed())return;setOpenKey(open?null:key);}}>
+                  <div style={{display:"flex",gap:".5rem",alignItems:"flex-start"}}>
+                    <button className={"chk"+(t.done?" on":"")} onClick={e=>{e.stopPropagation();togTodo(t.projId,t.id);}}>{t.done?"✓":""}</button>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div className="qx-txt">{t.text}</div>
+                      <div className="qx-meta"><span className="qx-dot" style={{background:t.projColor}}/>{t.projName}{t.due&&<span className={t.overdue?"qx-ov":""}> · {fmtMD(t.due)}{t.time?" "+t.time:""}</span>}</div>
+                    </div>
+                  </div>
+                  {open&&<div className="qx-move" onClick={e=>e.stopPropagation()}>
+                    {QUADS.map(z=><button key={z.k} className={"qx-mv"+(z.k===t.q?" on":"")} style={{"--qc":z.c}} onClick={()=>{setQuad({projId:t.projId,todoId:t.id},z.k);setOpenKey(null);}}>{z.l}</button>)}
+                    <button className="qx-mv" onClick={()=>selectProj(t.projId)}>開啟案件</button>
+                  </div>}
+                </div>);})}
+            </div>);})}
+        </div>
+        <div className="qx-hint">長按（電腦：按住拖曳）事項拖到其他格子，或點事項選擇象限。未指定的事項會依「優先級高＝重要、3 天內到期＝緊急」自動分格。</div>
+      </div>
+      {/* 時間軸 */}
+      <div>
+        <div className="today-sec-hd"><span>{sel===today?"今日時間軸":selLabel}</span><span className="proj-meta">{sel===today?selLabel:""}{lunar?` · 農曆${lunar.m}月${lunar.d}`:""}</span></div>
+        <div className="card" style={{padding:".6rem 1rem"}}>
+          {timeline.length===0&&<div className="qx-empty" style={{padding:"1.4rem 0"}}>這天沒有行程或待辦</div>}
+          {timeline.map(x=>(<div key={x.key} className="tl-row" onClick={()=>selectProj(x.projId)}>
+            <div className="tl-time">{x.time||"整天"}</div>
+            <div className="tl-bar" style={{background:x.color}}/>
+            <div style={{flex:1,minWidth:0}}>
+              <div className={"qx-txt"+(x.done?" todo-done":"")}>{x.text}</div>
+              <div className="qx-meta">{x.projName}{x.kind==="ms"?(x.range?" · 里程碑 "+x.range:" · 里程碑"):x.kind==="tl"?" · 紀錄":""}</div>
+            </div>
+            {x.kind==="todo"&&<button className={"chk"+(x.done?" on":"")} onClick={e=>{e.stopPropagation();togTodo(x.projId,x.todoId);}}>{x.done?"✓":""}</button>}
+          </div>))}
+        </div>
+      </div>
+    </div>
+    <WallpaperPanel model={model}/>
+    {drag&&<div className="qx-ghost" style={{left:drag.x,top:drag.y}}>{drag.text}</div>}
+    <div className="mobile-spacer"/>
+  </div>);
+}
+
 function App(){
   const [data,setData]=useState(null);
   const [loading,setLoading]=useState(true);
@@ -2551,7 +3167,9 @@ function App(){
   const [showAllTodos,setShowAllTodos]=useState(false);
   const [allTodosFilter,setAllTodosFilter]=useState("pending");
   const [modal,setModal]=useState(null);
-  const [syncOk,setSyncOk]=useState(false);
+  const [syncSt,setSyncSt]=useState("idle");
+  const [loadErr,setLoadErr]=useState(null);
+  const [notice,setNotice]=useState(null);
   const [calYM,setCalYM]=useState({y:new Date().getFullYear(),m:new Date().getMonth()});
   const [delTarget,setDelTarget]=useState(null);
   const [archiveTarget,setArchiveTarget]=useState(null);
@@ -2559,37 +3177,69 @@ function App(){
   const [showAllMats,setShowAllMats]=useState(false);
   const [showTools,setShowTools]=useState(false);
   const [showCaseOverview,setShowCaseOverview]=useState(true);
+  const [showToday,setShowToday]=useState(false);
   const [sbOpen,setSbOpen]=useState(false);
-  const lastSaveTime=useRef(0);
+  useEffect(()=>{if(showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview||showArchived)setShowToday(false);},[showAllCal,showAllTodos,showAllMats,showTools,showCaseOverview,showArchived]);
+  const dataRef=useRef(null);
+  const pidRef=useRef(null);
+  pidRef.current=pid;
+  const syncTimer=useRef(null);
 
-  useEffect(()=>{
-    loadData().then(d=>{
-      setData(d);
+  const upd=useCallback(fn=>{
+    const prev=dataRef.current;
+    if(!prev)return;
+    const next=fn(prev);
+    if(next===prev)return;
+    dataRef.current=next;setData(next);
+    Sync.record(fn,prev,next);
+  },[]);
+
+  const startLoad=useCallback(()=>{
+    setLoadErr(null);setLoading(true);
+    Sync.loadAll().then(d=>{
+      dataRef.current=d;setData(d);
       // 直接選第一個未歸檔案件
       const active=d.projects.filter(p=>!p.archived);
       if(active.length>0)setPid(active[0].id);
       setLoading(false);
       // 啟動通知檢查
       requestAndCheckNotifications(d);
-    });
-    const poll=setInterval(async()=>{
-      if(Date.now()-lastSaveTime.current<5000)return;
-      try{const r=await fetch(`${SURL}/rest/v1/studio_data?id=eq.${DID}&select=data`,{headers:{apikey:SKEY,Authorization:`Bearer ${SKEY}`}});const rows=await r.json();if(rows?.length){setData(rows[0].data);/* 注意：polling 不呼叫通知，避免重複推送 */}}catch(e){}
-    },20000);
-    return()=>clearInterval(poll);
+    }).catch(e=>{setLoadErr(String(e&&e.message||e));setLoading(false);});
   },[]);
 
-  const upd=useCallback(fn=>{setData(prev=>{const next=fn(prev);lastSaveTime.current=Date.now();saveData(next).then(()=>{setSyncOk(true);setTimeout(()=>setSyncOk(false),2500);});return next;});},[]);
+  useEffect(()=>{
+    Sync.init({
+      getData:()=>dataRef.current,
+      commit:nd=>{dataRef.current=nd;setData(nd);},
+      activeKey:()=>pidRef.current?"proj:"+pidRef.current:null,
+      onNotice:msg=>setNotice(msg),
+      onStatus:s=>{
+        clearTimeout(syncTimer.current);
+        setSyncSt(s);
+        if(s==="ok")syncTimer.current=setTimeout(()=>setSyncSt("idle"),2500);
+      },
+    });
+    startLoad();
+    /* 注意：polling 不呼叫通知，避免重複推送 */
+    const poll=setInterval(()=>{Sync.poll().catch(()=>{});},15000);
+    return()=>clearInterval(poll);
+  },[]);
+  useEffect(()=>{if(NS==="test:"){window.__ys={upd,Sync,getData:()=>dataRef.current,setPid};}},[upd]);
   const updP=useCallback((pid,fn)=>{upd(d=>({...d,projects:(d&&d.projects||[]).map(p=>p.id===pid?fn(p):p)}));},[upd]);
   const proj=(data&&data.projects)?data.projects.find(p=>p.id===pid)||null:null;
   const openModal=useCallback((type)=>setModal({type,pid}),[pid]);
   const closeModal=useCallback(()=>setModal(null),[]);
   const updProj=useCallback((fn)=>{if(pid)updP(pid,fn);},[pid,updP]);
   const handleArchived=useCallback(()=>{setPid(null);setShowCaseOverview(true);},[]);
-  const handleDeleted=useCallback((deletedId)=>{setData(curr=>{const r=curr.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowArchived(false);setShowAllMats(false);return curr;});},[ ]);
-  const handleCreated=useCallback((newId)=>{setPid(newId);setTab("overview");setShowAllCal(false);setShowAllTodos(false);},[]);
-  const selectProj=useCallback((id)=>{setPid(id);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowArchived(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);},[]);
+  const handleDeleted=useCallback((deletedId)=>{const r=dataRef.current.projects.filter(p=>p.id!==deletedId);setPid(r.length>0?r[0].id:null);setShowToday(false);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowArchived(false);setShowAllMats(false);},[]);
+  const handleCreated=useCallback((newId)=>{setPid(newId);setShowToday(false);setTab("overview");setShowAllCal(false);setShowAllTodos(false);},[]);
+  const selectProj=useCallback((id)=>{setPid(id);setShowToday(false);setTab("overview");setShowAllCal(false);setShowAllTodos(false);setShowArchived(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);},[]);
 
+  if(loadErr)return(<div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F2EFE9",fontFamily:"'Plus Jakarta Sans',sans-serif",gap:"1rem",padding:"1rem",textAlign:"center"}}>
+    <div style={{fontFamily:"'DM Serif Display',serif",fontSize:"1.4rem",color:"#1C1A17"}}>無法讀取雲端資料</div>
+    <div style={{fontSize:".85rem",color:"#6A6560",maxWidth:480,wordBreak:"break-word"}}>{loadErr}</div>
+    <button onClick={startLoad} style={{padding:".6rem 1.6rem",background:"#1C1A17",color:"#F8F4EC",border:"none",borderRadius:7,cursor:"pointer",fontSize:".9rem"}}>重新讀取</button>
+  </div>);
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:"100vh",background:"#F2EFE9",fontFamily:"'DM Serif Display',serif",fontSize:"1.2rem",letterSpacing:".05em",color:"#C5B8A5"}}>YC Studio</div>);
 
   const dateParts=new Date().toLocaleDateString("zh-TW",{year:"numeric",month:"2-digit",day:"2-digit"}).replace(/\//g,".");
@@ -2611,16 +3261,18 @@ function App(){
           <span style={{fontFamily:"'DM Serif Display',serif",fontSize:"1rem",color:"rgba(255,255,255,.88)",letterSpacing:".04em"}}>Studio</span>
         </span>
         <div className="hdr-div"/>
-        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showTools?"計算工具":showCaseOverview?"案件總覽":showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
+        <span className="hdr-proj" onClick={()=>setSbOpen(v=>!v)}>{showToday?"今日":showTools?"計算工具":showCaseOverview?"案件總覽":showAllMats?"材質與五金":showArchived?"歸檔案件":showAllTodos?"所有待辦":showAllCal?"總合行事曆":proj?proj.name:"選擇案件"}</span>
       </div>
       <div className="hdr-r">
-        <div className={`sync-pip${syncOk?" on":""}`} title="雲端同步"/>
+        {NS==="test:"&&<span style={{fontFamily:"'DM Mono',monospace",fontSize:".6rem",color:"#C9924F",border:"1px solid #C9924F",borderRadius:4,padding:".05rem .35rem"}}>TEST</span>}
+        <div className={`sync-pip${syncSt==="ok"?" on":syncSt==="saving"?" saving":syncSt==="error"?" err":""}`} title={syncSt==="error"?"同步失敗，稍後自動重試":syncSt==="saving"?"儲存中…":"雲端同步"}/>
         <span className="hdr-date">{dateParts}</span>
         {typeof Notification!=="undefined"&&Notification.permission!=="granted"&&<button className="hdr-btn" style={{background:"var(--acc)",color:"var(--dark)",border:"none"}} onClick={async()=>{await Notification.requestPermission();if(data)requestAndCheckNotifications(data);}}>🔔 開啟通知</button>}
-        <button className="hdr-btn" onClick={()=>{if(showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview||showArchived){setShowAllCal(false);setShowAllTodos(false);setShowAllMats(false);setShowTools(false);setShowCaseOverview(false);setShowArchived(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview||showArchived?"返回案件":"行事曆"}</button>
+        <button className="hdr-btn" onClick={()=>{if(showToday||showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview||showArchived){setShowToday(false);setShowAllCal(false);setShowAllTodos(false);setShowAllMats(false);setShowTools(false);setShowCaseOverview(false);setShowArchived(false);}else{setShowAllCal(true);}setSbOpen(false);}}>{showToday||showAllCal||showAllTodos||showAllMats||showTools||showCaseOverview||showArchived?"返回案件":"行事曆"}</button>
       </div>
     </header>
 
+    {notice&&<div onClick={()=>setNotice(null)} style={{background:"#F5EFE0",color:"#8B6020",fontSize:".82rem",padding:".5rem 1.5rem",cursor:"pointer",borderBottom:"1px solid rgba(28,26,23,.08)"}}>{notice}（點此關閉）</div>}
     <div className="workspace">
       <aside className={`sidebar${sbOpen?" open":""}`}>
         {/* Brand */}
@@ -2651,11 +3303,15 @@ function App(){
           <hr className="sb-sep"/>
           {/* 工具列 */}
           <div className="sb-sec">工具</div>
+          <div className={`sb-item${showToday?" on":""}`} onClick={()=>{setShowToday(true);setShowAllTodos(false);setShowAllCal(false);setShowAllMats(false);setShowTools(false);setShowCaseOverview(false);setShowArchived(false);setSbOpen(false);}}>
+            <span style={{fontSize:"1rem"}}>◐</span>
+            <div className="sb-info"><div className="sb-name">今日</div><div className="sb-sub">矩陣 · 時間軸 · 桌布</div></div>
+          </div>
           <div className={`sb-item${showAllTodos?" on":""}`} onClick={()=>{setShowAllTodos(true);setShowAllCal(false);setShowAllMats(false);setShowCaseOverview(false);setAllTodosFilter("pending");setSbOpen(false);}}>
             <span style={{fontSize:"1rem"}}>☑</span>
             <div className="sb-info">
               <div className="sb-name">所有待辦</div>
-              <div className="sb-sub">{data.projects.reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
+              <div className="sb-sub">{data.projects.filter(p=>!p.archived).reduce((a,p)=>a+(p.todos||[]).filter(t=>!t.done).length,0)} 件待辦</div>
             </div>
           </div>
           <div className={`sb-item${showAllCal?" on":""}`} onClick={()=>{setShowAllCal(true);setShowAllTodos(false);setShowArchived(false);setShowAllMats(false);setShowCaseOverview(false);setSbOpen(false);}}>
@@ -2691,6 +3347,8 @@ function App(){
             <div style={{fontFamily:"'DM Mono',monospace",fontSize:".72rem",color:"var(--t3)",marginBottom:"1.6rem"}}>建立第一個設計案件</div>
             <button className="btn-solid" onClick={()=>setModal({type:"newProj",pid:null})} style={{padding:".7rem 2rem",fontSize:".88rem"}}>＋ 新增案件</button>
           </div>
+        ):showToday?(
+          <TodayView data={data} upd={upd} selectProj={selectProj}/>
         ):showCaseOverview?(
           <CaseOverviewView data={data} selectProj={selectProj}/>
         ):showTools?(
@@ -2797,7 +3455,7 @@ async function requestAndCheckNotifications(data, force=false) {
   for (const proj of (data.projects || [])) {
     // ── 待辦事項 ──
     for (const todo of (proj.todos || [])) {
-      if (todo.done) continue;
+      if (todo.done || !todo.due) continue;
       const base = `todo-${todo.id}`;
       if (todo.due < today) {
         const id = `${base}-overdue`;
